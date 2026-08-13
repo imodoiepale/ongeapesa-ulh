@@ -1,0 +1,83 @@
+# Ongea Pesa voice worker — for Hostinger Docker Manager ("Compose from URL").
+#
+# Use THIS file in the panel. Use docker-compose.yml instead if you deploy by
+# SSH-ing in and cloning the repo yourself.
+#
+# ── Deploy ────────────────────────────────────────────────────────────────────
+# VPS -> Docker Manager -> Compose -> "Compose from URL", then paste:
+#
+#   https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/docker-compose.hostinger.yml
+#
+# Project name: ongea-voice-agent
+# Then add every variable below under the panel's Environment variables field.
+#
+# ── Why this file differs from docker-compose.yml ─────────────────────────────
+# The panel has no working copy of the repo, so there is no "." to build from
+# and no .env file to read. Two consequences:
+#
+#   1. build.context is a GIT URL. Docker clones the repo itself at build time.
+#      Works because the repo is public — no deploy key needed.
+#   2. Secrets come from the panel, NOT from env_file. Every value is a ${VAR}
+#      substitution, so nothing sensitive is ever written into this file — which
+#      matters, because this file is public.
+
+services:
+  voice-agent:
+    # <repo>.git#<branch>:<subdirectory> — Docker builds from voice-agent/.
+    build:
+      context: https://github.com/imodoiepale/ongeapesa-ulh.git#main:voice-agent
+    container_name: ongea-voice-agent
+    restart: unless-stopped
+
+    # No ports, no Traefik labels, no networks — on purpose. The worker dials
+    # OUT to LiveKit Cloud and joins rooms as a participant; nothing ever
+    # connects to it. It will not disturb traefik, n8n or evolution-api.
+
+    environment:
+      # ── LiveKit (same three must also be set in Vercel) ──────────────────────
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+
+      # ── Where money commands go. MUST be the deployed app, not localhost ─────
+      ONGEA_APP_URL: ${ONGEA_APP_URL:-https://ongeapesa.nsait.co.ke}
+      ONGEA_ENVIRONMENT: ${ONGEA_ENVIRONMENT:-live}
+      N8N_WEBHOOK_AUTH_TOKEN: ${N8N_WEBHOOK_AUTH_TOKEN}
+      N8N_CALLBACK_SECRET: ${N8N_CALLBACK_SECRET}
+
+      # ── STT. Deepgram default; flip ONGEA_STT to "openai" to A/B the fallback ─
+      # Deepgram supports NO Swahili — do not set DEEPGRAM_LANGUAGE to "multi".
+      ONGEA_STT: ${ONGEA_STT:-deepgram}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
+      DEEPGRAM_MODEL: ${DEEPGRAM_MODEL:-nova-3}
+      DEEPGRAM_LANGUAGE: ${DEEPGRAM_LANGUAGE:-en}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+      # ── LLM: intent + tool calling ───────────────────────────────────────────
+      ONGEA_LLM_API_KEY: ${ONGEA_LLM_API_KEY}
+      ONGEA_LLM_MODEL: ${ONGEA_LLM_MODEL:-gpt-4o-mini}
+
+      # ── Fish Audio TTS ───────────────────────────────────────────────────────
+      FISH_API_KEY: ${FISH_API_KEY}
+      FISH_TTS_MODEL: ${FISH_TTS_MODEL:-s2.1-pro}
+      FISH_VOICE_ID: ${FISH_VOICE_ID}
+      FISH_LATENCY: ${FISH_LATENCY:-balanced}
+      # Left at 0, TTS cost is deliberately NOT recorded — a zero would read as
+      # "this was free" on the economics dashboard.
+      FISH_USD_PER_1K_CHARS: ${FISH_USD_PER_1K_CHARS:-0}
+
+    # Silero VAD and the turn detector run locally on CPU, per session. These
+    # ceilings protect traefik, n8n, evolution-api and hermes-agent from a
+    # runaway worker. Raise once you know your real concurrency.
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+    # The worker is chatty at INFO; without this it will fill the VPS disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'

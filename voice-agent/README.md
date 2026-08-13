@@ -115,6 +115,48 @@ mangled number costs money.
 Neither is the destination. Both are holding positions until the fine-tune from
 `docs/sheng-asr-finetuning.md` can be served through `ONGEA_STT=whisper_sheng`.
 
+## Deploying: pick one of three
+
+| | Use when | Compose file |
+|---|---|---|
+| **A. Hostinger Docker Manager** | You want a managed app in the panel, alongside n8n and traefik | `docker-compose.hostinger.yml` |
+| **B. Docker over SSH** | You cloned the repo onto the VPS yourself | `docker-compose.yml` |
+| **C. systemd + venv** | No Docker, or you want the process supervised directly | none — see Setup below |
+
+**A is the recommended path on Hostinger.** The panel shows the worker next to
+your other applications, with logs, restart and terminal in the UI.
+
+### A. Hostinger Docker Manager
+
+**VPS → Docker Manager → Compose → "Compose from URL"**, then paste:
+
+```
+https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/docker-compose.hostinger.yml
+```
+
+Project name `ongea-voice-agent`. Add every variable from `.env.example` under
+the panel's **Environment variables** field, then Deploy. First build takes a
+few minutes — it clones the repo and bakes the model weights into the image.
+
+That file differs from `docker-compose.yml` in two ways, both forced by the
+panel having no working copy of the repo: `build.context` is a **git URL** so
+Docker clones the source itself, and every value is a `${VAR}` substitution
+rather than an `env_file`, so **no secret is ever written into a file that
+lives in a public repo**.
+
+### B. Docker over SSH
+
+```bash
+git clone https://github.com/imodoiepale/ongeapesa-ulh.git ongea-pesa
+cd ongea-pesa/voice-agent
+cp .env.example .env && chmod 600 .env && nano .env
+docker compose up -d --build && docker compose logs -f
+```
+
+### C. systemd
+
+Follow the Setup steps below.
+
 ## Setup
 
 **1. LiveKit project** — create one at livekit.io, note the URL, API key and
