@@ -56,6 +56,11 @@ credentials.json
 # our banking relationship. Keep it local.
 docs/NCBA_CREDENTIALS_RUNBOOK.md
 
+# Python bytecode from the voice worker
+__pycache__/
+*.pyc
+voice-agent/.venv/
+
 # PWA generated files
 public/sw.js.map
 public/workbox-*.js
