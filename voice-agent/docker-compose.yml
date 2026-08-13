@@ -1,0 +1,41 @@
+# Ongea Pesa LiveKit voice worker — Hostinger Docker Manager (Compose).
+#
+# Deploy:
+#   ssh root@srv1631847.hstgr.cloud
+#   git clone <repo> ongea-pesa && cd ongea-pesa/voice-agent
+#   cp .env.example .env && chmod 600 .env && nano .env
+#   docker compose up -d --build
+#   docker compose logs -f
+#
+# Deliberately NOT here:
+#   ports:    the worker dials out to LiveKit Cloud; nothing connects in.
+#   traefik:  no HTTP surface to route. Leave your existing Traefik alone.
+#   networks: no other container on this VPS talks to it.
+
+services:
+  voice-agent:
+    build: .
+    image: ongea-voice-agent:latest
+    container_name: ongea-voice-agent
+    restart: unless-stopped
+
+    # Every key lives in .env (chmod 600), never in this file — this one is
+    # committed to a public repo.
+    env_file: .env
+
+    # Silero VAD and the turn detector run locally on CPU, per session. These
+    # are ceilings that protect n8n, Traefik and evolution-api from a runaway
+    # worker; raise them once you know your real concurrency.
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+    # The worker is chatty at INFO. Without this, logs will fill the disk on a
+    # long-running VPS.
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'

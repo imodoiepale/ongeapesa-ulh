@@ -1,0 +1,9 @@
+# Secrets must never enter the image layer cache.
+.env
+.env.*
+!.env.example
+
+.venv/
+__pycache__/
+*.pyc
+README.md

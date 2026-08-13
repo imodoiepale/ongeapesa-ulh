@@ -1,0 +1,1998 @@
+"use client"
+
+import { useState, useEffect, useRef, Fragment } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import { ScreenShell, FluidNav, mobileNavItems } from "@/components/foundation"
+import {
+  Users, Plus, RefreshCw, Eye, Trash2, UserPlus, Search,
+  Upload, X, Wallet, User, Calendar, Zap, Send, Shuffle,
+  Check, LogOut, Gift, PiggyBank, HandCoins, Home, Bell,
+  LayoutGrid, List, Play, Pause, TrendingUp, AlertTriangle,
+  ChevronDown, ChevronUp, Clock, ArrowUpRight, Hash, Phone,
+  Activity, Target, Ban, RotateCcw, Receipt, CreditCard, StopCircle,
+  Contact, Smartphone,
+} from "lucide-react"
+import Link from "next/link"
+import { StepUpSheet } from "@/components/security/step-up-sheet"
+
+interface Chama {
+  id: string
+  name: string
+  description: string
+  creator_id: string
+  chama_type: "savings" | "collection" | "fundraising"
+  contribution_amount: number
+  currency: string
+  collection_frequency: string
+  collection_day: number | null
+  rotation_type: string
+  total_cycles: number | null
+  current_cycle: number
+  current_rotation_index: number
+  status: string
+  total_collected: number
+  total_distributed: number
+  next_collection_date: string | null
+  created_at: string
+  members?: ChamaMember[]
+  cycles?: any[]
+}
+
+interface ChamaMember {
+  id: string
+  chama_id: string
+  user_id: string | null
+  name: string
+  phone_number: string
+  email: string
+  role: string
+  rotation_position: number
+  status: string
+  total_contributed: number
+  total_received: number
+  has_received_payout: boolean
+  pledge_amount?: number
+}
+
+interface UserProfile {
+  id: string
+  email?: string
+  phone_number?: string
+  mpesa_number?: string
+}
+
+const CHAMA_TYPES = [
+  { id: "savings", label: "Savings", icon: PiggyBank, desc: "Fixed rotating savings" },
+  { id: "collection", label: "Collection", icon: HandCoins, desc: "Fixed group collection" },
+  { id: "fundraising", label: "Fundraising", icon: Gift, desc: "Pledge-based contributions" },
+]
+
+const FREQUENCIES = [
+  { id: "one-time", label: "One-Time", desc: "Single collection" },
+  { id: "daily", label: "Daily", desc: "Every day" },
+  { id: "weekly", label: "Weekly", desc: "Every week" },
+  { id: "biweekly", label: "Bi-Weekly", desc: "Every 2 weeks" },
+  { id: "monthly", label: "Monthly", desc: "Every month" },
+]
+
+const SCHEDULE_OPTIONS = [
+  { id: "now", label: "Collect Now", desc: "Start collection immediately after creating" },
+  { id: "later", label: "Schedule for Later", desc: "Choose a specific date and time" },
+  { id: "manual", label: "Manual", desc: "Start collections manually when ready" },
+]
+
+export default function ChamaPage() {
+  const router = useRouter()
+  const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [user, setUser] = useState<any>(null)
+  const [userProfile, setUserProfile] = useState<{ phone_number?: string; mpesa_number?: string; email?: string } | null>(null)
+  const [chamas, setChamas] = useState<Chama[]>([])
+  const [myChamas, setMyChamas] = useState<Chama[]>([])
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [activeTab, setActiveTab] = useState<"created" | "member">("created")
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
+  const [selectedChama, setSelectedChama] = useState<Chama | null>(null)
+  const [createStep, setCreateStep] = useState(1)
+  const [userSearchTerm, setUserSearchTerm] = useState("")
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [collecting, setCollecting] = useState(false)
+  const [collectionStatus, setCollectionStatus] = useState<any>(null)
+  const [stkRequests, setStkRequests] = useState<any[]>([])
+  const [showCollectionModal, setShowCollectionModal] = useState(false)
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
+  const [expandedStkRow, setExpandedStkRow] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<"card" | "table">("card")
+  const [statusTab, setStatusTab] = useState<"all" | "active" | "inactive">("all")
+  const [includeAdmin, setIncludeAdmin] = useState(true)
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
+  const [showPayoutStepUp, setShowPayoutStepUp] = useState(false)
+  const [payoutError, setPayoutError] = useState("")
+
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    chama_type: "savings" as "savings" | "collection" | "fundraising",
+    contribution_amount: "",
+    currency: "KES",
+    collection_frequency: "monthly",
+    collection_day: 25,
+    rotation_type: "sequential",
+    total_cycles: "",
+    members: [] as { name: string; phone: string; email: string; pledge_amount?: string }[],
+    include_admin_in_collection: true,
+    schedule_type: "manual" as "now" | "later" | "manual",
+    scheduled_date: "",
+    scheduled_time: "",
+  })
+
+  const [newMember, setNewMember] = useState({ name: "", phone: "", email: "", pledge_amount: "" })
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  const [contactPickerSupported, setContactPickerSupported] = useState(false)
+
+  // Check if Contact Picker API is supported (PWA on mobile)
+  useEffect(() => {
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+      setContactPickerSupported(true)
+    }
+  }, [])
+
+  // Pick contacts from device (PWA Contact Picker API)
+  const [contactPickerMessage, setContactPickerMessage] = useState<string | null>(null)
+  
+  const pickContacts = async () => {
+    try {
+      if (!('contacts' in navigator)) {
+        alert('Contact picker not supported. Please use a mobile device with PWA installed.')
+        return
+      }
+      
+      const props = ['name', 'tel']
+      const opts = { multiple: true }
+      
+      // @ts-ignore - Contact Picker API types not in standard lib
+      const contacts = await navigator.contacts.select(props, opts)
+      
+      if (contacts && contacts.length > 0) {
+        const newMembers: { name: string; phone: string; email: string; pledge_amount?: string }[] = []
+        const existingPhones = new Set(form.members.map(m => m.phone.replace(/\s/g, '')))
+        const adminPhones = new Set([userProfile?.phone_number, userProfile?.mpesa_number].filter(Boolean).map(p => p?.replace(/\s/g, '')))
+        let skippedAdmin = 0
+        let skippedDuplicate = 0
+        
+        for (const contact of contacts) {
+          const name = contact.name?.[0] || 'Unknown'
+          const phones = contact.tel || []
+          
+          for (const phone of phones) {
+            // Normalize phone number
+            let normalizedPhone = phone.replace(/[\s\-\(\)]/g, '')
+            // Convert +254 to 0 format
+            if (normalizedPhone.startsWith('+254')) {
+              normalizedPhone = '0' + normalizedPhone.slice(4)
+            } else if (normalizedPhone.startsWith('254')) {
+              normalizedPhone = '0' + normalizedPhone.slice(3)
+            }
+            
+            // Skip if already added
+            if (existingPhones.has(normalizedPhone)) {
+              skippedDuplicate++
+              continue
+            }
+            // Skip admin phone
+            if (adminPhones.has(normalizedPhone)) {
+              skippedAdmin++
+              continue
+            }
+            
+            existingPhones.add(normalizedPhone)
+            newMembers.push({ name, phone: normalizedPhone, email: '', pledge_amount: '' })
+            break // Only add first phone per contact
+          }
+        }
+        
+        if (newMembers.length > 0) {
+          setForm(f => ({ ...f, members: [...f.members, ...newMembers] }))
+        }
+        
+        // Show feedback message
+        let msg = `✅ Added ${newMembers.length} contact${newMembers.length !== 1 ? 's' : ''}`
+        if (skippedDuplicate > 0) msg += `, ${skippedDuplicate} duplicate${skippedDuplicate !== 1 ? 's' : ''} skipped`
+        if (skippedAdmin > 0) msg += `, ${skippedAdmin} (your number) skipped`
+        setContactPickerMessage(msg)
+        setTimeout(() => setContactPickerMessage(null), 4000)
+        
+        console.log(`📱 Added ${newMembers.length} contacts from device`)
+      }
+    } catch (err: any) {
+      if (err.name !== 'InvalidStateError') {
+        console.error('Contact picker error:', err)
+        setContactPickerMessage('❌ Failed to pick contacts')
+        setTimeout(() => setContactPickerMessage(null), 3000)
+      }
+    }
+  }
+
+  useEffect(() => { checkAuth() }, [])
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push("/login"); return }
+    setUser(user)
+    // Fetch user profile to get admin's phone for conflict detection
+    const { data: profile } = await supabase.from("profiles").select("phone_number, mpesa_number, email").eq("id", user.id).single()
+    setUserProfile(profile)
+    await Promise.all([fetchChamas(user.id), fetchAllUsers()])
+  }
+
+  const fetchChamas = async (userId: string) => {
+    setLoading(true)
+    try {
+      const { data: created } = await supabase.from("chamas").select("*, members:chama_members(*), cycles:chama_cycles(*)").eq("creator_id", userId).order("created_at", { ascending: false })
+      const { data: memberOf } = await supabase.from("chama_members").select("chama:chamas(*, members:chama_members(*), cycles:chama_cycles(*))").eq("user_id", userId)
+      setChamas(created || [])
+      setMyChamas(memberOf?.map((m: any) => m.chama).filter((c: any) => c && c.creator_id !== userId) || [])
+    } catch (err) { console.error(err) }
+    finally { setLoading(false) }
+  }
+
+  const fetchAllUsers = async () => {
+    const { data } = await supabase.from("profiles").select("id, email, phone_number, mpesa_number").order("created_at", { ascending: false })
+    setAllUsers(data || [])
+  }
+
+  const createChama = async () => {
+    if (!user) return
+    const response = await fetch("/api/chama/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...form, contribution_amount: form.chama_type === "fundraising" ? 0 : parseFloat(form.contribution_amount), members: form.members.map(m => ({ ...m, pledge_amount: m.pledge_amount ? Math.ceil(parseFloat(m.pledge_amount)) : undefined })) }),
+    })
+    const result = await response.json()
+    if (result.success) { setShowCreateModal(false); resetForm(); fetchChamas(user.id) }
+    else alert(result.error)
+  }
+
+  const addMember = async () => {
+    if (!selectedChama) return
+    const data = selectedUser ? { name: selectedUser.email || "User", phone: selectedUser.phone_number || selectedUser.mpesa_number || "", email: selectedUser.email || "", pledge_amount: newMember.pledge_amount } : newMember
+    if (!data.name || !data.phone) { alert("Name and phone required"); return }
+    const response = await fetch("/api/chama/add-member", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chama_id: selectedChama.id, ...data, pledge_amount: data.pledge_amount ? Math.ceil(parseFloat(data.pledge_amount)) : undefined }) })
+    const result = await response.json()
+    if (result.success) { setShowAddMemberModal(false); setNewMember({ name: "", phone: "", email: "", pledge_amount: "" }); setSelectedUser(null); fetchChamas(user.id) }
+    else alert(result.error)
+  }
+
+  const requestExit = async (chamaId: string) => {
+    if (!confirm("Request to exit?")) return
+    await supabase.from("chama_members").update({ status: "exit_requested" }).eq("chama_id", chamaId).eq("user_id", user.id)
+    fetchChamas(user.id)
+  }
+
+  const approveExit = async (memberId: string) => {
+    await supabase.from("chama_members").update({ status: "exited" }).eq("id", memberId)
+    fetchChamas(user.id)
+  }
+
+  const startCollection = async () => {
+    if (!selectedChama) return
+    if (selectedMemberIds.size === 0) {
+      alert("Please select at least one member for collection")
+      return
+    }
+    setCollecting(true)
+    setShowCollectionModal(true)
+    setStkRequests([])
+    const response = await fetch("/api/chama/start-collection", { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({ 
+        chama_id: selectedChama.id, 
+        include_admin: includeAdmin,
+        selected_member_ids: Array.from(selectedMemberIds)
+      }) 
+    })
+    const result = await response.json()
+    if (result.success) {
+      setCollectionStatus(result)
+      setStkRequests(result.stk_requests || [])
+      startPolling(result.cycle_id)
+    } else { 
+      alert(result.error)
+      setCollecting(false)
+      setShowCollectionModal(false)
+    }
+  }
+
+  const startPolling = (cycleId: string) => {
+    if (pollingInterval) clearInterval(pollingInterval)
+    // Poll immediately, then every 5 seconds - stop when all final
+    pollPendingStk().then(allFinal => {
+      if (allFinal) {
+        console.log('🛑 All STK requests have final status - not starting poll interval')
+        return
+      }
+      const interval = setInterval(async () => {
+        const shouldStop = await pollPendingStk()
+        if (shouldStop) {
+          console.log('🛑 All STK requests have final status - stopping polling')
+          clearInterval(interval)
+          setPollingInterval(null)
+        }
+      }, 5000)
+      setPollingInterval(interval)
+    })
+  }
+
+  const stopPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval)
+      setPollingInterval(null)
+    }
+  }
+
+  // Poll pending STK requests - manual trigger from Check Pending button
+  const pollPendingStk = async (): Promise<boolean> => {
+    if (!selectedChama) return true // Stop if no chama
+    setCollecting(true)
+    
+    try {
+      console.log(`🔄 Manual poll for chama ${selectedChama.id}...`)
+      
+      // Poll and fetch updated data in parallel
+      const [pollResponse, stkResult] = await Promise.all([
+        fetch('/api/chama/poll-pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chama_id: selectedChama.id })
+        }).then(r => r.json()),
+        supabase
+          .from("chama_stk_requests")
+          .select("*")
+          .eq("chama_id", selectedChama.id)
+          .order("created_at", { ascending: false })
+      ])
+      
+      console.log(`📊 Poll: ${pollResponse.completed} completed, ${pollResponse.failed} failed, ${pollResponse.still_pending} pending${pollResponse.all_final ? ' - ALL FINAL' : ''}`)
+      
+      // Update STK requests with member info
+      const stkData = stkResult.data || []
+      if (stkData.length > 0) {
+        const memberIds = [...new Set(stkData.map(s => s.member_id).filter(Boolean))]
+        let membersMap: Record<string, any> = {}
+        if (memberIds.length > 0) {
+          const { data: members } = await supabase.from("chama_members").select("*").in("id", memberIds)
+          if (members) membersMap = Object.fromEntries(members.map(m => [m.id, m]))
+        }
+        setStkRequests(stkData.map(stk => ({ ...stk, member: membersMap[stk.member_id] || null })))
+      }
+      
+      // Refresh chama totals if any completed
+      if (pollResponse.completed > 0 && user?.id) {
+        fetchChamas(user.id)
+      }
+      
+      // Return true if all final (should stop polling)
+      return pollResponse.all_final === true
+    } catch (err) {
+      console.error("Poll pending error:", err)
+      return false
+    } finally {
+      setCollecting(false)
+    }
+  }
+
+  // Count pending STK requests
+  const pendingStkCount = stkRequests.filter(r => ['pending', 'processing', 'sent'].includes(r.status)).length
+
+  // Auto-poll when modal is open and there are pending STK requests
+  // Initial poll is done in openChamaDetail, this just continues polling
+  // Stops automatically when all requests reach final status
+  useEffect(() => {
+    if (!showDetailModal || !selectedChama || pendingStkCount === 0) return
+    
+    let isPolling = false
+    let isMounted = true
+    let intervalId: NodeJS.Timeout | null = null
+    
+    const pollAndRefresh = async () => {
+      if (isPolling || !isMounted) return
+      isPolling = true
+      
+      try {
+        const response = await fetch('/api/chama/poll-pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chama_id: selectedChama.id })
+        })
+        
+        const result = await response.json()
+        if (!isMounted) return
+        
+        console.log(`📊 Poll: ${result.completed} completed, ${result.failed} failed, ${result.still_pending} pending${result.all_final ? ' - ALL FINAL' : ''}`)
+        
+        // Stop polling if all requests have final status
+        if (result.all_final && intervalId) {
+          console.log('🛑 All STK requests have final status - stopping auto-poll')
+          clearInterval(intervalId)
+          intervalId = null
+        }
+        
+        if (result.success && (result.completed > 0 || result.failed > 0)) {
+          // Refresh STK history
+          const { data: stkData } = await supabase
+            .from("chama_stk_requests")
+            .select("*")
+            .eq("chama_id", selectedChama.id)
+            .order("created_at", { ascending: false })
+          
+          if (stkData && isMounted) {
+            const memberIds = [...new Set(stkData.map(s => s.member_id).filter(Boolean))]
+            let membersMap: Record<string, any> = {}
+            if (memberIds.length > 0) {
+              const { data: members } = await supabase.from("chama_members").select("*").in("id", memberIds)
+              if (members) membersMap = Object.fromEntries(members.map(m => [m.id, m]))
+            }
+            setStkRequests(stkData.map(stk => ({ ...stk, member: membersMap[stk.member_id] || null })))
+          }
+          
+          // Refresh chama data
+          if (user?.id && isMounted) fetchChamas(user.id)
+        }
+      } catch (err) {
+        console.error("Auto-poll error:", err)
+      } finally {
+        isPolling = false
+      }
+    }
+    
+    // Poll every 5 seconds (initial poll done in openChamaDetail)
+    intervalId = setInterval(pollAndRefresh, 5000)
+    
+    return () => {
+      isMounted = false
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [showDetailModal, selectedChama?.id, pendingStkCount])
+
+  const retryStk = async (requestId: string) => {
+    try {
+      const response = await fetch("/api/chama/retry-stk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: requestId })
+      })
+      const result = await response.json()
+      if (result.success && selectedChama) {
+        // Update local state immediately instead of refetching
+        setStkRequests(prev => prev.map(r => 
+          r.id === requestId 
+            ? { ...r, status: 'sent', attempt_count: (r.attempt_count || 1) + 1, error_message: null }
+            : r
+        ))
+      }
+    } catch (err) {
+      console.error("Retry error:", err)
+    }
+  }
+
+  const retryAllFailed = async () => {
+    const failedRequests = stkRequests.filter(r => r.status === "failed")
+    for (const req of failedRequests) {
+      await retryStk(req.id)
+    }
+  }
+
+  const stopCollection = async () => {
+    if (!selectedChama) return
+    if (!confirm("Are you sure you want to stop this collection? All pending STKs will be cancelled.")) return
+    
+    try {
+      const response = await fetch("/api/chama/stop-collection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chama_id: selectedChama.id })
+      })
+      const result = await response.json()
+      if (result.success) {
+        setStkRequests(prev => prev.map(r => 
+          ['pending', 'sent', 'processing'].includes(r.status) 
+            ? { ...r, status: 'cancelled', error_message: 'Collection stopped by admin' }
+            : r
+        ))
+        setCollecting(false)
+        stopPolling()
+        if (user?.id) fetchChamas(user.id)
+      } else {
+        alert(result.error)
+      }
+    } catch (err) {
+      console.error("Stop collection error:", err)
+    }
+  }
+
+  const resendAllStk = async () => {
+    if (!selectedChama) return
+    
+    // Get cycle_id from existing STK requests to resend to same cycle
+    const cycleId = stkRequests[0]?.cycle_id || collectionStatus?.cycle_id
+    if (!cycleId) {
+      alert("No active collection cycle found. Start a new collection first.")
+      return
+    }
+    
+    setCollecting(true)
+    
+    try {
+      const response = await fetch("/api/chama/resend-all-stk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chama_id: selectedChama.id, cycle_id: cycleId })
+      })
+      const result = await response.json()
+      if (result.success) {
+        // Refresh STK requests
+        pollPendingStk()
+      } else {
+        alert(result.error)
+      }
+    } catch (err) {
+      console.error("Resend all STK error:", err)
+    } finally {
+      setCollecting(false)
+    }
+  }
+
+  const distributeCollectedCycle = async (stepupToken: string) => {
+    const cycle = selectedChama?.cycles?.find((item: any) => item.status === "collected")
+    if (!cycle || !user?.id) throw new Error("No collected cycle is ready for payout.")
+    setPayoutError("")
+    const response = await fetch("/api/chama/distribute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cycle_id: cycle.id, stepup_token: stepupToken }) })
+    const body = await response.json().catch(() => ({}))
+    if (!response.ok) { setPayoutError(body.error || "We couldn't start the payout."); throw new Error(body.error || "Payout failed") }
+    setShowPayoutStepUp(false); setShowDetailModal(false); await fetchChamas(user.id)
+  }
+
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const lines = (event.target?.result as string).split("\n").filter(l => l.trim())
+      const members: any[] = []
+      lines.forEach((line, i) => {
+        if (i === 0 && line.toLowerCase().includes("name")) return
+        const [name, phone, email, pledge] = line.split(",").map(s => s.trim())
+        if (name && phone) members.push({ name, phone, email: email || "", pledge_amount: pledge })
+      })
+      setForm(f => ({ ...f, members: [...f.members, ...members] }))
+    }
+    reader.readAsText(file)
+  }
+
+  const resetForm = () => { setForm({ name: "", description: "", chama_type: "savings", contribution_amount: "", currency: "KES", collection_frequency: "monthly", collection_day: 25, rotation_type: "sequential", total_cycles: "", members: [], include_admin_in_collection: true, schedule_type: "manual", scheduled_date: "", scheduled_time: "" }); setCreateStep(1) }
+
+  const filteredUsers = allUsers.filter(u => !userSearchTerm || u.email?.toLowerCase().includes(userSearchTerm.toLowerCase()) || u.phone_number?.includes(userSearchTerm))
+  const displayChamas = activeTab === "created" ? chamas : myChamas
+  const statusFilteredChamas = displayChamas.filter(c => {
+    if (statusTab === "active") return c.status === "active"
+    if (statusTab === "inactive") return ["paused", "completed", "dissolved"].includes(c.status)
+    return true
+  })
+  const filteredChamas = statusFilteredChamas.filter(c => (statusFilter === "all" || c.status === statusFilter) && (!searchTerm || c.name.toLowerCase().includes(searchTerm.toLowerCase())))
+  const activeCount = displayChamas.filter(c => c.status === "active").length
+  const inactiveCount = displayChamas.filter(c => ["paused", "completed", "dissolved"].includes(c.status)).length
+
+  const toggleChamaStatus = async (chamaId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.from("chamas").update({ status: newStatus }).eq("id", chamaId)
+      if (error) throw error
+      fetchChamas(user?.id)
+    } catch (err) { console.error("Failed to update status:", err) }
+  }
+
+  const fetchStkHistory = async (chamaId: string) => {
+    try {
+      // First get STK requests
+      const { data: stkData } = await supabase
+        .from("chama_stk_requests")
+        .select("*")
+        .eq("chama_id", chamaId)
+        .order("created_at", { ascending: false })
+      
+      if (!stkData || stkData.length === 0) {
+        setStkRequests([])
+        return
+      }
+      
+      // Get member info separately to avoid FK issues
+      const memberIds = [...new Set(stkData.map(s => s.member_id).filter(Boolean))]
+      let membersMap: Record<string, any> = {}
+      
+      if (memberIds.length > 0) {
+        const { data: members } = await supabase
+          .from("chama_members")
+          .select("*")
+          .in("id", memberIds)
+        if (members) {
+          membersMap = Object.fromEntries(members.map(m => [m.id, m]))
+        }
+      }
+      
+      // Combine data
+      const enrichedData = stkData.map(stk => ({
+        ...stk,
+        member: membersMap[stk.member_id] || null
+      }))
+      
+      setStkRequests(enrichedData)
+    } catch (err) { console.error("Failed to fetch STK history:", err) }
+  }
+
+  const openChamaDetail = async (chama: Chama) => {
+    setSelectedChama(chama)
+    setShowDetailModal(true)
+    // Initialize all selectable members (active + pending) as selected for collection
+    const selectableMembers = chama.members?.filter(m => m.status === 'active' || m.status === 'pending') || []
+    setSelectedMemberIds(new Set(selectableMembers.map(m => m.id)))
+    
+    // Fetch STK history and poll pending in parallel on load
+    try {
+      const [stkResult, pollResult] = await Promise.all([
+        // Fetch STK history
+        supabase
+          .from("chama_stk_requests")
+          .select("*")
+          .eq("chama_id", chama.id)
+          .order("created_at", { ascending: false }),
+        // Poll pending immediately
+        fetch('/api/chama/poll-pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chama_id: chama.id })
+        }).then(r => r.json()).catch(() => null)
+      ])
+      
+      const stkData = stkResult.data || []
+      
+      // Get member info
+      if (stkData.length > 0) {
+        const memberIds = [...new Set(stkData.map(s => s.member_id).filter(Boolean))]
+        let membersMap: Record<string, any> = {}
+        if (memberIds.length > 0) {
+          const { data: members } = await supabase.from("chama_members").select("*").in("id", memberIds)
+          if (members) membersMap = Object.fromEntries(members.map(m => [m.id, m]))
+        }
+        setStkRequests(stkData.map(stk => ({ ...stk, member: membersMap[stk.member_id] || null })))
+      } else {
+        setStkRequests([])
+      }
+      
+      if (pollResult?.success) {
+        console.log(`📊 Initial poll: ${pollResult.completed} completed, ${pollResult.failed} failed, ${pollResult.still_pending} pending`)
+      }
+    } catch (err) {
+      console.error("Failed to load chama detail:", err)
+    }
+  }
+  const formatCurrency = (n: number) => new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(Math.ceil(n))
+  const totalMembers = filteredChamas.reduce((s, c) => s + (c.members?.length || 0), 0)
+  const totalCollected = filteredChamas.reduce((s, c) => s + c.total_collected, 0)
+  const getStatusBadge = (s: string) => ({ active: "bg-brand/10 text-brand", paused: "bg-amber-100 text-amber-700", completed: "bg-blue-100 text-blue-700", exit_requested: "bg-orange-100 text-orange-700" }[s] || "bg-muted text-muted-foreground")
+  const getChamaIcon = (t: string) => t === "fundraising" ? Gift : t === "collection" ? HandCoins : PiggyBank
+
+  return (
+    <main id="main-content" className="orbital-page min-h-[100dvh]">
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-card/80 border-b border-border/60 pt-[env(safe-area-inset-top,0px)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center shadow-lg shadow-brand/20"><Users className="w-5 h-5 text-white" /></div>
+            <div><span className="orbital-label text-[hsl(var(--teal))]">Together</span><h1 className="orbital-display mt-2 text-4xl">Chama</h1></div>
+          </Link>
+          <div className="flex items-center gap-3">
+            <button className="p-2 rounded-lg hover:bg-muted"><Bell className="w-5 h-5 text-muted-foreground" /></button>
+            <Link href="/" className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg"><Home className="w-4 h-4" /> Home</Link>
+          </div>
+        </div>
+      </header>
+
+      <ScreenShell>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-nav">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+          <div><h2 className="text-xl font-bold text-foreground">Chama Collections</h2><p className="text-sm text-muted-foreground">Manage group savings & contributions</p></div>
+          <div className="flex gap-2">
+            <button onClick={() => fetchChamas(user?.id)} className="p-2 rounded-lg bg-card border border-border/60 shadow-none hover:bg-muted/30"><RefreshCw className={cn("w-4 h-4 text-muted-foreground", loading && "animate-spin")} /></button>
+            <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium shadow-md hover:shadow-lg transition-all"><Plus className="w-4 h-4" />New Chama</button>
+          </div>
+        </div>
+
+        {/* Compact Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-5">
+          {[
+            { label: "Total", value: displayChamas.length, icon: Users, gradient: "from-slate-500 to-slate-600" },
+            { label: "Active", value: activeCount, icon: Zap, gradient: "from-emerald-500 to-emerald-600" },
+            { label: "Inactive", value: inactiveCount, icon: Pause, gradient: "from-amber-500 to-amber-600" },
+            { label: "Members", value: totalMembers, icon: UserPlus, gradient: "from-purple-500 to-purple-600" },
+            { label: "Collected", value: formatCurrency(totalCollected), icon: Wallet, gradient: "from-blue-500 to-blue-600" },
+            { label: "Distributed", value: formatCurrency(filteredChamas.reduce((s, c) => s + c.total_distributed, 0)), icon: TrendingUp, gradient: "from-teal-500 to-teal-600" },
+          ].map((stat, i) => (
+            <div key={i} className="relative overflow-hidden p-3 rounded-xl bg-card/50 border border-border/40 shadow-sm">
+              <div className={cn("absolute top-0 right-0 w-16 h-16 -mr-4 -mt-4 rounded-full opacity-20 bg-gradient-to-br", stat.gradient)} />
+              <div className="relative flex items-center gap-2">
+                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br shadow", stat.gradient)}><stat.icon className="w-4 h-4 text-white" /></div>
+                <div><p className="text-lg font-bold text-foreground">{stat.value}</p><p className="text-[10px] text-muted-foreground">{stat.label}</p></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs Row */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <button onClick={() => setActiveTab("created")} className={cn("px-3 py-1.5 rounded text-xs font-medium", activeTab === "created" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground")}>My Chamas ({chamas.length})</button>
+            <button onClick={() => setActiveTab("member")} className={cn("px-3 py-1.5 rounded text-xs font-medium", activeTab === "member" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground")}>Member Of ({myChamas.length})</button>
+          </div>
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <button onClick={() => setStatusTab("all")} className={cn("px-3 py-1.5 rounded text-xs font-medium", statusTab === "all" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground")}>All</button>
+            <button onClick={() => setStatusTab("active")} className={cn("px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1", statusTab === "active" ? "bg-brand text-white shadow-sm" : "text-muted-foreground")}><Play className="w-3 h-3" />Active ({activeCount})</button>
+            <button onClick={() => setStatusTab("inactive")} className={cn("px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1", statusTab === "inactive" ? "bg-amber-500 text-white shadow-sm" : "text-muted-foreground")}><Pause className="w-3 h-3" />Inactive ({inactiveCount})</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative"><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 h-8 w-40 text-sm bg-card border-border/60 rounded-lg" /></div>
+            <div className="flex p-0.5 bg-muted rounded-lg">
+              <button onClick={() => setViewMode("card")} className={cn("p-1.5 rounded", viewMode === "card" ? "bg-card shadow-sm" : "")}><LayoutGrid className="w-4 h-4 text-muted-foreground" /></button>
+              <button onClick={() => setViewMode("table")} className={cn("p-1.5 rounded", viewMode === "table" ? "bg-card shadow-sm" : "")}><List className="w-4 h-4 text-muted-foreground" /></button>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        {loading ? <div className="flex items-center justify-center py-16"><RefreshCw className="w-8 h-8 text-brand animate-spin" /></div> : filteredChamas.length === 0 ? (
+          <div className="text-center py-12 rounded-xl bg-card border border-border/60">
+            <div className="w-14 h-14 rounded-xl bg-brand/10 flex items-center justify-center mx-auto mb-4"><Users className="w-7 h-7 text-brand" /></div>
+            <h3 className="text-lg font-semibold text-foreground mb-1">No chamas found</h3>
+            <p className="text-sm text-muted-foreground mb-4">Create your first chama to start</p>
+            {activeTab === "created" && <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium"><Plus className="w-4 h-4" /> Create Chama</button>}
+          </div>
+        ) : viewMode === "table" ? (
+          <div className="rounded-xl overflow-hidden bg-card border border-border/60 shadow-sm">
+            <table className="w-full">
+              <thead className="bg-muted/30 border-b border-border/60">
+                <tr>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase">#</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase">Name</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase">Type</th>
+                  <th className="px-3 py-2 text-right text-[10px] font-semibold text-muted-foreground uppercase">Contribution</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-muted-foreground uppercase">Members</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-muted-foreground uppercase">Cycle</th>
+                  <th className="px-3 py-2 text-right text-[10px] font-semibold text-muted-foreground uppercase">Collected</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-muted-foreground uppercase">Freq</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-muted-foreground uppercase">Status</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold text-muted-foreground uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {filteredChamas.map((chama, idx) => {
+                  const Icon = getChamaIcon(chama.chama_type || "savings")
+                  return (
+                    <tr key={chama.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openChamaDetail(chama)}>
+                      <td className="px-3 py-2 text-sm text-muted-foreground font-mono">{idx + 1}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", chama.chama_type === "fundraising" ? "bg-purple-100" : chama.chama_type === "collection" ? "bg-blue-100" : "bg-brand/10")}><Icon className={cn("w-3.5 h-3.5", chama.chama_type === "fundraising" ? "text-purple-600" : chama.chama_type === "collection" ? "text-blue-600" : "text-brand")} /></div>
+                          <div><p className="text-sm font-medium text-foreground">{chama.name}</p><p className="text-[10px] text-muted-foreground truncate max-w-[150px]">{chama.description || "No description"}</p></div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2"><span className="px-2 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground capitalize">{chama.chama_type}</span></td>
+                      <td className="px-3 py-2 text-right text-sm font-mono text-foreground">{formatCurrency(chama.contribution_amount)}</td>
+                      <td className="px-3 py-2 text-center text-sm font-semibold text-foreground">{chama.members?.length || 0}</td>
+                      <td className="px-3 py-2 text-center text-sm text-muted-foreground">{chama.current_cycle}</td>
+                      <td className="px-3 py-2 text-right text-sm font-mono text-brand">{formatCurrency(chama.total_collected)}</td>
+                      <td className="px-3 py-2 text-center"><span className="text-[10px] text-muted-foreground capitalize">{chama.collection_frequency}</span></td>
+                      <td className="px-3 py-2 text-center"><span className={cn("px-2 py-0.5 text-[10px] rounded-full font-medium", getStatusBadge(chama.status))}>{chama.status}</span></td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => openChamaDetail(chama)} className="p-1.5 hover:bg-muted rounded" title="View"><Eye className="w-3.5 h-3.5 text-muted-foreground" /></button>
+                          {activeTab === "created" && (
+                            chama.status === "active" 
+                              ? <button onClick={() => toggleChamaStatus(chama.id, "paused")} className="p-1.5 hover:bg-amber-50 rounded" title="Pause"><Pause className="w-3.5 h-3.5 text-amber-600" /></button>
+                              : <button onClick={() => toggleChamaStatus(chama.id, "active")} className="p-1.5 hover:bg-brand/10 rounded" title="Activate"><Play className="w-3.5 h-3.5 text-brand" /></button>
+                          )}
+                          {activeTab === "member" && <button onClick={() => requestExit(chama.id)} className="p-1.5 hover:bg-red-50 rounded" title="Exit"><LogOut className="w-3.5 h-3.5 text-red-500" /></button>}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredChamas.map((chama) => {
+              const Icon = getChamaIcon(chama.chama_type || "savings")
+              return (
+                <div key={chama.id} onClick={() => openChamaDetail(chama)} className="group p-4 rounded-xl cursor-pointer bg-card border border-border/60 hover:border-blue-300 hover:shadow-lg transition-all">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shadow", chama.chama_type === "fundraising" ? "bg-gradient-to-br from-purple-500 to-purple-600" : chama.chama_type === "collection" ? "bg-gradient-to-br from-blue-500 to-blue-600" : "bg-brand")}><Icon className="w-4 h-4 text-white" /></div>
+                      <div><h3 className="text-sm font-semibold text-foreground group-hover:text-blue-600">{chama.name}</h3><p className="text-[10px] text-muted-foreground capitalize">{chama.chama_type || "savings"}</p></div>
+                    </div>
+                    <span className={cn("px-2 py-0.5 text-[10px] rounded-full font-medium", getStatusBadge(chama.status))}>{chama.status}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="p-2 bg-muted/30 rounded-lg"><p className="text-[9px] text-muted-foreground uppercase">Contribution</p><p className="text-sm font-bold text-foreground">{formatCurrency(chama.contribution_amount)}</p></div>
+                    <div className="p-2 bg-muted/30 rounded-lg"><p className="text-[9px] text-muted-foreground uppercase">Members</p><p className="text-sm font-bold text-foreground">{chama.members?.length || 0}</p></div>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-2"><span className="capitalize">{chama.collection_frequency}</span><span>Cycle {chama.current_cycle}</span></div>
+                  {chama.next_collection_date && <div className="flex items-center gap-1.5 text-[10px] text-blue-600 bg-blue-50 px-2 py-1.5 rounded-lg"><Calendar className="w-3 h-3" />Next: {new Date(chama.next_collection_date).toLocaleDateString()}</div>}
+                  <div className="flex gap-1.5 mt-3 pt-3 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => { setSelectedChama(chama); setShowDetailModal(true) }} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-muted-foreground bg-muted/30 rounded-lg hover:bg-muted font-medium"><Eye className="w-3 h-3" />View</button>
+                    {activeTab === "created" && (
+                      chama.status === "active"
+                        ? <button onClick={() => toggleChamaStatus(chama.id, "paused")} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 font-medium"><Pause className="w-3 h-3" />Pause</button>
+                        : <button onClick={() => toggleChamaStatus(chama.id, "active")} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-brand bg-brand/5 rounded-lg hover:bg-brand/10 font-medium"><Play className="w-3 h-3" />Activate</button>
+                    )}
+                    {activeTab === "member" && <button onClick={() => requestExit(chama.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] text-red-600 bg-red-50 rounded-lg hover:bg-red-100 font-medium"><LogOut className="w-3 h-3" />Exit</button>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-3xl bg-card shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b bg-brand"><div><h2 className="text-xl font-bold text-white">Create Chama</h2><p className="text-sm text-blue-100">Step {createStep} of 3</p></div><button onClick={() => { setShowCreateModal(false); resetForm() }} className="p-2 hover:bg-card/20 rounded-xl text-white"><X className="w-6 h-6" /></button></div>
+            <div className="px-6 pt-4"><div className="flex gap-2">{[1, 2, 3].map(s => <div key={s} className={cn("flex-1 h-1.5 rounded-full", s <= createStep ? "bg-blue-500" : "bg-zinc-200")} />)}</div></div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {createStep === 1 && (
+                <div className="space-y-5">
+                  {/* Chama Type */}
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-3 block">Chama Type</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {CHAMA_TYPES.map(t => (
+                        <div 
+                          key={t.id} 
+                          onClick={() => setForm(f => ({ ...f, chama_type: t.id as any }))} 
+                          className={cn("p-4 rounded-xl cursor-pointer text-center border-2", form.chama_type === t.id ? "border-blue-500 bg-blue-50" : "border-border/60")}
+                        >
+                          <t.icon className={cn("w-8 h-8 mx-auto mb-2", form.chama_type === t.id ? "text-blue-600" : "text-muted-foreground")} />
+                          <p className="font-semibold text-foreground">{t.label}</p>
+                          <p className="text-xs text-muted-foreground">{t.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Name & Description */}
+                  <div><label className="text-sm font-medium text-foreground">Chama Name</label><Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g., Office Savings Group" className="mt-2 h-12" /></div>
+                  <div><label className="text-sm font-medium text-foreground">Description</label><textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe your chama..." rows={2} className="w-full mt-2 px-4 py-3 rounded-xl text-sm border border-border/60 bg-card" /></div>
+                  
+                  {/* Contribution Amount */}
+                  {form.chama_type !== "fundraising" && (
+                    <div><label className="text-sm font-medium text-foreground">Contribution Amount (KES)</label><Input type="number" value={form.contribution_amount} onChange={(e) => setForm(f => ({ ...f, contribution_amount: e.target.value }))} placeholder="5000" className="mt-2 h-12" /></div>
+                  )}
+                  
+                  {/* Frequency Selection */}
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-3 block">Collection Frequency</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {FREQUENCIES.map(f => (
+                        <div 
+                          key={f.id} 
+                          onClick={() => setForm(prev => ({ ...prev, collection_frequency: f.id }))} 
+                          className={cn(
+                            "p-3 rounded-xl cursor-pointer text-center border-2 transition-all",
+                            form.collection_frequency === f.id 
+                              ? "border-blue-500 bg-blue-50" 
+                              : "border-border/60 hover:border-border/80"
+                          )}
+                        >
+                          <p className={cn("font-medium text-sm", form.collection_frequency === f.id ? "text-blue-600" : "text-foreground")}>{f.label}</p>
+                          <p className="text-xs text-muted-foreground">{f.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Schedule Options */}
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-3 block">When to Start Collection</label>
+                    <RadioGroup 
+                      value={form.schedule_type} 
+                      onValueChange={(value) => setForm(f => ({ ...f, schedule_type: value as any }))}
+                      className="space-y-2"
+                    >
+                      {SCHEDULE_OPTIONS.map(opt => (
+                        <div 
+                          key={opt.id}
+                          className={cn(
+                            "flex items-center space-x-3 p-3 rounded-xl border-2 cursor-pointer transition-all",
+                            form.schedule_type === opt.id 
+                              ? "border-blue-500 bg-blue-50" 
+                              : "border-border/60 hover:border-border/80"
+                          )}
+                          onClick={() => setForm(f => ({ ...f, schedule_type: opt.id as any }))}
+                        >
+                          <RadioGroupItem value={opt.id} id={opt.id} />
+                          <Label htmlFor={opt.id} className="flex-1 cursor-pointer">
+                            <span className={cn("font-medium", form.schedule_type === opt.id ? "text-blue-600" : "text-foreground")}>{opt.label}</span>
+                            <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                          </Label>
+                          {opt.id === "now" && <Zap className="w-4 h-4 text-amber-500" />}
+                          {opt.id === "later" && <Calendar className="w-4 h-4 text-blue-500" />}
+                          {opt.id === "manual" && <Play className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                  
+                  {/* Date/Time Picker for Schedule Later */}
+                  {form.schedule_type === "later" && (
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 space-y-3">
+                      <p className="text-sm font-medium text-blue-700 flex items-center gap-2">
+                        <Calendar className="w-4 h-4" /> Schedule Collection
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground">Date</label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="w-full mt-1 h-10 px-3 rounded-lg border border-border/60 bg-card text-left text-sm flex items-center justify-between">
+                                {form.scheduled_date ? format(new Date(form.scheduled_date), "PPP") : "Pick date"}
+                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={form.scheduled_date ? new Date(form.scheduled_date) : undefined}
+                                onSelect={(date: Date | undefined) => setForm(f => ({ ...f, scheduled_date: date ? date.toISOString() : "" }))}
+                                disabled={(date: Date) => date < new Date()}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground">Time</label>
+                          <Input 
+                            type="time" 
+                            value={form.scheduled_time} 
+                            onChange={(e) => setForm(f => ({ ...f, scheduled_time: e.target.value }))} 
+                            className="mt-1 h-10" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {form.chama_type === "fundraising" && (
+                    <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                      <p className="text-sm text-purple-700 flex items-center gap-2"><Gift className="w-5 h-5" />Fundraising: Each member pledges their own amount.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {createStep === 2 && (
+                <div className="space-y-5">
+                  {/* Header with title */}
+                  <div>
+                    <h3 className="text-sm font-medium text-foreground">Add Members</h3>
+                    <p className="text-xs text-muted-foreground">Add members from your contacts, Ongea Pesa, or manually</p>
+                  </div>
+                  
+                  {/* Quick Add Buttons - Mobile Friendly */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={pickContacts}
+                      className="flex items-center justify-center gap-2 px-3 py-3 bg-brand text-white rounded-xl hover:opacity-90 font-medium text-sm shadow-lg transition-all"
+                    >
+                      <Contact className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">Pick Contacts</span>
+                    </button>
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center justify-center gap-2 px-3 py-3 bg-muted text-foreground rounded-xl hover:bg-muted font-medium text-sm"
+                    >
+                      <Upload className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">Upload CSV</span>
+                    </button>
+                    <input type="file" ref={fileInputRef} onChange={handleCSVUpload} accept=".csv" className="hidden" />
+                  </div>
+                  
+                  {/* Contact Picker Feedback Message */}
+                  {contactPickerMessage && (
+                    <div className={cn(
+                      "p-3 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2",
+                      contactPickerMessage.startsWith('✅') ? "bg-brand/5 text-brand border border-brand/20" : "bg-red-50 text-red-700 border border-red-200"
+                    )}>
+                      {contactPickerMessage}
+                    </div>
+                  )}
+                  
+                  {/* Contact Picker Hint for Mobile */}
+                  {!contactPickerSupported && !contactPickerMessage && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-xs text-amber-700 flex items-center gap-2">
+                        <Smartphone className="w-4 h-4 flex-shrink-0" />
+                        <span>Install as PWA on mobile to pick multiple contacts at once</span>
+                      </p>
+                    </div>
+                  )}
+                  {/* Search Ongea Pesa Users */}
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input 
+                        type="text" 
+                        placeholder="Search Ongea Pesa users..." 
+                        value={userSearchTerm} 
+                        onChange={(e) => { setUserSearchTerm(e.target.value); setShowUserDropdown(true) }} 
+                        className="w-full pl-10 pr-3 py-3 rounded-xl text-sm border border-border/60 bg-card" 
+                      />
+                    </div>
+                    {showUserDropdown && userSearchTerm && (
+                      <div className="absolute z-50 w-full mt-2 rounded-xl overflow-hidden bg-card border border-border/60 shadow-xl max-h-48 overflow-y-auto">
+                        {filteredUsers.slice(0, 10).map(u => (
+                          <div 
+                            key={u.id} 
+                            onClick={() => { 
+                              const phone = u.phone_number || u.mpesa_number || ""; 
+                              if (phone && !form.members.find(m => m.phone === phone)) {
+                                setForm(f => ({ ...f, members: [...f.members, { name: u.email || "User", phone, email: u.email || "", pledge_amount: "" }] }))
+                              }
+                              setUserSearchTerm(""); 
+                              setShowUserDropdown(false) 
+                            }} 
+                            className="flex items-center gap-3 p-3 hover:bg-muted/30 cursor-pointer"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-xs font-medium text-white">
+                              {(u.email?.[0] || "U").toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground">{u.email || "No email"}</p>
+                              <p className="text-xs text-muted-foreground">{u.phone_number || u.mpesa_number}</p>
+                            </div>
+                            <Plus className="w-4 h-4 text-blue-600" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Manual Add - Mobile Friendly */}
+                  <div className="p-3 bg-muted/30 rounded-xl border border-border/60 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Or add manually:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input placeholder="Name" value={newMember.name} onChange={(e) => setNewMember(m => ({ ...m, name: e.target.value }))} className="col-span-2 sm:col-span-1 h-10" />
+                      <Input placeholder="Phone (07...)" value={newMember.phone} onChange={(e) => setNewMember(m => ({ ...m, phone: e.target.value }))} className="col-span-2 sm:col-span-1 h-10" />
+                      {form.chama_type === "fundraising" && <Input type="number" placeholder="Pledge amount" value={newMember.pledge_amount} onChange={(e) => setNewMember(m => ({ ...m, pledge_amount: e.target.value }))} className="col-span-2 h-10" />}
+                    </div>
+                    <button 
+                      onClick={() => { 
+                        if (newMember.name && newMember.phone) { 
+                          const normalizedPhone = newMember.phone.replace(/\s/g, '')
+                          const isDuplicate = form.members.some(m => m.phone.replace(/\s/g, '') === normalizedPhone)
+                          if (isDuplicate) {
+                            alert(`Phone ${newMember.phone} is already added`)
+                            return
+                          }
+                          const adminPhones = [userProfile?.phone_number, userProfile?.mpesa_number].filter(Boolean).map(p => p?.replace(/\s/g, ''))
+                          if (adminPhones.includes(normalizedPhone)) {
+                            if (!confirm(`This phone matches your admin phone. Add anyway?`)) return
+                          }
+                          setForm(f => ({ ...f, members: [...f.members, { ...newMember, phone: normalizedPhone }] }))
+                          setNewMember({ name: "", phone: "", email: "", pledge_amount: "" }) 
+                        } 
+                      }} 
+                      disabled={!newMember.name || !newMember.phone}
+                      className="w-full px-4 py-2.5 bg-brand text-white rounded-lg flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Member
+                    </button>
+                  </div>
+                  
+                  {/* Members List */}
+                  <div className="rounded-xl overflow-hidden border border-border/60">
+                    <div className="p-3 bg-muted/30 border-b border-border/60 flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">{form.members.length} members added</span>
+                      {form.members.length > 0 && (
+                        <button 
+                          onClick={() => setForm(f => ({ ...f, members: [] }))} 
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {form.members.length === 0 ? (
+                        <div className="p-6 text-center">
+                          <Contact className="w-10 h-10 text-muted-foreground/50 mx-auto mb-2" />
+                          <p className="text-muted-foreground text-sm">No members added yet</p>
+                          <p className="text-muted-foreground text-xs mt-1">Use the buttons above to add members</p>
+                        </div>
+                      ) : (
+                        form.members.map((m, i) => (
+                          <div key={i} className="flex items-center gap-3 p-3 border-b border-border/40 last:border-0 hover:bg-muted/30">
+                            <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                              {i + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
+                              <p className="text-xs text-muted-foreground">{m.phone}</p>
+                            </div>
+                            {m.pledge_amount && (
+                              <span className="text-sm font-mono text-purple-600 flex-shrink-0">
+                                {formatCurrency(parseFloat(m.pledge_amount))}
+                              </span>
+                            )}
+                            <button 
+                              onClick={() => setForm(f => ({ ...f, members: f.members.filter((_, j) => j !== i) }))} 
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {createStep === 3 && (() => {
+                // Check if admin's phone is already in the members list
+                const adminPhones = [userProfile?.phone_number, userProfile?.mpesa_number].filter(Boolean).map(p => p?.replace(/[\s\-]/g, ''))
+                const adminInList = form.members.some(m => {
+                  const memberPhone = m.phone.replace(/[\s\-]/g, '')
+                  return adminPhones.some(ap => ap === memberPhone || ap?.endsWith(memberPhone.slice(-9)) || memberPhone.endsWith(ap?.slice(-9) || ''))
+                })
+                const effectiveMemberCount = adminInList 
+                  ? form.members.length 
+                  : form.members.length + (form.include_admin_in_collection ? 1 : 0)
+                
+                return (
+                <div className="space-y-5">
+                  <h3 className="text-sm font-medium text-foreground">Review & Create</h3>
+                  <div className="p-5 rounded-xl bg-muted/40 border border-border/60">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div><p className="text-muted-foreground">Name</p><p className="font-semibold text-foreground">{form.name || "—"}</p></div>
+                      <div><p className="text-muted-foreground">Type</p><p className="font-semibold text-foreground capitalize">{form.chama_type}</p></div>
+                      {form.chama_type !== "fundraising" && <div><p className="text-muted-foreground">Contribution</p><p className="font-semibold text-foreground">{form.contribution_amount ? formatCurrency(parseFloat(form.contribution_amount)) : "—"}</p></div>}
+                      <div><p className="text-muted-foreground">Frequency</p><p className="font-semibold text-foreground capitalize">{form.collection_frequency.replace('-', ' ')}</p></div>
+                      <div>
+                        <p className="text-muted-foreground">Members</p>
+                        <p className="font-semibold text-foreground">
+                          {form.members.length} added 
+                          {adminInList ? (
+                            <span className="text-brand ml-1">(You included)</span>
+                          ) : form.include_admin_in_collection ? (
+                            <span className="text-purple-600 ml-1">+ You (Admin)</span>
+                          ) : null}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Expected per Cycle</p>
+                        <p className="font-bold text-brand text-lg">
+                          {form.chama_type === "fundraising" 
+                            ? formatCurrency(form.members.reduce((s, m) => s + (m.pledge_amount ? parseFloat(m.pledge_amount) : 0), 0)) 
+                            : form.contribution_amount 
+                              ? formatCurrency(parseFloat(form.contribution_amount) * effectiveMemberCount) 
+                              : "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Admin Collection Option - Only show if admin not already in list */}
+                  {adminInList ? (
+                    <div className="p-4 rounded-xl bg-brand/5 border border-brand/20">
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-brand" />
+                        <div>
+                          <p className="text-sm font-medium text-brand">You're Already in the Members List</p>
+                          <p className="text-xs text-brand">Your phone number was detected in the members. You'll receive STK pushes automatically.</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                  <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={form.include_admin_in_collection} 
+                        onChange={(e) => setForm(f => ({ ...f, include_admin_in_collection: e.target.checked }))}
+                        className="w-4 h-4 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-purple-900">Include You (Admin) in Collections</p>
+                        <p className="text-xs text-purple-600">When enabled, you will also receive STK pushes during collection cycles</p>
+                      </div>
+                    </label>
+                  </div>
+                  )}
+
+                  {/* Admin Phone Conflict Warning */}
+                  {(() => {
+                    const adminPhones = [userProfile?.phone_number, userProfile?.mpesa_number].filter(Boolean).map(p => p?.replace(/\s/g, ''))
+                    const conflictingMembers = form.members.filter(m => adminPhones.includes(m.phone.replace(/\s/g, '')))
+                    
+                    if (conflictingMembers.length > 0) {
+                      return (
+                        <div className="p-4 rounded-xl bg-red-50 border border-red-200 space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-red-800 flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4" />
+                              Admin Phone Conflict Detected
+                            </p>
+                            <p className="text-xs text-red-600 mt-1">
+                              You added <strong>{conflictingMembers.map(m => m.name).join(", ")}</strong> with phone <strong>{conflictingMembers[0]?.phone}</strong> which matches your admin phone.
+                            </p>
+                            <p className="text-xs text-red-500 mt-1">
+                              You will be automatically added as admin. This member entry is a duplicate.
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => {
+                                const adminPhonesSet = new Set(adminPhones)
+                                setForm(f => ({ 
+                                  ...f, 
+                                  members: f.members.filter(m => !adminPhonesSet.has(m.phone.replace(/\s/g, ''))) 
+                                }))
+                              }}
+                              className="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                            >
+                              Remove Duplicate
+                            </button>
+                            <button 
+                              onClick={() => {
+                                // Keep in list but mark - API will handle deduplication
+                              }}
+                              className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-lg hover:bg-muted"
+                            >
+                              Keep (API will deduplicate)
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+
+                  {/* Duplicate Phone Warning */}
+                  {(() => {
+                    const phones = form.members.map(m => m.phone.replace(/\s/g, ''))
+                    const duplicates = phones.filter((p, i) => phones.indexOf(p) !== i)
+                    if (duplicates.length > 0) {
+                      return (
+                        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-amber-800 flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4" />
+                              Duplicate phone numbers in member list
+                            </p>
+                            <p className="text-xs text-amber-600 mt-1">
+                              {[...new Set(duplicates)].join(", ")} appears multiple times
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const seen = new Set<string>()
+                              setForm(f => ({
+                                ...f,
+                                members: f.members.filter(m => {
+                                  const phone = m.phone.replace(/\s/g, '')
+                                  if (seen.has(phone)) return false
+                                  seen.add(phone)
+                                  return true
+                                })
+                              }))
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200"
+                          >
+                            Remove Duplicates (keep first)
+                          </button>
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+                </div>
+              )})()}
+            </div>
+            <div className="flex items-center justify-between p-6 border-t bg-muted/30"><button onClick={() => createStep > 1 ? setCreateStep(s => s - 1) : (setShowCreateModal(false), resetForm())} className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted rounded-xl">{createStep > 1 ? "Back" : "Cancel"}</button><button onClick={() => createStep < 3 ? setCreateStep(s => s + 1) : createChama()} disabled={createStep === 1 && (!form.name || (form.chama_type !== "fundraising" && !form.contribution_amount))} className="px-8 py-2.5 rounded-xl text-sm font-semibold bg-brand text-white disabled:opacity-50 shadow-lg">{createStep < 3 ? "Continue" : "Create Chama"}</button></div>
+          </div>
+        </div>
+      )}
+
+      {showDetailModal && selectedChama && (() => {
+        const totalRequests = stkRequests.length
+        const completedCount = stkRequests.filter(r => r.status === "completed").length
+        const failedCount = stkRequests.filter(r => r.status === "failed").length
+        const pendingCount = stkRequests.filter(r => ["pending", "processing", "sent"].includes(r.status)).length
+        const totalStkAmount = stkRequests.reduce((s, r) => s + (r.amount || 0), 0)
+        const collectedStkAmount = stkRequests.filter(r => r.status === "completed").reduce((s, r) => s + (r.amount || 0), 0)
+        const totalAttempts = stkRequests.reduce((s, r) => s + (r.attempt_count || 1), 0)
+        const avgAttempts = totalRequests > 0 ? (totalAttempts / totalRequests).toFixed(1) : "0"
+        const successRate = totalRequests > 0 ? ((completedCount / totalRequests) * 100).toFixed(1) : "0"
+        const forfeitCount = stkRequests.filter(r => r.status === "failed" && (r.attempt_count || 1) >= (r.max_attempts || 3)).length
+
+        return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-2">
+          <div className="w-full max-w-6xl h-[95vh] overflow-hidden rounded-2xl bg-muted/30 shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className={cn("flex items-center justify-between px-6 py-4", selectedChama.chama_type === "fundraising" ? "bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700" : selectedChama.chama_type === "collection" ? "bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-700" : "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600")}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-card/20 rounded-xl flex items-center justify-center">
+                  {collecting ? <RefreshCw className="w-6 h-6 text-white animate-spin" /> : <Activity className="w-6 h-6 text-white" />}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">{selectedChama.name}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="px-2 py-0.5 text-xs bg-card/20 text-white rounded-full">{selectedChama.status}</span>
+                    <span className="text-xs text-white/80 capitalize">{selectedChama.chama_type || "savings"}</span>
+                    <span className="text-xs text-white/80">• Cycle {selectedChama.current_cycle}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {selectedChama.cycles?.some((cycle: any) => cycle.status === "collected") && <button onClick={() => setShowPayoutStepUp(true)} className="orbital-button min-h-10 px-4"><Send className="h-4 w-4" />Payout</button>}
+                {collecting && <span className="flex items-center gap-2 px-3 py-1.5 bg-card/20 rounded-lg text-sm text-white"><RefreshCw className="w-4 h-4 animate-spin" />Live</span>}
+                <button onClick={() => { setShowDetailModal(false); stopPolling(); setExpandedStkRow(null); setStkRequests([]) }} className="p-2 hover:bg-card/20 rounded-xl text-white"><X className="w-6 h-6" /></button>
+              </div>
+            </div>
+
+            {/* Main Content - Scrollable */}
+            <div className="flex-1 overflow-auto p-4 space-y-4">
+              {/* Top Stats Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                {[
+                  { label: "Contribution", value: formatCurrency(selectedChama.contribution_amount), icon: Wallet, color: "from-slate-500 to-slate-600", textColor: "text-slate-600" },
+                  { label: "Members", value: selectedChama.members?.length || 0, icon: Users, color: "from-blue-500 to-blue-600", textColor: "text-blue-600" },
+                  { label: "Collected", value: formatCurrency(selectedChama.total_collected), icon: TrendingUp, color: "from-emerald-500 to-emerald-600", textColor: "text-brand" },
+                  { label: "Distributed", value: formatCurrency(selectedChama.total_distributed), icon: Send, color: "from-purple-500 to-purple-600", textColor: "text-purple-600" },
+                  { label: "STK Sent", value: totalRequests, icon: CreditCard, color: "from-cyan-500 to-cyan-600", textColor: "text-cyan-600" },
+                  { label: "Paid", value: completedCount, icon: Check, color: "from-brand to-brand", textColor: "text-brand" },
+                  { label: "Failed", value: failedCount, icon: AlertTriangle, color: "from-red-500 to-red-600", textColor: "text-red-600" },
+                  { label: "Success Rate", value: `${successRate}%`, icon: Target, color: "from-amber-500 to-amber-600", textColor: "text-amber-600" },
+                ].map((stat, i) => (
+                  <div key={i} className="relative overflow-hidden p-3 rounded-xl bg-card border border-border/60 shadow-sm">
+                    <div className={cn("absolute top-0 right-0 w-12 h-12 -mr-3 -mt-3 rounded-full opacity-20 bg-gradient-to-br", stat.color)} />
+                    <div className="relative">
+                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br mb-2", stat.color)}>
+                        <stat.icon className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <p className={cn("text-lg font-bold", stat.textColor)}>{stat.value}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{stat.label}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Charts & Members Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Pie Chart - Status Distribution */}
+                <div className="p-4 rounded-xl bg-card border border-border/60 shadow-sm">
+                  <h4 className="text-xs font-semibold text-foreground mb-3">STK Status Distribution</h4>
+                  {totalRequests > 0 ? (
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 36 36" className="w-20 h-20 transform -rotate-90">
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray={`${(completedCount / Math.max(totalRequests, 1)) * 100} 100`} strokeLinecap="round" />
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#f59e0b" strokeWidth="3" strokeDasharray={`${(pendingCount / Math.max(totalRequests, 1)) * 100} 100`} strokeDashoffset={`-${(completedCount / Math.max(totalRequests, 1)) * 100}`} strokeLinecap="round" />
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#ef4444" strokeWidth="3" strokeDasharray={`${(failedCount / Math.max(totalRequests, 1)) * 100} 100`} strokeDashoffset={`-${((completedCount + pendingCount) / Math.max(totalRequests, 1)) * 100}`} strokeLinecap="round" />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center"><span className="text-lg font-bold text-foreground">{totalRequests}</span></div>
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand" />Completed</span><span className="font-semibold">{completedCount}</span></div>
+                        <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" />Pending</span><span className="font-semibold">{pendingCount}</span></div>
+                        <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />Failed</span><span className="font-semibold">{failedCount}</span></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground text-sm">No STK requests yet</div>
+                  )}
+                </div>
+
+                {/* Collection Progress */}
+                <div className="p-4 rounded-xl bg-card border border-border/60 shadow-sm">
+                  <h4 className="text-xs font-semibold text-foreground mb-3">Collection Progress</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Expected</span><span className="font-semibold text-foreground">{formatCurrency(totalStkAmount || selectedChama.contribution_amount * (selectedChama.members?.length || 0))}</span></div>
+                      <div className="h-2 bg-zinc-200 rounded-full overflow-hidden"><div className="h-full bg-zinc-400" style={{ width: "100%" }} /></div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Collected</span><span className="font-semibold text-brand">{formatCurrency(collectedStkAmount || selectedChama.total_collected)}</span></div>
+                      <div className="h-2 bg-zinc-200 rounded-full overflow-hidden"><div className="h-full bg-brand" style={{ width: `${(collectedStkAmount / Math.max(totalStkAmount || 1, 1)) * 100}%` }} /></div>
+                    </div>
+                    <div className="pt-2 border-t border-border/60 flex justify-between text-xs">
+                      <span className="text-muted-foreground">Avg Attempts</span><span className="font-semibold text-purple-600">{avgAttempts}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Forfeited</span><span className="font-semibold text-red-600">{forfeitCount} members</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Members Quick View with Selection */}
+                <div className="p-4 rounded-xl bg-card border border-border/60 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-semibold text-foreground">Members ({selectedChama.members?.length || 0})</h4>
+                      <span className="text-[10px] text-blue-600 font-medium">{selectedMemberIds.size} selected</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => {
+                          const selectableMembers = selectedChama.members?.filter(m => m.status === 'active' || m.status === 'pending') || []
+                          if (selectedMemberIds.size === selectableMembers.length) {
+                            setSelectedMemberIds(new Set())
+                          } else {
+                            setSelectedMemberIds(new Set(selectableMembers.map(m => m.id)))
+                          }
+                        }} 
+                        className="text-[10px] text-blue-600 hover:underline"
+                      >
+                        {selectedMemberIds.size === (selectedChama.members?.filter(m => m.status === 'active' || m.status === 'pending').length || 0) ? "Deselect All" : "Select All"}
+                      </button>
+                      <button onClick={() => setShowAddMemberModal(true)} className="flex items-center gap-1 px-2 py-1 text-[10px] bg-blue-100 text-blue-700 rounded font-medium"><UserPlus className="w-3 h-3" />Add</button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 max-h-40 overflow-auto">
+                    {selectedChama.members?.map((m, i) => (
+                      <div key={m.id} className={cn("flex items-center gap-2 text-xs p-1.5 rounded-lg transition-colors", (m.status === 'exited' || m.status === 'exit_requested') && "opacity-50")}>
+                        <input 
+                          type="checkbox" 
+                          checked={selectedMemberIds.has(m.id)} 
+                          disabled={m.status === 'exited' || m.status === 'exit_requested'}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedMemberIds)
+                            if (e.target.checked) {
+                              newSet.add(m.id)
+                            } else {
+                              newSet.delete(m.id)
+                            }
+                            setSelectedMemberIds(newSet)
+                          }}
+                          className="w-3.5 h-3.5 rounded border-border/60 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white", m.role === 'admin' ? "bg-purple-500" : m.has_received_payout ? "bg-brand" : "bg-blue-500")}>
+                          {m.has_received_payout ? <Check className="w-3 h-3" /> : m.role === 'admin' ? "A" : i + 1}
+                        </div>
+                        <span className="flex-1 truncate font-medium">{m.name}</span>
+                        {m.role === 'admin' && <span className="text-[9px] px-1 py-0.5 bg-purple-100 text-purple-600 rounded">Admin</span>}
+                        {m.status !== 'active' && <span className="text-[9px] px-1 py-0.5 bg-muted text-muted-foreground rounded">{m.status}</span>}
+                        <span className="text-muted-foreground">{formatCurrency(m.total_contributed || 0)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* STK History Section */}
+              <div className="rounded-xl bg-card border border-border/60 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <h4 className="text-sm font-semibold text-foreground">STK Push History</h4>
+                    <span className="text-xs text-muted-foreground">({stkRequests.length} requests)</span>
+                    {pendingCount > 0 && <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full"><Clock className="w-3 h-3 animate-pulse" />{pendingCount} pending</span>}
+                  </div>
+                  <div className="flex gap-2">
+                    {pendingCount > 0 && (
+                      <button onClick={pollPendingStk} disabled={collecting} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50">
+                        <RefreshCw className={cn("w-3 h-3", collecting && "animate-spin")} />
+                        {collecting ? "Checking..." : "Check Pending"}
+                      </button>
+                    )}
+                    {failedCount > 0 && <button onClick={retryAllFailed} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200"><RotateCcw className="w-3 h-3" />Retry Failed ({failedCount})</button>}
+                    <button onClick={() => fetchStkHistory(selectedChama.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted text-foreground rounded-lg hover:bg-muted"><RefreshCw className="w-3 h-3" />Refresh</button>
+                  </div>
+                </div>
+
+                {/* STK Table */}
+                <div className="max-h-64 overflow-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold text-muted-foreground">#</th>
+                        <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Member</th>
+                        <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Phone</th>
+                        <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Amount</th>
+                        <th className="px-3 py-2 text-center font-semibold text-muted-foreground">Status</th>
+                        <th className="px-3 py-2 text-center font-semibold text-muted-foreground">Attempts</th>
+                        <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Account #</th>
+                        <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Receipt</th>
+                        <th className="px-3 py-2 text-center font-semibold text-muted-foreground">Action</th>
+                        <th className="px-3 py-2 w-6"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stkRequests.length === 0 ? (
+                        <tr><td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">No STK requests. Start a collection to send STK pushes.</td></tr>
+                      ) : stkRequests.map((req, idx) => (
+                        <Fragment key={req.id}>
+                          <tr onClick={() => setExpandedStkRow(expandedStkRow === req.id ? null : req.id)} className={cn(
+                            "cursor-pointer transition-colors border-b border-border/40",
+                            req.status === "completed" && "bg-brand/5",
+                            req.status === "failed" && "bg-red-50/50",
+                            expandedStkRow === req.id && "bg-blue-50 border-blue-200",
+                            "hover:bg-blue-50/50"
+                          )}>
+                            <td className="px-3 py-2 font-mono text-muted-foreground">{idx + 1}</td>
+                            <td className="px-3 py-2 font-medium">{req.member?.name || "Unknown"}</td>
+                            <td className="px-3 py-2 font-mono text-muted-foreground">{req.phone_number}</td>
+                            <td className="px-3 py-2 text-right font-mono font-semibold">{formatCurrency(req.amount)}</td>
+                            <td className="px-3 py-2 text-center">
+                              <span className={cn("px-2 py-0.5 text-[10px] font-semibold rounded-full",
+                                req.status === "completed" ? "bg-brand/10 text-brand" :
+                                req.status === "failed" ? "bg-red-100 text-red-700" :
+                                req.status === "sent" ? "bg-blue-100 text-blue-700" :
+                                "bg-amber-100 text-amber-700"
+                              )}>{req.status}</span>
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <span className={cn("font-medium", (req.attempt_count || 1) >= 3 ? "text-red-600" : "text-muted-foreground")}>
+                                {req.attempt_count || 1}/3
+                              </span>
+                              {req.status === "sent" && (req.attempt_count || 1) < 3 && (() => {
+                                const lastAttempt = new Date(req.last_attempt_at || req.created_at)
+                                const nextRetry = new Date(lastAttempt.getTime() + 10 * 60 * 1000)
+                                const now = new Date()
+                                const minsLeft = Math.max(0, Math.ceil((nextRetry.getTime() - now.getTime()) / 60000))
+                                return minsLeft > 0 ? <span className="block text-[9px] text-amber-600">retry in {minsLeft}m</span> : <span className="block text-[9px] text-blue-600">retrying...</span>
+                              })()}
+                            </td>
+                            <td className="px-3 py-2 font-mono text-[10px] text-muted-foreground">{req.account_number || "—"}</td>
+                            <td className="px-3 py-2 font-mono text-[10px] text-brand">{req.mpesa_receipt_number || "—"}</td>
+                            <td className="px-3 py-2 text-center">
+                              {(req.status === "failed") && <button onClick={(e) => { e.stopPropagation(); retryStk(req.id) }} className="p-1 hover:bg-blue-100 rounded text-blue-600"><RotateCcw className="w-3 h-3" /></button>}
+                              {req.status === "completed" && <Check className="w-4 h-4 text-brand mx-auto" />}
+                              {req.status === "pending" && <Clock className="w-3 h-3 text-amber-500 mx-auto" />}
+                            </td>
+                            <td className="px-3 py-2">{expandedStkRow === req.id ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}</td>
+                          </tr>
+                          {expandedStkRow === req.id && (
+                            <tr className="bg-blue-50/70 border-b border-blue-200">
+                              <td colSpan={10} className="px-4 py-3">
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
+                                  <div><p className="text-muted-foreground mb-1">Request ID</p><p className="font-mono text-[9px] break-all">{req.id}</p></div>
+                                  <div><p className="text-muted-foreground mb-1">Checkout ID</p><p className="font-mono text-[9px] break-all">{req.checkout_request_id || "—"}</p></div>
+                                  <div><p className="text-muted-foreground mb-1">Account #</p><p className="font-mono">{req.account_number || "—"}</p></div>
+                                  <div><p className="text-muted-foreground mb-1">Receipt</p><p className="font-mono text-brand">{req.mpesa_receipt_number || "—"}</p></div>
+                                  <div><p className="text-muted-foreground mb-1">Created</p><p>{req.created_at ? new Date(req.created_at).toLocaleString() : "—"}</p></div>
+                                  <div><p className="text-muted-foreground mb-1">Last Attempt</p><p>{req.last_attempt_at ? new Date(req.last_attempt_at).toLocaleString() : "—"}</p></div>
+                                  {req.error_message && <div className="col-span-2"><p className="text-muted-foreground mb-1">Error</p><p className="text-red-600">{req.error_message}</p></div>}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-3 bg-card border-t border-border/60">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span>Total Collected: <strong className="text-brand">{formatCurrency(selectedChama.total_collected)}</strong></span>
+                <span>Distributed: <strong className="text-purple-600">{formatCurrency(selectedChama.total_distributed)}</strong></span>
+                <span className="text-blue-600 font-medium">{selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? 's' : ''} selected for collection</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={startCollection} disabled={collecting || selectedMemberIds.size === 0} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-white disabled:opacity-50 shadow-lg hover:shadow-xl transition-all">
+                  {collecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {collecting ? "Collecting..." : `Collect from ${selectedMemberIds.size}`}
+                </button>
+                <button onClick={() => { setShowDetailModal(false); stopPolling(); setExpandedStkRow(null); setStkRequests([]) }} className="px-4 py-2 text-sm font-medium bg-muted hover:bg-muted text-foreground rounded-lg">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        )
+      })()}
+
+      {showAddMemberModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="w-full max-w-md rounded-2xl bg-card shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b bg-brand">
+              <h3 className="font-semibold text-white">Add Member</h3>
+              <button onClick={() => { setShowAddMemberModal(false); setSelectedUser(null); setNewMember({ name: "", phone: "", email: "", pledge_amount: "" }) }} className="p-1 hover:bg-card/20 rounded text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Pick from Contacts - Mobile PWA */}
+              <button 
+                onClick={async () => {
+                  try {
+                    if (!('contacts' in navigator)) {
+                      alert('Contact picker not supported. Use manual entry.')
+                      return
+                    }
+                    // @ts-ignore
+                    const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: false })
+                    if (contacts && contacts.length > 0) {
+                      const contact = contacts[0]
+                      let phone = contact.tel?.[0] || ''
+                      phone = phone.replace(/[\s\-\(\)]/g, '')
+                      if (phone.startsWith('+254')) phone = '0' + phone.slice(4)
+                      else if (phone.startsWith('254')) phone = '0' + phone.slice(3)
+                      setNewMember(m => ({ ...m, name: contact.name?.[0] || '', phone }))
+                      setSelectedUser(null)
+                    }
+                  } catch (err) { console.error('Contact picker:', err) }
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-brand hover:bg-brand/90 active:scale-[0.97] text-white rounded-xl font-medium text-sm shadow-lg shadow-brand/20 transition-all"
+              >
+                <Contact className="w-4 h-4" />
+                Pick from Contacts
+              </button>
+              
+              {/* Search Ongea Pesa */}
+              <div className="relative">
+                <label className="text-xs font-medium text-foreground mb-1 block">Search Ongea Pesa Users</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input type="text" placeholder="Search by email or phone..." value={userSearchTerm} onChange={(e) => setUserSearchTerm(e.target.value)} className="w-full pl-10 pr-3 py-2.5 rounded-xl text-sm border border-border/60 bg-card" />
+                </div>
+                {userSearchTerm && (
+                  <div className="absolute z-10 w-full mt-1 rounded-xl overflow-hidden bg-card border border-border/60 shadow-xl max-h-40 overflow-y-auto">
+                    {filteredUsers.slice(0, 5).map(u => (
+                      <div key={u.id} onClick={() => { setSelectedUser(u); setUserSearchTerm(""); setNewMember({ name: "", phone: "", email: "", pledge_amount: "" }) }} className="flex items-center gap-3 p-3 hover:bg-muted/30 cursor-pointer">
+                        <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-xs font-medium text-white">{(u.email?.[0] || "U").toUpperCase()}</div>
+                        <div className="flex-1"><p className="text-sm font-medium">{u.email || "No email"}</p><p className="text-xs text-muted-foreground">{u.phone_number || u.mpesa_number}</p></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Selected User or Manual Entry */}
+              {selectedUser ? (
+                <div className="p-3 bg-muted/30 rounded-xl flex items-center gap-3 border border-border/60">
+                  <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center"><User className="w-5 h-5 text-brand" /></div>
+                  <div className="flex-1"><p className="font-medium text-foreground">{selectedUser.email}</p><p className="text-xs text-muted-foreground">{selectedUser.phone_number || selectedUser.mpesa_number}</p></div>
+                  <button onClick={() => setSelectedUser(null)} className="p-1 text-muted-foreground hover:text-muted-foreground"><X className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center text-xs text-muted-foreground py-1">— or enter manually —</div>
+                  <div className="space-y-3">
+                    <div><label className="text-xs font-medium text-foreground">Name</label><Input value={newMember.name} onChange={(e) => setNewMember(m => ({ ...m, name: e.target.value }))} placeholder="John Doe" className="mt-1" /></div>
+                    <div><label className="text-xs font-medium text-foreground">Phone</label><Input value={newMember.phone} onChange={(e) => setNewMember(m => ({ ...m, phone: e.target.value }))} placeholder="0712345678" className="mt-1" /></div>
+                  </div>
+                </>
+              )}
+              
+              {selectedChama?.chama_type === "fundraising" && (
+                <div><label className="text-xs font-medium text-foreground">Pledge Amount (KES)</label><Input type="number" value={newMember.pledge_amount} onChange={(e) => setNewMember(m => ({ ...m, pledge_amount: e.target.value }))} placeholder="10000" className="mt-1" /></div>
+              )}
+            </div>
+            <div className="flex gap-2 p-5 border-t">
+              <button onClick={() => { setShowAddMemberModal(false); setSelectedUser(null) }} className="flex-1 py-2.5 text-sm text-muted-foreground hover:bg-muted rounded-xl">Cancel</button>
+              <button onClick={addMember} disabled={!selectedUser && (!newMember.name || !newMember.phone)} className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-brand text-white disabled:opacity-50">Add Member</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collection Dashboard Modal - Full Screen */}
+      {showCollectionModal && (() => {
+        const totalRequests = stkRequests.length
+        const completedCount = stkRequests.filter(r => r.status === "completed").length
+        const failedCount = stkRequests.filter(r => r.status === "failed").length
+        const pendingCount = stkRequests.filter(r => ["pending", "processing", "sent"].includes(r.status)).length
+        const totalAmount = stkRequests.reduce((s, r) => s + (r.amount || 0), 0)
+        const collectedAmount = stkRequests.filter(r => r.status === "completed").reduce((s, r) => s + (r.amount || 0), 0)
+        const totalAttempts = stkRequests.reduce((s, r) => s + (r.attempt_count || 1), 0)
+        const avgAttempts = totalRequests > 0 ? (totalAttempts / totalRequests).toFixed(1) : "0"
+        const successRate = totalRequests > 0 ? ((completedCount / totalRequests) * 100).toFixed(1) : "0"
+        const forfeitCount = stkRequests.filter(r => r.status === "failed" && (r.attempt_count || 1) >= (r.max_attempts || 3)).length
+
+        return (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[70] p-2">
+            <div className="w-full max-w-6xl h-[95vh] overflow-hidden rounded-2xl bg-muted/30 shadow-2xl flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 bg-brand">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-card/20 rounded-xl flex items-center justify-center">
+                    {collecting ? <RefreshCw className="w-6 h-6 text-white animate-spin" /> : <Activity className="w-6 h-6 text-white" />}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Collection Dashboard</h2>
+                    <p className="text-sm text-white/80">{selectedChama?.name} • Cycle {collectionStatus?.cycle_number || selectedChama?.current_cycle} • {new Date().toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {collecting && <span className="flex items-center gap-2 px-3 py-1.5 bg-card/20 rounded-lg text-sm text-white"><RefreshCw className="w-4 h-4 animate-spin" />Live Polling</span>}
+                  <button onClick={() => { setShowCollectionModal(false); stopPolling() }} className="p-2 hover:bg-card/20 rounded-xl text-white"><X className="w-6 h-6" /></button>
+                </div>
+              </div>
+
+              {/* Analytics Section */}
+              <div className="p-4 bg-card border-b border-border/60">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                  {[
+                    { label: "Total Members", value: totalRequests, icon: Users, color: "from-slate-500 to-slate-600", textColor: "text-slate-600" },
+                    { label: "Completed", value: completedCount, icon: Check, color: "from-emerald-500 to-emerald-600", textColor: "text-brand" },
+                    { label: "Pending", value: pendingCount, icon: Clock, color: "from-amber-500 to-amber-600", textColor: "text-amber-600" },
+                    { label: "Failed", value: failedCount, icon: AlertTriangle, color: "from-red-500 to-red-600", textColor: "text-red-600" },
+                    { label: "Success Rate", value: `${successRate}%`, icon: Target, color: "from-blue-500 to-blue-600", textColor: "text-blue-600" },
+                    { label: "Avg Attempts", value: avgAttempts, icon: RotateCcw, color: "from-purple-500 to-purple-600", textColor: "text-purple-600" },
+                    { label: "Forfeited", value: forfeitCount, icon: Ban, color: "from-rose-500 to-rose-600", textColor: "text-rose-600" },
+                    { label: "Collected", value: formatCurrency(collectedAmount), icon: Wallet, color: "from-teal-500 to-teal-600", textColor: "text-teal-600" },
+                  ].map((stat, i) => (
+                    <div key={i} className="relative overflow-hidden p-3 rounded-xl bg-muted/30 border border-border/60">
+                      <div className={cn("absolute top-0 right-0 w-12 h-12 -mr-3 -mt-3 rounded-full opacity-20 bg-gradient-to-br", stat.color)} />
+                      <div className="relative">
+                        <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br mb-2", stat.color)}>
+                          <stat.icon className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <p className={cn("text-lg font-bold", stat.textColor)}>{stat.value}</p>
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{stat.label}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Charts Row */}
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  {/* Pie Chart - Status Distribution */}
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border/60">
+                    <h4 className="text-xs font-semibold text-foreground mb-3">Status Distribution</h4>
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-24 h-24">
+                        <svg viewBox="0 0 36 36" className="w-24 h-24 transform -rotate-90">
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray={`${(completedCount / Math.max(totalRequests, 1)) * 100} 100`} strokeLinecap="round" />
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#f59e0b" strokeWidth="3" strokeDasharray={`${(pendingCount / Math.max(totalRequests, 1)) * 100} 100`} strokeDashoffset={`-${(completedCount / Math.max(totalRequests, 1)) * 100}`} strokeLinecap="round" />
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#ef4444" strokeWidth="3" strokeDasharray={`${(failedCount / Math.max(totalRequests, 1)) * 100} 100`} strokeDashoffset={`-${((completedCount + pendingCount) / Math.max(totalRequests, 1)) * 100}`} strokeLinecap="round" />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-lg font-bold text-foreground">{totalRequests}</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand" />Completed</span><span className="font-semibold">{completedCount}</span></div>
+                        <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" />Pending</span><span className="font-semibold">{pendingCount}</span></div>
+                        <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />Failed</span><span className="font-semibold">{failedCount}</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Amount Progress */}
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border/60">
+                    <h4 className="text-xs font-semibold text-foreground mb-3">Collection Progress</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Expected</span><span className="font-semibold text-foreground">{formatCurrency(totalAmount)}</span></div>
+                        <div className="h-2 bg-zinc-200 rounded-full overflow-hidden"><div className="h-full bg-zinc-400" style={{ width: "100%" }} /></div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">Collected</span><span className="font-semibold text-brand">{formatCurrency(collectedAmount)}</span></div>
+                        <div className="h-2 bg-zinc-200 rounded-full overflow-hidden"><div className="h-full bg-brand" style={{ width: `${(collectedAmount / Math.max(totalAmount, 1)) * 100}%` }} /></div>
+                      </div>
+                      <div className="pt-2 border-t border-border/60">
+                        <div className="flex justify-between text-xs"><span className="text-muted-foreground">Outstanding</span><span className="font-semibold text-red-600">{formatCurrency(totalAmount - collectedAmount)}</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Retry Analytics */}
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border/60">
+                    <h4 className="text-xs font-semibold text-foreground mb-3">Retry Analytics</h4>
+                    <div className="space-y-2">
+                      {[1, 2, 3].map(attempt => {
+                        const count = stkRequests.filter(r => (r.attempt_count || 1) === attempt).length
+                        return (
+                          <div key={attempt} className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground w-16">Attempt {attempt}</span>
+                            <div className="flex-1 h-4 bg-zinc-200 rounded overflow-hidden">
+                              <div className={cn("h-full", attempt === 1 ? "bg-blue-500" : attempt === 2 ? "bg-amber-500" : "bg-red-500")} style={{ width: `${(count / Math.max(totalRequests, 1)) * 100}%` }} />
+                            </div>
+                            <span className="text-xs font-semibold w-8 text-right">{count}</span>
+                          </div>
+                        )
+                      })}
+                      <div className="pt-2 border-t border-border/60 flex justify-between text-xs">
+                        <span className="text-muted-foreground">Max Retries Reached</span>
+                        <span className="font-semibold text-rose-600">{forfeitCount} members</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions Bar */}
+              <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border/60">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">Showing {stkRequests.length} STK requests</span>
+                  {!collecting && collectionStatus?.all_completed && <span className="flex items-center gap-1.5 px-2 py-1 bg-brand/10 text-brand rounded-full text-xs font-medium"><Check className="w-3 h-3" />All Completed!</span>}
+                </div>
+                <div className="flex gap-2">
+                  {stkRequests.length > 0 && stkRequests.some(r => r.status !== 'completed') && (
+                    <button onClick={resendAllStk} disabled={collecting} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50">
+                      <Send className="w-3.5 h-3.5" />Resend All STK
+                    </button>
+                  )}
+                  {failedCount > 0 && (
+                    <button onClick={retryAllFailed} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200">
+                      <RotateCcw className="w-3.5 h-3.5" />Retry Failed ({failedCount})
+                    </button>
+                  )}
+                  {stkRequests.length > 0 && (
+                    <button onClick={stopCollection} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200">
+                      <StopCircle className="w-3.5 h-3.5" />Stop Collection
+                    </button>
+                  )}
+                  {!collecting && collectionStatus?.cycle_id && (
+                    <button onClick={() => startPolling(collectionStatus.cycle_id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted text-foreground rounded-lg hover:bg-muted">
+                      <RefreshCw className="w-3.5 h-3.5" />Refresh Status
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Detailed Table */}
+              <div className="flex-1 overflow-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted sticky top-0 z-10">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">#</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Member</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Phone</th>
+                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground">Amount</th>
+                      <th className="px-3 py-2 text-center font-semibold text-muted-foreground">Status</th>
+                      <th className="px-3 py-2 text-center font-semibold text-muted-foreground">Attempts</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Account #</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Transaction ID</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Receipt</th>
+                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Last Updated</th>
+                      <th className="px-3 py-2 text-center font-semibold text-muted-foreground">Actions</th>
+                      <th className="px-3 py-2 w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stkRequests.length === 0 ? (
+                      <tr><td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">
+                        {collecting ? <div className="flex flex-col items-center gap-2"><RefreshCw className="w-8 h-8 animate-spin text-blue-500" /><span>Sending STK pushes to members...</span></div> : "No STK requests yet. Start a collection to see data here."}
+                      </td></tr>
+                    ) : stkRequests.map((req, idx) => (
+                      <Fragment key={req.id}>
+                        <tr onClick={() => setExpandedStkRow(expandedStkRow === req.id ? null : req.id)} className={cn(
+                          "cursor-pointer transition-colors border-b border-border/40",
+                          idx % 2 === 0 ? "bg-card/50" : "bg-muted/20",
+                          req.status === "completed" && "bg-brand/5",
+                          req.status === "failed" && "bg-red-50/50 dark:bg-red-900/10",
+                          expandedStkRow === req.id && "bg-blue-50 dark:bg-blue-900/20 border-blue-200",
+                          "hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                        )}>
+                          <td className="px-3 py-2 font-mono text-muted-foreground">{idx + 1}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white",
+                                req.status === "completed" ? "bg-brand" : req.status === "failed" ? "bg-red-500" : "bg-blue-500"
+                              )}>
+                                {req.status === "completed" ? <Check className="w-3.5 h-3.5" /> : req.status === "failed" ? <X className="w-3.5 h-3.5" /> : (req.member?.name?.[0] || "?")}
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">{req.member?.name || "Unknown"}</p>
+                                {req.member?.role === "admin" && <span className="text-[9px] px-1 py-0.5 bg-purple-100 text-purple-600 rounded">Admin</span>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-muted-foreground">{req.phone_number}</td>
+                          <td className="px-3 py-2 text-right font-mono font-semibold text-foreground">{formatCurrency(req.amount)}</td>
+                          <td className="px-3 py-2 text-center">
+                            <span className={cn("px-2 py-0.5 text-[10px] font-semibold rounded-full",
+                              req.status === "completed" ? "bg-brand/10 text-brand" :
+                              req.status === "failed" ? "bg-red-100 text-red-700" :
+                              req.status === "sent" ? "bg-blue-100 text-blue-700" :
+                              req.status === "processing" ? "bg-purple-100 text-purple-700" :
+                              "bg-amber-100 text-amber-700"
+                            )}>{req.status}</span>
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <span className={cn("font-medium", (req.attempt_count || 1) >= 3 ? "text-red-600" : "text-muted-foreground")}>
+                              {req.attempt_count || 1}/3
+                            </span>
+                            {req.status === "sent" && (req.attempt_count || 1) < 3 && (() => {
+                              const lastAttempt = new Date(req.last_attempt_at || req.created_at)
+                              const nextRetry = new Date(lastAttempt.getTime() + 10 * 60 * 1000)
+                              const now = new Date()
+                              const minsLeft = Math.max(0, Math.ceil((nextRetry.getTime() - now.getTime()) / 60000))
+                              return minsLeft > 0 ? <span className="block text-[9px] text-amber-600">retry in {minsLeft}m</span> : <span className="block text-[9px] text-blue-600">retrying...</span>
+                            })()}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-[10px] text-muted-foreground">{req.account_number || "—"}</td>
+                          <td className="px-3 py-2 font-mono text-[10px] text-muted-foreground truncate max-w-[100px]" title={req.checkout_request_id}>{req.checkout_request_id || "—"}</td>
+                          <td className="px-3 py-2 font-mono text-[10px] text-brand">{req.mpesa_receipt_number || "—"}</td>
+                          <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{req.updated_at ? new Date(req.updated_at).toLocaleTimeString() : "—"}</td>
+                          <td className="px-3 py-2 text-center">
+                            {(req.status === "failed" || req.status === "expired" || req.status === "cancelled") && (
+                              <button onClick={(e) => { e.stopPropagation(); retryStk(req.id) }} className="p-1.5 hover:bg-blue-100 rounded text-blue-600" title="Retry STK">
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {req.status === "processing" && <RefreshCw className="w-3.5 h-3.5 text-purple-600 animate-spin mx-auto" />}
+                            {req.status === "completed" && <Check className="w-4 h-4 text-brand mx-auto" />}
+                            {req.status === "pending" && <Clock className="w-3.5 h-3.5 text-amber-500 mx-auto" />}
+                          </td>
+                          <td className="px-3 py-2">{expandedStkRow === req.id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}</td>
+                        </tr>
+                        {expandedStkRow === req.id && (
+                          <tr className="bg-blue-50/70 dark:bg-blue-900/20 border-b border-blue-200">
+                            <td colSpan={12} className="px-4 py-3">
+                              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-xs">
+                                <div><p className="text-muted-foreground mb-1">Request ID</p><p className="font-mono text-[10px] text-foreground break-all">{req.id}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Member ID</p><p className="font-mono text-[10px] text-foreground break-all">{req.member_id || "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Cycle ID</p><p className="font-mono text-[10px] text-foreground break-all">{req.cycle_id || "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Checkout Request ID</p><p className="font-mono text-[10px] text-foreground break-all">{req.checkout_request_id || "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Account Number</p><p className="font-mono text-foreground">{req.account_number || "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">M-Pesa Receipt</p><p className="font-mono text-brand">{req.mpesa_receipt_number || "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Created At</p><p className="text-foreground">{req.created_at ? new Date(req.created_at).toLocaleString() : "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Last Attempt</p><p className="text-foreground">{req.last_attempt_at ? new Date(req.last_attempt_at).toLocaleString() : "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Next Retry</p><p className="text-foreground">{req.next_retry_at ? new Date(req.next_retry_at).toLocaleString() : "—"}</p></div>
+                                <div><p className="text-muted-foreground mb-1">Attempt Count</p><p className={cn("font-semibold", (req.attempt_count || 1) >= 3 ? "text-red-600" : "text-foreground")}>{req.attempt_count || 1} of {req.max_attempts || 3}</p></div>
+                                <div className="col-span-2"><p className="text-muted-foreground mb-1">Error Message</p><p className="text-red-600">{req.error_message || "No errors"}</p></div>
+                                {req.stk_history && (
+                                  <div className="col-span-full"><p className="text-muted-foreground mb-1">STK History (JSON)</p><pre className="text-[10px] bg-muted p-2 rounded overflow-auto max-h-24">{JSON.stringify(req.stk_history, null, 2)}</pre></div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between px-4 py-3 bg-card border-t border-border/60">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>Expected: <strong className="text-foreground">{formatCurrency(totalAmount)}</strong></span>
+                  <span>Collected: <strong className="text-brand">{formatCurrency(collectedAmount)}</strong></span>
+                  <span>Outstanding: <strong className="text-red-600">{formatCurrency(totalAmount - collectedAmount)}</strong></span>
+                </div>
+                <button onClick={() => { setShowCollectionModal(false); stopPolling(); setExpandedStkRow(null) }} className="px-4 py-2 text-sm font-medium bg-muted hover:bg-muted text-foreground rounded-lg">
+                  Close Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+      </ScreenShell>
+      <StepUpSheet open={showPayoutStepUp} title="Approve payout" description={selectedChama ? `Send the collected ${selectedChama.name} cycle to its recipient.` : undefined} onClose={() => setShowPayoutStepUp(false)} onVerified={distributeCollectedCycle} />
+      {payoutError && <p className="fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-full bg-red-600 px-4 py-2 text-sm text-white" role="alert">{payoutError}</p>}
+      <FluidNav items={mobileNavItems} />
+    </main>
+  )
+}

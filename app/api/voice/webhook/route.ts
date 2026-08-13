@@ -1,0 +1,807 @@
+import { NextResponse, NextRequest } from 'next/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { NCBA_TARIFF_VERSION, ncbaTransactionCost, platformFee } from '@/lib/transaction-fees';
+import { getPlatformFeeRate } from '@/lib/services/platformSettings';
+
+// n8n webhook URL and auth (env-overridable for Railway → Hostinger cutover).
+const N8N_BASE = process.env.N8N_WEBHOOK_BASE_URL || 'https://n8n-lc5r.srv1631847.hstgr.cloud';
+const N8N_WEBHOOK_URL = `${N8N_BASE}/webhook/send_money`;
+const N8N_AUTH_TOKEN = process.env.N8N_WEBHOOK_AUTH_TOKEN || '';
+
+// Money-moving voice intents that must be gated by an in-app step-up confirm.
+// Non-payment commands (balance queries, etc.) fall through to n8n directly.
+// NOTE: buy_goods_pochi intentionally omitted — feature is coming soon; rejected early below.
+const MONEY_MOVING_TYPES = new Set([
+  'send_phone', 'buy_goods_till', 'paybill',
+  'withdraw', 'bank_to_mpesa', 'bank_to_bank',
+  'c2c', 'c2b', 'b2c', 'b2b',
+]);
+
+export async function POST(request: NextRequest) {
+  try {
+    // Log incoming request details
+    console.log('\n=== VOICE WEBHOOK CALLED ===')
+    console.log('Timestamp:', new Date().toISOString())
+    console.log('Request URL:', request.url)
+    console.log('Request Headers:', Object.fromEntries(request.headers))
+
+    // Parse the incoming data from ElevenLabs
+    const body = await request.json()
+    console.log('Request Body:', JSON.stringify(body, null, 2))
+
+    // ── Pochi La Biashara: COMING SOON gate ──────────────────────────────────
+    // buy_goods_pochi is not available yet. Reject immediately before any user
+    // lookup, balance check, or n8n forward so no transaction is ever created.
+    if (body.type === 'buy_goods_pochi') {
+      console.log('🚫 buy_goods_pochi rejected — feature coming soon')
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Feature not available',
+          message: 'Pochi la Biashara is not available yet — coming soon.',
+          agent_message: "Pochi la Biashara is coming soon and not available yet. For now you can pay using a Till number, a Paybill, or send directly to an M-Pesa phone number. Which would you prefer?",
+        },
+        { status: 400 }
+      )
+    }
+
+    const queryParams = new URL(request.url).searchParams
+    const fullRequest = queryParams.get('request')
+    const userEmail = queryParams.get('user_email') || body.user_email
+    const userId = queryParams.get('user_id') || body.user_id
+    const gateName = queryParams.get('gate_name') || body.gate_name || ''
+    const gateId = queryParams.get('gate_id') || body.gate_id || ''
+    const conversationId = body.conversation_id || body.session_id // ElevenLabs sends this
+
+    console.log('Query Param - request:', fullRequest)
+    console.log('Query Param - user_email:', userEmail)
+    console.log('Query Param - user_id:', userId)
+    console.log('Query Param - gate_name:', gateName)
+    console.log('Query Param - gate_id:', gateId)
+    console.log('Conversation ID:', conversationId)
+
+    // Initialize Supabase with service role for user lookup
+    const supabase = await createClient()
+
+    let userContext = null
+    let profile = null
+    let user = null
+
+    // Option 1: Try to get user from session (if called from browser)
+    const { data: { user: sessionUser }, error: authError } = await supabase.auth.getUser()
+
+    if (sessionUser && !authError) {
+      user = sessionUser
+      console.log('✅ User from session:', user.email)
+    }
+    // Option 2: Look up user by email from query params
+    else if (userEmail) {
+      console.log('🔍 Looking up user by email:', userEmail)
+      const { data: { users }, error: lookupError } = await supabase.auth.admin.listUsers()
+
+      if (!lookupError && users) {
+        user = users.find(u => u.email === userEmail)
+        if (user) {
+          console.log('✅ Found user by email:', user.email)
+        }
+      }
+    }
+    // Option 3: Look up most recent active voice session
+    else {
+      console.log('🔍 Looking up user from recent voice sessions')
+      console.log('Current time:', new Date().toISOString())
+
+      // First, check if we have any voice sessions at all
+      const { data: allSessions, error: countError } = await supabase
+        .from('voice_sessions')
+        .select('*')
+        .limit(5)
+
+      console.log('Total recent voice sessions:', allSessions?.length || 0)
+      if (allSessions && allSessions.length > 0) {
+        console.log('Recent sessions:', JSON.stringify(allSessions, null, 2))
+      }
+
+      const { data: recentSession, error: sessionError } = await supabase
+        .from('voice_sessions')
+        .select('user_id')
+        .eq('status', 'active')
+        .gte('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (sessionError) {
+        console.error('❌ Voice session lookup error:', sessionError)
+      }
+
+      if (!sessionError && recentSession) {
+        console.log('✅ Found active voice session, user_id:', recentSession.user_id)
+        // Get full user details
+        const { data: { users }, error: lookupError } = await supabase.auth.admin.listUsers()
+        if (!lookupError && users) {
+          user = users.find(u => u.id === recentSession.user_id)
+          if (user) {
+            console.log('✅ Found user from session:', user.email)
+          } else {
+            console.warn('⚠️ User ID from session not found in users list')
+          }
+        } else {
+          console.error('❌ Failed to list users for session lookup');
+        }
+      } else {
+        console.warn('⚠️ No active voice session found')
+      }
+    }
+
+    // If we found a user, get their profile
+    if (user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      profile = profileData
+
+      userContext = {
+        id: user.id,
+        email: user.email,
+        phone: user.phone || profile?.phone_number || profile?.mpesa_number,
+        full_name: user.user_metadata?.full_name || profile?.phone_number,
+        wallet_balance: profile?.wallet_balance || 0,
+        created_at: user.created_at,
+      }
+
+      console.log('✅ User context:', userContext)
+    } else {
+      console.log('⚠️ No user found from session/database')
+      console.log('Auth error:', authError?.message)
+
+      // CHECK: Does ElevenLabs body contain real user data?
+      const hasRealUserData = body.user_id &&
+        body.user_id !== 'test-user-id' &&
+        body.user_email &&
+        body.user_email !== 'test@example.com';
+
+      if (hasRealUserData) {
+        console.log('✅ Using user data from ElevenLabs body (dynamic variables)')
+        userContext = {
+          id: body.user_id,
+          email: body.user_email,
+          phone: body.user_phone || body.phone || '',
+          full_name: body.user_name || body.user_email?.split('@')[0] || 'User',
+          wallet_balance: parseFloat(body.balance) || 0,
+          created_at: new Date().toISOString(),
+          from_elevenlabs: true,
+        }
+        console.log('📋 User context from ElevenLabs:', userContext)
+      }
+      // NEW: If we have gate_name, look up the real user from profiles
+      else if (gateName && gateName !== '') {
+        console.log('🔍 Looking up user by gate_name:', gateName)
+        const { data: gateProfile, error: gateError } = await supabase
+          .from('profiles')
+          .select('id, name, gate_name, gate_id, wallet_balance, phone_number, mpesa_number')
+          .eq('gate_name', gateName)
+          .single()
+
+        if (gateProfile && !gateError) {
+          console.log('✅ Found user by gate_name:', gateProfile)
+          // Get full user details from auth
+          const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers()
+          if (!usersError && users) {
+            const foundUser = users.find(u => u.id === gateProfile.id)
+            if (foundUser) {
+              user = foundUser
+              profile = gateProfile
+              userContext = {
+                id: foundUser.id,
+                email: foundUser.email,
+                phone: foundUser.phone || gateProfile.phone_number || gateProfile.mpesa_number,
+                full_name: gateProfile.name || foundUser.email?.split('@')[0] || 'User',
+                wallet_balance: gateProfile.wallet_balance || 0,
+                created_at: foundUser.created_at,
+                from_gate_lookup: true,
+              }
+              console.log('✅ User context from gate_name lookup:', userContext)
+            }
+          }
+        } else {
+          console.warn('⚠️ Could not find user by gate_name:', gateName, gateError?.message)
+        }
+      }
+
+      // Final fallback: test mode
+      if (!userContext) {
+        console.log('⚠️ No real user data - using test mode')
+        userContext = {
+          id: 'test-user-id',
+          email: userEmail || 'test@ongeapesa.com',
+          phone: '254712345678',
+          full_name: 'Test User',
+          created_at: new Date().toISOString(),
+          test_mode: true,
+        }
+      }
+    }
+
+    console.log('\n=== PREPARING N8N PAYLOAD ===')
+
+    // Use user data - prefer ElevenLabs body data if available and valid
+    let finalUserId = userContext?.id || body.user_id
+    let finalUserEmail = userContext?.email || body.user_email
+    let finalUserPhone = userContext?.phone || body.user_phone || body.phone
+    let finalUserName = userContext?.full_name || body.user_name
+
+    // If we still don't have user AND no userContext from ElevenLabs, try voice sessions
+    if (!user && !userContext) {
+      console.log('⚠️ No user context found, checking voice_sessions...')
+      console.log('  Looking for conversation_id:', conversationId)
+
+      try {
+        let recentSession = null
+
+        // FIRST: Try to match by conversation_id if available
+        if (conversationId) {
+          console.log('🔍 Looking up session by conversation_id:', conversationId)
+          const { data: matchedSession, error: matchError } = await supabase
+            .from('voice_sessions')
+            .select('user_id, session_id, created_at, status, expires_at')
+            .eq('session_id', conversationId)
+            .maybeSingle()
+
+          if (matchError) {
+            console.error('❌ Error matching session by conversation_id:', matchError)
+          } else if (matchedSession) {
+            console.log('✅ Found matching session for conversation_id:', conversationId)
+            recentSession = matchedSession
+          } else {
+            console.warn('⚠️ No session found for conversation_id:', conversationId)
+          }
+        }
+
+        // FALLBACK: If no conversation_id match, get recent ACTIVE sessions
+        if (!recentSession) {
+          console.log('🔍 Fallback: Looking for recent active sessions')
+          const { data: allSessions, error: sessionsError } = await supabase
+            .from('voice_sessions')
+            .select('user_id, session_id, created_at, status, expires_at')
+            .eq('status', 'active')
+            .gte('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(5)
+
+          console.log('Voice sessions query:')
+          console.log('  Error:', sessionsError)
+          console.log('  Active sessions found:', allSessions?.length || 0)
+
+          if (sessionsError) {
+            console.error('❌ Error fetching sessions:', sessionsError)
+          }
+
+          if (allSessions && allSessions.length > 0) {
+            console.log('✅ Found', allSessions.length, 'active voice sessions')
+            console.log('Sessions:', JSON.stringify(allSessions, null, 2))
+
+            // ⚠️ WARNING: This is a fallback and may not be accurate in multi-user scenarios
+            recentSession = allSessions[0]
+            console.warn('⚠️ Using most recent active session as fallback - this may be inaccurate!')
+          } else {
+            console.error('❌ No active voice sessions found')
+          }
+        }
+
+        // If we found a session, get the user profile
+        if (recentSession) {
+          console.log('✅ Using session:', recentSession.session_id, 'user_id:', recentSession.user_id)
+
+          // Now get user's profile using the user_id
+          const { data: userProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, phone_number, mpesa_number, wallet_balance')
+            .eq('id', recentSession.user_id)
+            .maybeSingle()
+
+          if (profileError) {
+            console.error('❌ Profile query error:', profileError)
+          }
+
+          if (userProfile) {
+            console.log('✅ Found profile:', userProfile)
+
+            finalUserId = userProfile.id
+            finalUserEmail = `user-${userProfile.id.slice(0, 8)}@ongeapesa.com` // Fallback email
+            finalUserPhone = userProfile.phone_number || userProfile.mpesa_number || ''
+            finalUserName = userProfile.phone_number || 'User'
+
+            // Try to get actual email from auth.users if possible
+            // But this might not work without service role, so email might be fallback
+
+            console.log('✅ SUCCESSFULLY SET REAL USER DATA FROM VOICE SESSION')
+          } else {
+            console.warn('⚠️ Profile not found for user_id:', recentSession.user_id)
+            // Still use the user_id from session
+            finalUserId = recentSession.user_id
+            finalUserEmail = `user-${recentSession.user_id.slice(0, 8)}@ongeapesa.com`
+            console.log('✅ Using user_id from session without full profile')
+          }
+        } else {
+          console.error('❌ No voice sessions found in database')
+          console.log('💡 TIP: Make sure you opened the voice interface at least once to create a session')
+        }
+      } catch (fallbackError: any) {
+        console.error('❌ Failed to fetch user from sessions:')
+        console.error('Error:', fallbackError?.message || fallbackError)
+      }
+    } else {
+      console.log('✅ User already found from earlier lookup')
+    }
+
+    console.log('📤 Final user data for n8n:')
+    console.log('  user_id:', finalUserId)
+    console.log('  user_email:', finalUserEmail)
+    console.log('  user_phone:', finalUserPhone)
+    console.log('  user_name:', finalUserName)
+
+    // ============================================
+    // REAL-TIME BALANCE CHECK
+    // ============================================
+    // First, try to use balance from ElevenLabs body (most reliable)
+    let currentBalance = 0
+    let subscriptionStatus = 'inactive'
+    let freeTxRemaining = 0
+    let subscriptionEndDate = null
+
+    // Priority 1: Use balance from ElevenLabs dynamic variables (already validated by the app)
+    if (body.balance && !isNaN(parseFloat(body.balance))) {
+      currentBalance = parseFloat(body.balance)
+      console.log('💰 Using balance from ElevenLabs body:', currentBalance)
+    }
+    // Priority 2: Use balance from userContext (set earlier from ElevenLabs data)
+    else if (userContext?.wallet_balance && userContext.wallet_balance > 0) {
+      currentBalance = userContext.wallet_balance
+      console.log('💰 Using balance from userContext:', currentBalance)
+    }
+    // Priority 3: Fallback to DB query (only wallet_balance column exists)
+    else if (finalUserId && finalUserId !== 'no-user-found' && finalUserId !== 'test-user-id') {
+      const { data: balanceData, error: balanceError } = await supabase
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', finalUserId)
+        .single()
+
+      if (balanceError) {
+        console.error('❌ Error fetching balance from DB:', balanceError)
+      } else if (balanceData) {
+        currentBalance = parseFloat(String(balanceData.wallet_balance)) || 0
+        console.log('💰 Using balance from DB:', currentBalance)
+      }
+    }
+
+    console.log('💰 Final current balance:', currentBalance)
+
+    // Validate amount
+    const requestedAmount = parseFloat(body.amount)
+    if (isNaN(requestedAmount) || requestedAmount <= 0) {
+      console.error('❌ Invalid amount received:', body.amount)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid amount',
+          message: `The amount ${body.amount} is not valid. Please provide a positive number.`,
+          current_balance: currentBalance,
+          agent_message: `I'm sorry, but the amount you provided is invalid. Please try again with a valid amount.`
+        },
+        { status: 400 }
+      )
+    }
+
+    if (requestedAmount > 999999) {
+      console.error('❌ Amount exceeds maximum:', requestedAmount)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Amount too large',
+          message: `The amount KSh ${requestedAmount.toLocaleString()} exceeds the maximum of KSh 999,999.`,
+          current_balance: currentBalance,
+          agent_message: `I'm sorry, but the amount of ${requestedAmount.toLocaleString()} shillings exceeds our maximum transaction limit of 999,999 shillings. Please try a smaller amount.`
+        },
+        { status: 400 }
+      )
+    }
+
+    // ============================================
+    // CHECK FREE TRANSACTION ELIGIBILITY
+    // ============================================
+    let isFreeTransaction = false
+    let platformFeeAmount = 0
+    let providerCostAmount = 0
+
+    // Check if this is a debit transaction (money going out)
+    const debitTypes = [
+      'send_phone', 'buy_goods_till',
+      'paybill', 'withdraw', 'bank_to_mpesa', 'mpesa_to_bank'
+    ]
+    const isDebitTransaction = debitTypes.includes(body.type)
+
+    if (isDebitTransaction) {
+      const rail = body.billType || body.bill_type ? 'utility_bill' : 'mobile_wallet'
+      providerCostAmount = ncbaTransactionCost(requestedAmount, rail)
+      console.log('\n=== CHECKING FREE TRANSACTION ELIGIBILITY ===')
+
+      // Check if user qualifies for free transaction
+      if (subscriptionStatus === 'active' &&
+        subscriptionEndDate &&
+        new Date(subscriptionEndDate) >= new Date() &&
+        requestedAmount >= 1000 &&
+        freeTxRemaining > 0) {
+        isFreeTransaction = true
+        platformFeeAmount = 0
+        console.log('✅ FREE TRANSACTION QUALIFIED!')
+        console.log('  Amount:', requestedAmount, '(>= KES 1,000)')
+        console.log('  Free transactions remaining:', freeTxRemaining)
+      } else {
+        // Live rate from platform_settings, so an admin fee change on
+        // /admin-analytics/settings applies to real charges, not just reporting.
+        platformFeeAmount = platformFee(requestedAmount, body.type, await getPlatformFeeRate())
+        console.log('💰 REGULAR TRANSACTION (0.5% fee)')
+        console.log('  Platform fee:', platformFeeAmount)
+
+        if (subscriptionStatus !== 'active') {
+          console.log('  Reason: No active subscription')
+        } else if (requestedAmount < 1000) {
+          console.log('  Reason: Amount below KES 1,000 minimum')
+        } else if (freeTxRemaining <= 0) {
+          console.log('  Reason: No free transactions remaining this month')
+        }
+      }
+    }
+
+    // For debit transactions, check if user has sufficient balance
+    if (isDebitTransaction) {
+      console.log('\n=== BALANCE VALIDATION ===')
+      console.log('💳 Debit transaction detected')
+      console.log('  Type:', body.type)
+      console.log('  Amount:', requestedAmount)
+      console.log('  Platform Fee:', platformFeeAmount)
+      console.log('  NCBA Cost:', providerCostAmount)
+      console.log('  Total Required:', requestedAmount + platformFeeAmount + providerCostAmount)
+      console.log('  Current Balance:', currentBalance)
+
+      const transactionCost = platformFeeAmount + providerCostAmount
+      const totalRequired = requestedAmount + transactionCost
+
+      if (currentBalance < totalRequired) {
+        const shortfall = totalRequired - currentBalance
+        console.error('❌ INSUFFICIENT FUNDS')
+        console.error('  Balance:', currentBalance)
+        console.error('  Required:', totalRequired)
+        console.error('  Shortfall:', shortfall)
+
+        // Return error to ElevenLabs AI agent with clear message
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Insufficient funds',
+            message: `Your current balance is KSh ${currentBalance.toLocaleString()}, but you need KSh ${totalRequired.toLocaleString()} including a KSh ${transactionCost.toLocaleString()} transaction cost. You need KSh ${shortfall.toLocaleString()} more.`,
+            current_balance: currentBalance,
+            required_amount: totalRequired,
+            shortfall: shortfall,
+            transaction_cost: transactionCost,
+            agent_message: `I'm sorry, but you don't have enough funds for this transaction. Your current balance is ${currentBalance.toLocaleString()} shillings, but you need ${totalRequired.toLocaleString()} shillings including the transaction cost. You need ${shortfall.toLocaleString()} shillings more. Would you like to add funds to your wallet first?`
+          },
+          { status: 400 }
+        )
+      }
+
+      console.log('✅ BALANCE CHECK PASSED')
+      console.log('  Balance after transaction:', currentBalance - totalRequired)
+    } else {
+      console.log('💰 Credit transaction (deposit/receive) - no balance check needed')
+    }
+
+    console.log('✅ Valid amount:', requestedAmount)
+
+    // ============================================
+    // TRUST AI EXTRACTION - NO RE-CONFIRMATION
+    // ============================================
+    // The ElevenLabs AI already confirmed with user:
+    // "I'm sending KSh X to Y" means user already said YES
+    // We just validate and execute immediately
+    console.log('🤖 AI already confirmed transaction with user')
+    console.log('⚡ Executing immediately - no re-confirmation needed')
+
+    // Prepare the payload - all fields at top level for n8n
+    const n8nPayload = {
+      // Voice request
+      request: fullRequest || body.summary || 'Voice transaction request',
+      voice_command_text: fullRequest || body.summary || '',
+
+      // User context - ALWAYS REAL DATA, NEVER TEST
+      user_id: finalUserId || 'no-user-found',
+      user_email: finalUserEmail || 'no-email@ongeapesa.com',
+      user_phone: finalUserPhone || '',
+      user_name: finalUserName || 'User',
+      gate_name: gateName || '',
+      gate_id: gateId || '',
+      current_balance: currentBalance, // Send current wallet balance to AI
+      wallet_balance: currentBalance, // Alternative field name for compatibility
+
+      // Subscription & Free Transaction Info
+      subscription_status: subscriptionStatus,
+      subscription_end_date: subscriptionEndDate,
+      free_transactions_remaining: freeTxRemaining,
+      is_free_transaction: isFreeTransaction,
+      platform_fee: platformFeeAmount,
+      transaction_cost: providerCostAmount,
+      total_transaction_cost: platformFeeAmount + providerCostAmount,
+      total_debit: requestedAmount + platformFeeAmount + providerCostAmount,
+      cost_bearer: 'customer',
+      fee_tariff: NCBA_TARIFF_VERSION,
+
+      // Transaction details from ElevenLabs
+      type: body.type,
+      amount: requestedAmount, // Already validated above
+      phone: body.phone || '',
+      till: body.till || '',
+      paybill: body.paybill || '',
+      account: body.account || '',
+      agent: body.agent || '',
+      store: body.store || '',
+      bank_code: body.bankCode || '',
+      summary: body.summary || '',
+
+      // Voice metadata
+      voice_verified: true,
+      confidence_score: 85,
+
+      // Status fields
+      status: 'pending',
+      mpesa_transaction_id: '',
+      external_ref: '',
+
+      // Timestamp and source
+      timestamp: new Date().toISOString(),
+      source: 'elevenlabs',
+    }
+
+    console.log('N8N Payload:', JSON.stringify(n8nPayload, null, 2))
+
+    // ===== Voice step-up gate (A6) — OPT-IN, OFF by default =====
+    // Product decision: voice payments move as fast as possible — no confirm step.
+    // So by default we forward straight to n8n (fastest path).
+    //
+    // This gate can be turned on later without code changes:
+    //   VOICE_STEPUP_ENABLED=true            → stage ALL money-moving commands
+    //   VOICE_STEPUP_THRESHOLD=5000          → stage only when amount >= threshold
+    // When enabled, the command is staged in pending_voice_payments and released
+    // only after an in-app PIN/passkey confirm via /api/voice/confirm/[id].
+    const stepupEnabled = process.env.VOICE_STEPUP_ENABLED === 'true';
+    const stepupThreshold = Number(process.env.VOICE_STEPUP_THRESHOLD || '0') || 0;
+    const isMoneyMoving = MONEY_MOVING_TYPES.has(String(body.type));
+    const isRealUser = !userContext?.test_mode && !!finalUserId && finalUserId !== 'test-user-id';
+    const amountForStage = Number(requestedAmount) || 0;
+    const needsStepUp =
+      stepupEnabled && isMoneyMoving && isRealUser && amountForStage >= stepupThreshold && amountForStage > 0;
+
+    if (needsStepUp) {
+      console.log('🔐 Staging voice payment for in-app confirmation (step-up required)')
+      const admin = createServiceClient();
+      const summary =
+        body.summary ||
+        `${body.type} of KSh ${amountForStage}` +
+          (body.phone ? ` to ${body.phone}` : '') +
+          (body.till ? ` to till ${body.till}` : '') +
+          (body.paybill ? ` to paybill ${body.paybill}` : '');
+
+      const { data: pending, error: stageError } = await admin
+        .from('pending_voice_payments')
+        .insert({
+          user_id: finalUserId,
+          voice_session_id: conversationId || null,
+          payload: n8nPayload,
+          summary,
+          status: 'awaiting_confirm',
+        })
+        .select('id, expires_at')
+        .single();
+
+      if (stageError || !pending) {
+        console.error('❌ Failed to stage voice payment:', stageError);
+        return NextResponse.json(
+          { success: false, error: 'Could not stage payment for confirmation', details: stageError?.message },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        status: 'awaiting_confirmation',
+        pending_id: pending.id,
+        expires_at: pending.expires_at,
+        summary,
+        message: `I've prepared ${summary}. Confirm in the app with your PIN or Face ID to release it.`,
+      });
+    }
+
+    // Forward to n8n (non-payment intents or test/anonymous sessions)
+    console.log('\n=== FORWARDING TO N8N ===')
+    console.log('N8N URL:', N8N_WEBHOOK_URL)
+    console.log('Auth configured:', N8N_AUTH_TOKEN ? 'Yes' : 'No')
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    // Add authentication header if token is configured
+    if (N8N_AUTH_TOKEN) {
+      headers['Authorization'] = N8N_AUTH_TOKEN
+    }
+
+    console.log('📤 Sending to n8n with headers:', Object.keys(headers))
+    console.log('📤 Payload size:', JSON.stringify(n8nPayload).length, 'bytes')
+
+    let n8nResponse: Response
+    try {
+      n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: headers, // Use the headers variable with auth token
+        body: JSON.stringify(n8nPayload),
+      })
+    } catch (fetchError: any) {
+      console.error('❌ FETCH ERROR to n8n:', fetchError.message)
+      console.error('❌ Error details:', fetchError)
+      return NextResponse.json(
+        { error: 'Failed to connect to n8n', success: false, details: fetchError.message },
+        { status: 500 }
+      )
+    }
+
+    console.log('n8n Response Status:', n8nResponse.status)
+    console.log('n8n Response Headers:', Object.fromEntries(n8nResponse.headers.entries()))
+
+    if (!n8nResponse.ok) {
+      const errorText = await n8nResponse.text()
+      console.error('❌ n8n webhook failed')
+      console.error('Status:', n8nResponse.status)
+      console.error('Response:', errorText)
+      return NextResponse.json(
+        { error: 'Failed to process transaction', success: false, n8n_response: errorText },
+        { status: 500 }
+      )
+    }
+
+    // Parse n8n response safely
+    const responseText = await n8nResponse.text()
+    console.log('n8n Raw Response:', responseText)
+
+    let n8nResult: any = {}
+    try {
+      if (responseText && responseText.trim()) {
+        n8nResult = JSON.parse(responseText)
+        console.log('✅ n8n Response parsed:', n8nResult)
+      } else {
+        console.log('⚠️ n8n returned empty response, using default')
+        n8nResult = {
+          success: true,
+          message: 'Transaction queued for processing',
+          transaction_id: `tx_${Date.now()}`
+        }
+      }
+    } catch (parseError) {
+      console.error('❌ Failed to parse n8n response as JSON:', parseError)
+      console.error('Raw response:', responseText)
+      // If n8n doesn't return JSON, assume success since the request went through
+      n8nResult = {
+        success: true,
+        message: 'Transaction sent to n8n',
+        raw_response: responseText,
+        transaction_id: `tx_${Date.now()}`
+      }
+    }
+
+    // Return success response to ElevenLabs.
+    // n8n WALLET SYSTEM returns various shapes depending on instance/node:
+    //   { success: true, transaction_id, bankRef, status, type, amount, message }  (canonical)
+    //   { isSuccess: true, txId, bankRef, status }                                  (Respond-node expr)
+    //   { status: "Success" }                                                        (observed live)
+    //   { status: "completed" }                                                      (DB-flipped)
+    // Tolerant detection: let an explicit failure signal win; otherwise infer from
+    // status string or the presence of a real bank reference.
+    console.log('\n=== SENDING RESPONSE TO ELEVENLABS ===')
+    const statusStr = String(n8nResult.status ?? '').toLowerCase()
+    const explicitFailure =
+      n8nResult.success === false ||
+      n8nResult.isSuccess === false ||
+      ['failed', 'error', 'declined', 'cancelled', 'canceled', 'rejected'].includes(statusStr)
+    const explicitSuccess =
+      n8nResult.success === true ||
+      n8nResult.isSuccess === true ||
+      ['success', 'completed', 'ok', 'sent'].includes(statusStr) ||
+      Boolean(n8nResult.bankRef || n8nResult.txId)
+    const ncbaSuccess: boolean = explicitSuccess && !explicitFailure
+
+    const bankRef = n8nResult.bankRef || null
+    const ncbaMessage: string =
+      n8nResult.message ||
+      (ncbaSuccess
+        ? (bankRef
+            ? `Done! Money sent successfully. Reference ${bankRef}.`
+            : `Done! Money sent successfully.`)
+        : `Payment failed. Please try again.`)
+
+    // Persist the cost fields even when the existing n8n workflow does not map
+    // newly-added payload fields. If n8n already completed the row, the database
+    // fee-reconciliation trigger applies only the cost delta.
+    const transactionId = n8nResult.transaction_id || n8nResult.txId || null
+    if (
+      ncbaSuccess &&
+      isDebitTransaction &&
+      typeof transactionId === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(transactionId)
+    ) {
+      const admin = createServiceClient()
+      const { data: transaction } = await admin
+        .from('transactions')
+        .select('metadata')
+        .eq('id', transactionId)
+        .maybeSingle()
+      if (transaction) {
+        await admin
+          .from('transactions')
+          .update({
+            platform_fee: platformFeeAmount,
+            transaction_cost: providerCostAmount,
+            metadata: {
+              ...((transaction.metadata && typeof transaction.metadata === 'object') ? transaction.metadata : {}),
+              cost_bearer: 'customer',
+              fee_tariff: NCBA_TARIFF_VERSION,
+              transaction_cost_estimated: true,
+              // Distinguishes "fee deliberately waived" from "fee not recorded".
+              // Reporting reads platform_fee as authoritative, so without this a
+              // free transaction is indistinguishable from a missing value.
+              fee_waived: isFreeTransaction ? 'true' : 'false',
+            },
+          })
+          .eq('id', transactionId)
+      }
+    }
+
+    const response = {
+      success: ncbaSuccess,
+      message: ncbaMessage,
+      agent_message: ncbaMessage,
+      transaction_id: transactionId,
+      bank_ref: bankRef,
+      status: n8nResult.status || (ncbaSuccess ? 'completed' : 'failed'),
+      data: n8nResult,
+    }
+    console.log('Response:', JSON.stringify(response, null, 2))
+    console.log('=== WEBHOOK COMPLETED ===\n')
+
+    return NextResponse.json(response)
+
+  } catch (error) {
+    console.error('Voice webhook error:', error)
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        success: false,
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    )
+  }
+}
+
+// Handle OPTIONS for CORS
+export async function OPTIONS(request: NextRequest) {
+  return NextResponse.json({}, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}

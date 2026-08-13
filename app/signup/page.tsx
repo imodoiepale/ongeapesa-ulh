@@ -1,0 +1,148 @@
+'use client';
+
+import { useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
+import AuthLayout from '@/components/auth/auth-layout';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export default function SignupPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${siteUrl}/auth/confirm`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+    } else if (data.user) {
+      console.log('User signed up:', data.user.email);
+
+      try {
+        console.log('🔧 Creating wallet for new signup:', data.user.email);
+        const response = await fetch('/api/gate/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: data.user.email,
+            userId: data.user.id,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('❌ Wallet creation failed during signup:', errorData);
+          setError('Account created but wallet creation failed. Please try logging in again.');
+        } else {
+          const walletData = await response.json();
+          console.log('✅ Wallet creation result:', walletData);
+          setSuccess('Success! Please check your email for a confirmation link. Your wallet has already been provisioned.');
+        }
+      } catch (walletError) {
+        console.error('❌ Wallet creation error during signup:', walletError);
+        setError('Account created but wallet creation encountered an error. Please try logging in again.');
+      }
+    }
+  };
+
+  return (
+    <AuthLayout>
+      <div className="w-full max-w-sm">
+        <h2 className="text-3xl font-bold text-foreground mb-2">Create Your Account</h2>
+        <p className="text-muted-foreground mb-8">Join the future of voice payments.</p>
+        
+        {success ? (
+          <div className="text-center bg-secondary p-8 rounded-lg">
+            <p className="text-brand mb-4 font-semibold">{success}</p>
+            <button
+              onClick={() => router.push('/login')}
+              className="w-full bg-primary text-primary-foreground font-bold py-3 px-4 rounded-lg hover:bg-primary/90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+            >
+              Proceed to Login
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSignup}>
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-foreground mb-2" htmlFor="email">
+                Email
+              </label>
+              <input
+                className="w-full py-3 px-4 bg-input text-foreground rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-300 placeholder:text-muted-foreground"
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-foreground mb-2" htmlFor="password">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  className="w-full py-3 px-4 pr-12 bg-input text-foreground rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-300 placeholder:text-muted-foreground"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+            {error && <p className="text-destructive text-sm text-center mb-4">{error}</p>}
+            <div className="mb-6">
+              <button
+                className="w-full bg-primary text-primary-foreground font-bold py-3 px-4 rounded-lg hover:bg-primary/90 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+                type="submit"
+              >
+                Sign Up
+              </button>
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link href="/login" className="font-semibold text-primary hover:underline">
+                Sign In
+              </Link>
+            </p>
+          </form>
+        )}
+      </div>
+    </AuthLayout>
+  );
+}

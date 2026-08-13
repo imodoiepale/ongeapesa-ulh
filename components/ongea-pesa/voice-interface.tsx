@@ -1,0 +1,440 @@
+// @ts-nocheck
+"use client"
+
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Mic, MicOff, Volume2, ArrowLeft, AlertCircle, BarChart3, LogOut, Wallet } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/components/providers/auth-provider"
+import { createClient } from '@/lib/supabase/client'
+import BalanceSheet from "./balance-sheet"
+import { useUser } from '@/contexts/UserContext';
+import { useElevenLabs } from '@/contexts/ElevenLabsContext';
+import type { PaymentSlots } from '@/contexts/ElevenLabsContext';
+import { ScreenShell } from "@/components/foundation"
+import PaymentIdentificationPanel from "./payment-identification-panel"
+import { VoiceNodeField } from "./voice-node-field"
+
+type Screen = "dashboard" | "voice" | "send" | "recurring" | "analytics" | "test" | "permissions" | "scanner";
+
+interface VoiceInterfaceProps {
+  onNavigate: (screen: Screen) => void;
+}
+
+
+export default function VoiceInterface({ onNavigate }: VoiceInterfaceProps) {
+  const { user, signOut } = useAuth();
+  const { userId, user: userContext, isLoading: userContextLoading } = useUser();
+  const { isConnected, isLoading, messages, conversation, isSpeaking, startSession, endSession, registerToolHandlers, unregisterToolHandlers } = useElevenLabs();
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'speaking'>('idle')
+  const [stagedPayments, setStagedPayments] = useState<PaymentSlots[]>([])
+  const [balance, setBalance] = useState<number>(0)
+  const [loadingBalance, setLoadingBalance] = useState(true);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [isPushToTalk, setIsPushToTalk] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isBalanceSheetOpen, setIsBalanceSheetOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const supabase = createClient();
+
+  // Register stagePayment tool handler — merges by index (default 0)
+  useEffect(() => {
+    registerToolHandlers({
+      stagePayment: (params: PaymentSlots & { index?: number }) => {
+        const { index = 0, ...slots } = params
+        setStagedPayments(prev => {
+          const next = [...prev]
+          const existing = next[index] ?? {}
+          next[index] = {
+            ...existing,
+            ...(slots.amount !== undefined && { amount: slots.amount }),
+            ...(slots.phone !== undefined && { phone: slots.phone }),
+            ...(slots.till !== undefined && { till: slots.till }),
+            ...(slots.paybill !== undefined && { paybill: slots.paybill }),
+            ...(slots.account !== undefined && { account: slots.account }),
+            ...(slots.type !== undefined && { type: slots.type }),
+            ...(slots.recipientName !== undefined && { recipientName: slots.recipientName }),
+          }
+          return next
+        })
+      }
+    })
+    return () => unregisterToolHandlers(['stagePayment'])
+  }, []) // stable refs — no deps needed
+
+  // Fetch balance from API
+  const fetchBalance = useCallback(async () => {
+    setLoadingBalance(false); // Remove loading immediately
+    try {
+      const response = await fetch('/api/balance');
+      if (response.ok) {
+        const data = await response.json();
+        setBalance(data.balance || 0);
+        console.log('⚡ Balance loaded:', data.balance);
+      } else {
+        console.error('Failed to fetch balance:', response.statusText);
+        setBalance(0);
+      }
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      setBalance(0);
+    }
+  }, []);
+
+  // Use messages from global context to track processing state
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.source === 'user') {
+        setIsProcessing(true);
+      } else if (lastMessage.source === 'ai') {
+        setIsProcessing(false);
+      }
+    }
+  }, [messages]);
+
+  // Inactivity timer function - DISABLED to prevent premature disconnects
+  // The global voice widget should handle session management instead
+  const resetInactivityTimer = useCallback(() => {
+    // Timer disabled - sessions should persist until user explicitly ends them
+    // This prevents the voice interface from interfering with the global widget
+    return;
+
+    // // Clear existing timer
+    // if (inactivityTimerRef.current) {
+    //   clearTimeout(inactivityTimerRef.current);
+    // }
+    //
+    // // Set new timer for 60 seconds of inactivity (increased from 5s)
+    // inactivityTimerRef.current = setTimeout(async () => {
+    //   console.log('60 seconds of inactivity - closing session');
+    //   try {
+    //     await endSession();
+    //   } catch (error) {
+    //     console.error('Error ending session:', error);
+    //   }
+    //   onNavigate("dashboard");
+    // }, 60000);
+  }, []);
+
+  const stopConversation = useCallback(async () => {
+    try {
+      await endSession();
+      setStagedPayments([]);
+      setRecordingTime(0);
+      setIsProcessing(false);
+      setIsPushToTalk(false);
+    } catch (error) {
+      console.error('Error stopping conversation:', error);
+    }
+  }, [endSession]);
+
+  // Start session on first interaction (when user presses push-to-talk)
+  const handleFirstInteraction = useCallback(() => {
+    if (!isConnected && !isLoading && userId) {
+      console.log('🎤 Starting voice session on user interaction');
+      startSession();
+    }
+  }, [isConnected, isLoading, userId, startSession]);
+
+  // Auto-start ElevenLabs session when voice interface opens
+  const hasAutoStarted = useRef(false);
+  useEffect(() => {
+    if (userId && !isConnected && !isLoading && !hasAutoStarted.current) {
+      hasAutoStarted.current = true;
+      console.log('🚀 Auto-starting ElevenLabs session on voice interface open');
+      startSession();
+    }
+  }, [userId, isConnected, isLoading, startSession]); // Include all deps but use ref to prevent re-runs
+
+  // Fetch balance on mount and set up real-time subscription
+  useEffect(() => {
+    // Initial fetch
+    fetchBalance();
+
+    if (!user?.id) return;
+
+    // Set up real-time subscription to profiles table
+    const channel = supabase
+      .channel('profile-balance-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Balance updated in real-time:', payload);
+          if (payload.new && 'wallet_balance' in payload.new) {
+            setBalance(payload.new.wallet_balance || 0);
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchBalance, supabase]);
+
+  // Start inactivity timer when connected
+  useEffect(() => {
+    if (isConnected) {
+      resetInactivityTimer();
+    }
+
+    // Cleanup timer on unmount
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [isConnected, resetInactivityTimer]);
+
+  // Button click to start session (no longer push-to-talk, just click to connect)
+  const handleMicClick = useCallback(async () => {
+    // Start session if not connected
+    if (!isConnected && !isLoading) {
+      console.log('🎤 Starting session on mic click...');
+      hasAutoStarted.current = true; // Prevent auto-start from also triggering
+      await startSession();
+      return;
+    }
+    // If already connected, just log - ElevenLabs is always listening
+    console.log('Already connected - just speak');
+  }, [isConnected, isLoading, startSession]);
+
+  // Keep these for backwards compatibility but they're not really needed anymore
+  const handleMouseDown = handleMicClick;
+  const handleMouseUp = useCallback(() => {
+    // No-op - ElevenLabs is always listening when connected
+  }, []);
+
+  // Handle keyboard events - Space to connect if not connected
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !isConnected && !isLoading) {
+        e.preventDefault();
+        handleMicClick();
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // No-op - ElevenLabs is always listening
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isConnected, isLoading, handleMicClick]);
+
+  // Initialize the ElevenLabs agent
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isConnected) {
+      interval = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setRecordingTime(0);
+    }
+    return () => clearInterval(interval);
+  }, [isConnected]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Show loading state while userId is being fetched
+  if (userContextLoading || !userId) {
+    return (
+      <div className="min-h-[100dvh] surface-voice flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full border-2 border-[hsl(var(--voice-accent))] border-t-transparent animate-spin mx-auto" />
+          <p className="text-foreground text-base font-medium">Connecting voice session&hellip;</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <main
+      id="main-content"
+      className="orbital-page h-[100dvh] min-h-0 flex flex-col relative overflow-hidden pb-[var(--bottom-nav-h)] lg:pb-0"
+    >
+      {/* Height is locked to one viewport; nav clearance stays inside the screen. */}
+      {/* Dark voice orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-[hsl(var(--voice-accent))] opacity-[0.04] blur-3xl animate-blob" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-[hsl(var(--voice-accent-2))] opacity-[0.04] blur-3xl animate-blob animation-delay-2000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-[hsl(var(--brand))] opacity-[0.03] blur-3xl animate-blob animation-delay-4000" />
+      </div>
+
+      {/* Header — top padding respects the notch/status bar in standalone PWA mode */}
+      <div className="flex items-center justify-between pt-[max(1.5rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-4 px-5 relative z-10">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="w-8 h-8 rounded-full bg-foreground/[0.06] border border-border/30 flex items-center justify-center text-foreground/70 hover:text-foreground hover:bg-foreground/10 transition-all duration-200 active:scale-[0.97]"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <span className="orbital-label">{isConnected ? "Listening" : "Voice"}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Balance pill */}
+          <button
+            onClick={() => setIsBalanceSheetOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/[0.06] border border-border/30 hover:bg-foreground/10 transition-all duration-200 active:scale-[0.97]"
+          >
+            <Wallet className="h-3.5 w-3.5 text-[hsl(var(--voice-accent))]" />
+            <span className="text-xs font-semibold text-foreground">
+              {loadingBalance ? '…' : `KSh ${balance.toLocaleString('en-KE', {maximumFractionDigits:0})}`}
+            </span>
+          </button>
+
+          {/* Status dot */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-foreground/[0.06] border border-border/30">
+            <div className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+              isConnected ? 'bg-[hsl(var(--voice-accent))]' :
+              isLoading ? 'bg-amber-400 animate-pulse' :
+              error ? 'bg-red-400' : 'bg-muted-foreground'
+            }`} />
+            <span className="text-[11px] font-medium text-foreground/70">
+              {isConnected ? 'Live' : isLoading ? 'Connecting' : error ? 'Error' : 'Ready'}
+            </span>
+          </div>
+
+          {/* User menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white font-semibold text-sm hover:bg-brand/90 transition-all active:scale-[0.97]">
+                {user?.email?.charAt(0).toUpperCase() || 'U'}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">Voice-activated payments</p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onNavigate("dashboard")}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="text-red-600 focus:text-red-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Error alert */}
+      {error && (
+        <div className="px-5 relative z-10 mb-4">
+          <Alert className="border-red-500/30 bg-red-500/10 text-red-300">
+            <AlertCircle className="h-4 w-4 text-red-400" />
+            <AlertDescription className="text-red-300">{error}</AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {/* Main content — centers when it fits, scrolls internally only if it overflows */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 relative z-10">
+        <div className="min-h-full flex flex-col items-center justify-center gap-5 py-2">
+        <h1 className="orbital-display text-[2.5rem]">Voice Assistant</h1>
+        <p className="font-[family-name:var(--font-display)] text-xl text-[hsl(var(--teal))]">{isConnected ? "Tuma elfu mbili kwa Mum" : "Speak naturally"}</p>
+        <VoiceNodeField
+          active={isConnected}
+          speaking={isSpeaking}
+          processing={isProcessing || isLoading}
+          timer={formatTime(recordingTime)}
+        />
+
+        {/* Payment identification panel — blank until fields are identified */}
+        <PaymentIdentificationPanel payments={stagedPayments} />
+
+        {/* Primary mic action button (Double-Bezel) + End call */}
+        <div className="flex flex-col items-center gap-4 pb-4">
+          {/* Outer shell */}
+          <div className={`p-2 rounded-full border transition-all duration-500 ${
+            isConnected || isPushToTalk
+              ? 'bg-[rgba(0,255,136,0.08)] border-[rgba(0,255,136,0.3)]'
+              : 'bg-background/50 border-border/30'
+          }`}>
+            {/* Inner button */}
+            <button
+              ref={buttonRef}
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleMouseDown}
+              onTouchEnd={handleMouseUp}
+              disabled={isLoading}
+              aria-label={isConnected ? 'Voice connected — just speak' : 'Connect voice session'}
+              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--voice-accent))] focus-visible:ring-offset-2 ring-offset-background shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)] ${
+                isPushToTalk
+                  ? 'bg-red-500'
+                  : isConnected
+                  ? 'bg-[hsl(var(--voice-accent))]'
+                  : isLoading
+                  ? 'bg-foreground/10 cursor-not-allowed'
+                  : 'bg-brand'
+              }`}
+            >
+              {isLoading ? (
+                <div className="w-6 h-6 border-2 border-foreground/40 border-t-foreground rounded-full animate-spin" />
+              ) : isPushToTalk ? (
+                <MicOff className="h-8 w-8 text-white" />
+              ) : (
+                <Mic className={`h-8 w-8 ${isConnected ? 'text-black' : 'text-white'}`} />
+              )}
+            </button>
+          </div>
+
+          {/* End call button — only when connected */}
+          {isConnected && (
+            <button
+              onClick={async () => {
+                await endSession()
+                setIsPushToTalk(false)
+                setStagedPayments([])
+                onNavigate('dashboard')
+              }}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-400 transition-colors duration-200"
+            >
+              <MicOff className="h-3.5 w-3.5" />
+              End session
+            </button>
+          )}
+        </div>
+        </div>
+      </div>
+
+      {/* Balance Sheet */}
+      <BalanceSheet
+        isOpen={isBalanceSheetOpen}
+        onClose={() => setIsBalanceSheetOpen(false)}
+        currentBalance={balance}
+        onBalanceUpdate={(newBalance) => setBalance(newBalance)}
+      />
+    </main>
+  );
+}
