@@ -1,0 +1,1202 @@
+<title>Ongea Pesa × LOOP</title>
+
+<style>
+/* ============================================================
+   ONGEA PESA × LOOP — pitch deck
+   Palette + type derived from Product Launch/00_Brand_Foundation/brand-spec.md
+   Deliberately single-theme: this is a projected deck, it commits to the
+   Abyss Ink stage on any host ground. Every colour is painted explicitly.
+   ============================================================ */
+
+:root {
+  /* ground */
+  --ink:      #050E12;   /* stage, deeper than Abyss so panels lift */
+  --abyss:    #0A1A1F;   /* Abyss Ink — panel */
+  --sea:      #0E2A30;   /* Deep Sea — raised panel */
+  /* voice teal family */
+  --teal:     #0FB5A6;   /* Deep Voice Teal */
+  --cyan:     #22D3EE;   /* Electric Cyan */
+  --green:    #34D399;   /* Signal Green */
+  /* text on dark */
+  --mist:     #E6F7F5;   /* Mist */
+  --muted:    #8AAEB0;   /* teal-biased neutral, chosen not inherited */
+  --faint:    #567376;
+  --rule:     rgba(230,247,245,.13);
+  --rule-2:   rgba(230,247,245,.07);
+
+  /* the one light slide (LOOP), same system inverted */
+  --lt-bg:    #E6F7F5;
+  --lt-ink:   #04262A;
+  --lt-muted: #3E6266;
+  --lt-teal:  #0A7C74;   /* darkened for contrast on Mist */
+  --lt-rule:  rgba(4,38,42,.14);
+  --lt-panel: #F5FCFB;
+
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --display: "Sora", "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--mist);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.deck {
+  scroll-snap-type: y mandatory;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100svh;
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) { .deck { scroll-behavior: auto; } }
+
+/* ---------- the stage ---------- */
+
+.slide {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 2vh, 28px) clamp(12px, 2.5vw, 34px);
+  position: relative;
+}
+
+.stage {
+  container-type: inline-size;
+  width: min(1480px, 100%);
+  aspect-ratio: 16 / 9;
+  max-height: calc(100svh - clamp(24px, 4vh, 56px));
+  position: relative;
+  overflow: hidden;
+  border-radius: clamp(10px, 1.1cqi, 20px);
+  background: var(--abyss);
+  border: 1px solid var(--rule);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: clamp(20px, 3.4cqi, 62px);
+  gap: clamp(10px, 1.6cqi, 26px);
+  isolation: isolate;
+}
+
+/* Ambient art layer — always behind, never under live text without a scrim.
+   The brand renders are light painted on black, so they composite with `screen`:
+   the black backing plate drops out entirely and only the glow survives. */
+.amb {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: screen;
+  opacity: .62;
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 80% at 12% 50%, rgba(10,26,31,.97) 0%, rgba(10,26,31,.86) 42%, rgba(10,26,31,.30) 76%),
+    linear-gradient(180deg, rgba(5,14,18,.55), rgba(5,14,18,.25) 40%, rgba(5,14,18,.80));
+}
+
+/* ---------- chrome: eyebrow + footer ---------- */
+
+.eyebrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2ch;
+  font-family: var(--mono);
+  font-size: clamp(9px, 1.02cqi, 15px);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.eyebrow b { color: var(--teal); font-weight: 600; }
+.eyebrow .mark { color: var(--muted); letter-spacing: .3em; }
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2ch;
+  font-family: var(--mono);
+  font-size: clamp(9px, .98cqi, 14px);
+  letter-spacing: .12em;
+  color: var(--faint);
+  border-top: 1px solid var(--rule-2);
+  padding-top: clamp(8px, 1.1cqi, 18px);
+}
+
+/* ---------- type scale ---------- */
+
+.h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(26px, 5.3cqi, 86px);
+  line-height: .96;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+  margin: 0;
+}
+.h1 em { font-style: normal; color: var(--teal); }
+
+.h2 {
+  font-family: var(--display);
+  font-weight: 650;
+  font-size: clamp(15px, 2.15cqi, 34px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  margin: 0;
+}
+
+.lede {
+  font-size: clamp(12px, 1.52cqi, 24px);
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 58ch;
+  margin: 0;
+}
+.lede strong { color: var(--mist); font-weight: 600; }
+
+.small {
+  font-size: clamp(10px, 1.18cqi, 17px);
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+}
+
+.kicker {
+  font-family: var(--mono);
+  font-size: clamp(9px, 1.02cqi, 15px);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+
+/* ---------- shared blocks ---------- */
+
+.body { min-height: 0; display: grid; align-content: center; }
+
+.cols {
+  display: grid;
+  gap: clamp(14px, 2.6cqi, 46px);
+  align-items: start;
+}
+
+.card {
+  background: linear-gradient(160deg, rgba(14,42,48,.86), rgba(10,26,31,.72));
+  border: 1px solid var(--rule);
+  border-radius: clamp(8px, .8cqi, 14px);
+  padding: clamp(11px, 1.5cqi, 24px);
+  display: grid;
+  gap: clamp(4px, .55cqi, 9px);
+  align-content: start;
+}
+.card .t {
+  font-family: var(--display);
+  font-weight: 640;
+  font-size: clamp(11px, 1.32cqi, 20px);
+  letter-spacing: -.012em;
+  color: var(--mist);
+}
+.card .d {
+  font-size: clamp(9.5px, 1.08cqi, 16px);
+  line-height: 1.45;
+  color: var(--muted);
+}
+.card .ix {
+  font-family: var(--mono);
+  font-size: clamp(8px, .9cqi, 13px);
+  letter-spacing: .2em;
+  color: var(--teal);
+}
+
+/* link chips */
+.links { display: flex; flex-wrap: wrap; gap: clamp(5px, .6cqi, 10px); }
+.chip {
+  font-family: var(--mono);
+  font-size: clamp(8.5px, .92cqi, 13px);
+  letter-spacing: .06em;
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  padding: .42em 1em;
+  white-space: nowrap;
+  transition: color .18s, border-color .18s, background-color .18s;
+}
+.chip::before { content: "↗ "; color: var(--teal); }
+.chip:hover { color: var(--mist); border-color: var(--teal); background: rgba(15,181,166,.10); }
+.chip:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+/* ============================================================
+   01 — COVER
+   ============================================================ */
+
+#s1 .stage {
+  grid-template-rows: auto 1fr auto;
+  background: radial-gradient(90% 120% at 78% 52%, #0d2f34 0%, #0A1A1F 55%, #061218 100%);
+}
+.cover-grid > * { min-width: 0; }
+.cover-grid {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  align-items: center;
+  gap: clamp(14px, 2.4cqi, 40px);
+  min-height: 0;
+}
+.wordmark {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(34px, 8.4cqi, 136px);
+  line-height: .85;
+  letter-spacing: -.05em;
+  margin: 0;
+  background: linear-gradient(96deg, var(--green) 0%, var(--teal) 46%, var(--cyan) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.cover-sw {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(13px, 2.05cqi, 33px);
+  letter-spacing: -.015em;
+  color: var(--mist);
+  margin: 0;
+}
+.cover-sw span { color: var(--faint); }
+
+.orb-wrap { display: grid; place-items: center; min-height: 0; height: 100%; }
+.orb {
+  width: min(100%, 40cqi);
+  aspect-ratio: 1;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  /* screen drops the black plate; the mask feathers the render's square edge */
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 92%);
+  mask-image: radial-gradient(closest-side, #000 62%, transparent 92%);
+  animation: orbit 84s linear infinite;
+}
+@keyframes orbit { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .orb { animation: none; } }
+
+.rule-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--teal) 18%, var(--cyan) 52%, transparent);
+  opacity: .55;
+}
+
+/* ============================================================
+   02 — BACKGROUND
+   ============================================================ */
+.three { grid-template-columns: repeat(3, 1fr); }
+
+/* ============================================================
+   03 — PROBLEM
+   ============================================================ */
+.prob { grid-template-columns: 1.05fr .95fr; align-items: center; }
+.prob > * { min-width: 0; }
+#s3 .h1 { font-size: clamp(20px, 3.62cqi, 57px); }
+.ussd {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: clamp(34px, 9.4cqi, 152px);
+  line-height: .8;
+  letter-spacing: -.04em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(138,174,176,.30);
+  user-select: none;
+  margin: 0;
+}
+.ussd-sub {
+  font-family: var(--mono);
+  font-size: clamp(8.5px, .95cqi, 14px);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: clamp(6px,.9cqi,14px) 0 0;
+}
+.rows { display: grid; gap: 0; }
+.row {
+  display: grid;
+  /* auto, not a ch measure — the value is set much larger than the row's own
+     font-size, so a ch-based track under-measures it and the label collides */
+  grid-template-columns: auto 1fr;
+  gap: clamp(10px, 1.6cqi, 26px);
+  align-items: baseline;
+  padding: clamp(7px, .95cqi, 16px) 0;
+  border-bottom: 1px solid var(--rule-2);
+}
+.row:first-child { border-top: 1px solid var(--rule-2); }
+.row .v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: clamp(13px, 1.9cqi, 30px);
+  letter-spacing: -.02em;
+  color: var(--cyan);
+  white-space: nowrap;
+}
+.row .l {
+  font-size: clamp(9.5px, 1.12cqi, 17px);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* ============================================================
+   04 — SOLUTION
+   ============================================================ */
+.flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(12px, 2cqi, 34px); }
+.step { display: grid; gap: clamp(5px, .7cqi, 11px); align-content: start; }
+.step .n {
+  font-family: var(--mono);
+  font-size: clamp(8.5px, .95cqi, 14px);
+  letter-spacing: .24em;
+  color: var(--teal);
+}
+.step .t {
+  font-family: var(--display);
+  font-weight: 660;
+  font-size: clamp(14px, 2cqi, 32px);
+  letter-spacing: -.022em;
+}
+.step .d { font-size: clamp(9.5px, 1.1cqi, 16px); line-height: 1.48; color: var(--muted); }
+.step .d b { color: var(--mist); font-weight: 600; }
+.step .m,
+.card .m {
+  font-family: var(--mono);
+  font-size: clamp(8px, .9cqi, 12.5px);
+  letter-spacing: .12em;
+  color: var(--faint);
+  border-top: 1px solid var(--rule-2);
+  padding-top: clamp(5px, .7cqi, 11px);
+  margin-top: clamp(2px, .35cqi, 6px);
+}
+
+.said {
+  font-family: var(--display);
+  font-weight: 620;
+  font-size: clamp(13px, 1.85cqi, 29px);
+  letter-spacing: -.02em;
+  color: var(--cyan);
+  line-height: 1.2;
+}
+.said small { display: block; font-family: var(--sans); font-weight: 400; font-size: .5em; letter-spacing: 0; color: var(--faint); margin-top: .5em; }
+
+.wave { display: block; width: 100%; height: clamp(30px, 5.4cqi, 96px); }
+
+/* ============================================================
+   05 — LOOP (light slide)
+   ============================================================ */
+#s5 .stage {
+  background: linear-gradient(168deg, var(--lt-panel) 0%, var(--lt-bg) 58%, #D6EFEC 100%);
+  border-color: rgba(4,38,42,.12);
+  color: var(--lt-ink);
+}
+#s5 .eyebrow { color: var(--lt-muted); }
+#s5 .eyebrow b { color: var(--lt-teal); }
+#s5 .eyebrow .mark { color: var(--lt-muted); }
+#s5 .h1 { color: var(--lt-ink); }
+#s5 .h1 em { color: var(--lt-teal); }
+#s5 .lede { color: var(--lt-muted); }
+#s5 .lede strong { color: var(--lt-ink); }
+#s5 .kicker { color: var(--lt-teal); }
+#s5 .foot { color: var(--lt-muted); border-top-color: var(--lt-rule); }
+#s5 .chip { color: var(--lt-muted); border-color: var(--lt-rule); }
+#s5 .chip::before { color: var(--lt-teal); }
+#s5 .chip:hover { color: var(--lt-ink); border-color: var(--lt-teal); background: rgba(10,124,116,.09); }
+
+.rails { width: 100%; border-collapse: collapse; }
+.rails caption { text-align: left; padding-bottom: .6em; }
+.rails th, .rails td {
+  text-align: left;
+  padding: clamp(5px, .78cqi, 13px) clamp(6px, .8cqi, 14px);
+  border-bottom: 1px solid var(--lt-rule);
+  font-size: clamp(9px, 1.06cqi, 16px);
+  vertical-align: baseline;
+}
+.rails th {
+  font-family: var(--mono);
+  font-size: clamp(7.5px, .86cqi, 12px);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--lt-muted);
+  font-weight: 500;
+  border-bottom-color: rgba(4,38,42,.28);
+}
+.rails td:first-child { color: var(--lt-ink); font-weight: 550; }
+.rails code {
+  font-family: var(--mono);
+  font-size: .92em;
+  color: var(--lt-teal);
+  letter-spacing: -.01em;
+}
+.dir {
+  font-family: var(--mono);
+  font-size: clamp(7.5px, .84cqi, 12px);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  border-radius: 100px;
+  padding: .25em .8em;
+  white-space: nowrap;
+}
+.dir.in  { color: #0A7C74; }
+.dir.out { color: #1D6FA8; }
+.dir.read{ color: #6B7280; }
+
+.env {
+  background: rgba(4,38,42,.05);
+  border: 1px solid var(--lt-rule);
+  border-radius: clamp(8px, .8cqi, 14px);
+  padding: clamp(10px, 1.4cqi, 22px);
+  display: grid;
+  gap: clamp(6px, .8cqi, 13px);
+  align-content: start;
+}
+.env dl { margin: 0; display: grid; gap: clamp(5px, .65cqi, 11px); }
+.env dt {
+  font-family: var(--mono);
+  font-size: clamp(7.5px, .84cqi, 12px);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--lt-muted);
+}
+.env dd {
+  margin: .18em 0 0;
+  font-family: var(--mono);
+  font-size: clamp(9px, 1.02cqi, 15px);
+  color: var(--lt-ink);
+  word-break: break-word;
+}
+.env dd .fade { color: var(--lt-muted); }
+
+/* ============================================================
+   06 — RIGOUR
+   ============================================================ */
+.traps { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(10px, 1.5cqi, 24px); }
+.trap { border-left: 2px solid var(--cyan); padding-left: clamp(9px, 1.2cqi, 20px); display: grid; gap: clamp(4px,.5cqi,8px); align-content: start; }
+.trap .t {
+  font-family: var(--display);
+  font-weight: 640;
+  font-size: clamp(11px, 1.42cqi, 22px);
+  letter-spacing: -.018em;
+  line-height: 1.14;
+}
+.trap .d { font-size: clamp(9px, 1.05cqi, 15.5px); line-height: 1.45; color: var(--muted); }
+.trap code { font-family: var(--mono); color: var(--green); font-size: .95em; }
+
+.proof { display: flex; flex-wrap: wrap; gap: clamp(5px, .6cqi, 10px); }
+.pill {
+  font-family: var(--mono);
+  font-size: clamp(8px, .92cqi, 13px);
+  letter-spacing: .1em;
+  color: var(--mist);
+  background: rgba(15,181,166,.10);
+  border: 1px solid rgba(15,181,166,.34);
+  border-radius: 100px;
+  padding: .42em 1em;
+  white-space: nowrap;
+}
+.pill b { color: var(--green); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   07 — EXTRAS
+   ============================================================ */
+.grid6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(9px, 1.3cqi, 20px); }
+
+/* ============================================================
+   08 — THANK YOU
+   ============================================================ */
+#s8 .stage { background: radial-gradient(80% 110% at 50% 62%, #0e3238 0%, #0A1A1F 58%, #050E12 100%); }
+.asante {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(40px, 11cqi, 176px);
+  line-height: .84;
+  letter-spacing: -.05em;
+  margin: 0;
+  background: linear-gradient(100deg, var(--green), var(--teal) 52%, var(--cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.voices { display: flex; flex-wrap: wrap; gap: clamp(6px, .8cqi, 13px); justify-content: center; }
+.voice {
+  display: inline-flex;
+  align-items: center;
+  gap: .7em;
+  font-size: clamp(9px, 1.08cqi, 16px);
+  color: var(--mist);
+  background: rgba(14,42,48,.75);
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  padding: .5em 1.1em .5em .85em;
+}
+.voice .dot {
+  width: .55em; height: .55em; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 .28em rgba(52,211,153,.16);
+  flex: none;
+}
+.centered { text-align: center; justify-items: center; }
+.centered .lede { margin-inline: auto; }
+
+/* ---------- nav rail ---------- */
+
+.rail {
+  position: fixed;
+  right: clamp(8px, 1.1vw, 20px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: grid;
+  gap: 10px;
+}
+.rail button {
+  appearance: none;
+  width: 22px; height: 22px;
+  padding: 0;
+  display: grid; place-items: center;
+  background: none; border: 0; cursor: pointer;
+}
+.rail button::after {
+  content: "";
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(138,174,176,.34);
+  transition: background-color .2s, transform .2s;
+}
+.rail button[aria-current="true"]::after { background: var(--cyan); transform: scale(1.5); }
+.rail button:hover::after { background: var(--teal); }
+.rail button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; border-radius: 50%; }
+
+.counter {
+  position: fixed;
+  left: clamp(10px, 1.4vw, 24px);
+  bottom: clamp(10px, 1.6vh, 22px);
+  z-index: 20;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: .22em;
+  color: var(--faint);
+  pointer-events: none;
+}
+.counter b { color: var(--cyan); font-weight: 600; }
+
+/* ---------- reveal ---------- */
+[data-r] { opacity: 0; transform: translateY(14px); transition: opacity .62s cubic-bezier(.2,.7,.3,1), transform .62s cubic-bezier(.2,.7,.3,1); transition-delay: var(--d, 0ms); }
+.live [data-r] { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  [data-r] { opacity: 1; transform: none; transition: none; }
+}
+
+/* ---------- narrow screens: let it flow ---------- */
+@media (max-width: 860px), (max-aspect-ratio: 1/1) {
+  .deck { scroll-snap-type: none; height: auto; overflow: visible; }
+  .slide { min-height: 0; scroll-snap-align: none; padding: 10px; }
+  .stage { aspect-ratio: auto; max-height: none; padding: 22px 18px; gap: 18px; }
+  .cover-grid, .prob, .cols, .three, .flow, .traps, .grid6 { grid-template-columns: 1fr !important; }
+  .orb { width: min(74vw, 320px); }
+  .rail { display: none; }
+  .counter { display: none; }
+  .amb { opacity: .40; }
+  .rails th:nth-child(3), .rails td:nth-child(3) { display: none; }
+  /* the eyebrow and footer are two-up rows; at this width they stack */
+  .eyebrow, .foot { flex-direction: column; align-items: flex-start; gap: 4px; letter-spacing: .14em; }
+  .eyebrow .mark { letter-spacing: .18em; }
+  .wave { height: 56px; }
+  .ussd { font-size: 74px; }
+}
+
+@media print {
+  .deck { height: auto; overflow: visible; scroll-snap-type: none; }
+  .slide { min-height: 0; break-after: page; padding: 0; }
+  .stage { border-radius: 0; break-inside: avoid; }
+  .rail, .counter { display: none; }
+}
+</style>
+
+<main class="deck" id="deck">
+
+<!-- ══════════════════ 01 · COVER ══════════════════ -->
+<section class="slide" id="s1" aria-label="Cover">
+  <div class="stage">
+    <div class="eyebrow">
+      <span><b>Ongea Pesa</b> &nbsp;·&nbsp; pitch deck</span>
+      <span class="mark">by NSAIT · Nairobi</span>
+    </div>
+
+    <div class="body">
+      <div class="cover-grid">
+        <div style="display:grid; gap:clamp(10px,1.5cqi,26px);">
+          <p class="kicker" data-r style="--d:60ms">Voice-first money · Kenya</p>
+          <h1 class="wordmark" data-r style="--d:140ms">ONGEA<br>PESA</h1>
+          <div class="rule-glow" data-r style="--d:220ms"></div>
+          <p class="cover-sw" data-r style="--d:300ms">Ongea. Pesa itembee.<br><span>Speak. Let money move.</span></p>
+          <p class="lede" data-r style="--d:380ms; max-width:42ch">You say the payment in your own words. We show it back to you. Then it goes out over <strong>LOOP</strong> — NCBA’s licensed banking rails.</p>
+        </div>
+        <div class="orb-wrap" data-r style="--d:200ms">
+          <div class="orb" style="background-image:url('__ORB__')" role="img" aria-label="The Ongea Pesa orbital mark: a glowing core wrapped in soundwave rings"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Speak. Send. Done.</span>
+      <span>8 slides · scroll or press →</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 02 · BACKGROUND ══════════════════ -->
+<section class="slide" id="s2" aria-label="Background">
+  <div class="stage">
+    <div class="amb" style="background-image:url('__VOICE__')"></div>
+    <div class="scrim"></div>
+
+    <div class="eyebrow">
+      <span><b>01</b> &nbsp;·&nbsp; Background</span>
+      <span class="mark">Ongea Pesa</span>
+    </div>
+
+    <div class="body">
+      <div class="cols" style="grid-template-columns: 1fr; gap:clamp(12px,2cqi,34px);">
+        <h2 class="h1" data-r style="font-size:clamp(22px,4.5cqi,72px)">Money here already moves by phone.<br><em>It just doesn’t move by voice.</em></h2>
+        <p class="lede" data-r style="--d:120ms">Kenya runs on mobile money — but every shilling still travels through a menu tree you type your way down. Ongea Pesa is the layer on top: <strong>a payment you can simply say out loud</strong>, in English, Swahili or Sheng, on any phone with a browser.</p>
+
+        <div class="cols three" style="margin-top:clamp(2px,.6cqi,10px)">
+          <div class="card" data-r style="--d:220ms">
+            <span class="ix">WHO IT’S FOR</span>
+            <span class="t">The M-Pesa generation</span>
+            <span class="d">Hustlers, chama members, mama mbogas, small traders. Mobile-only, Sheng-fluent, and far more comfortable speaking than typing.</span>
+            <span class="m">MOBILE-ONLY · SHENG-FLUENT</span>
+          </div>
+          <div class="card" data-r style="--d:300ms">
+            <span class="ix">WHAT IT DOES</span>
+            <span class="t">Say it, confirm it, sent</span>
+            <span class="d">One sentence carries the whole instruction — amount, recipient, rail. You review it on screen before a single shilling moves.</span>
+            <span class="m">ENGLISH · KISWAHILI · SHENG</span>
+          </div>
+          <div class="card" data-r style="--d:380ms">
+            <span class="ix">WHERE IT RUNS</span>
+            <span class="t">A PWA, built in Nairobi</span>
+            <span class="d">No app store, no 200MB download. It installs from the browser and works on the handsets people already carry.</span>
+            <span class="m">INSTALLABLE PWA · OFFLINE-TOLERANT</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Positioning · The bank that listens</span>
+      <span>01 / 08</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 03 · PROBLEM ══════════════════ -->
+<section class="slide" id="s3" aria-label="The problem">
+  <div class="stage">
+    <div class="eyebrow">
+      <span><b>02</b> &nbsp;·&nbsp; The problem</span>
+      <span class="mark">Friction, measured</span>
+    </div>
+
+    <div class="body">
+      <div class="cols prob">
+        <div style="display:grid; gap:clamp(10px,1.6cqi,26px);">
+          <h2 class="h1" data-r>To send one payment,<br>you press <em>twelve things</em><br>and hope.</h2>
+          <p class="lede" data-r style="--d:140ms">The technology isn’t the hard part. <strong>The typing is.</strong> Every wrong digit is somebody’s rent landing in a stranger’s account.</p>
+          <p class="ussd" aria-hidden="true" data-r style="--d:240ms">*334#</p>
+          <p class="ussd-sub" data-r style="--d:300ms">Still the front door to most people’s money</p>
+        </div>
+
+        <div class="rows">
+          <div class="row" data-r style="--d:180ms">
+            <span class="v">7–12</span>
+            <span class="l">menu steps to complete a single send</span>
+          </div>
+          <div class="row" data-r style="--d:250ms">
+            <span class="v">2–3 min</span>
+            <span class="l">start to finish, if nothing goes wrong</span>
+          </div>
+          <div class="row" data-r style="--d:320ms">
+            <span class="v">15–20%</span>
+            <span class="l">of attempts carry a wrong digit or a wrong amount</span>
+          </div>
+          <div class="row" data-r style="--d:390ms">
+            <span class="v">~40%</span>
+            <span class="l">of users struggle with the menus — elderly, low-vision, low-literacy</span>
+          </div>
+          <div class="row" data-r style="--d:460ms">
+            <span class="v">100%</span>
+            <span class="l">of a paper bill is still keyed in by hand, digit by digit</span>
+          </div>
+          <p class="small" data-r style="--d:530ms; margin-top:clamp(8px,1.2cqi,20px); color:var(--faint); font-size:clamp(8.5px,.95cqi,13px)">Ongea Pesa internal product research, 2026.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Nobody’s problem is the technology</span>
+      <span>02 / 08</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 04 · SOLUTION ══════════════════ -->
+<section class="slide" id="s4" aria-label="The solution">
+  <div class="stage">
+    <div class="eyebrow">
+      <span><b>03</b> &nbsp;·&nbsp; The solution</span>
+      <span class="mark">Speak · Verify · Done</span>
+    </div>
+
+    <div class="body">
+      <div style="display:grid; gap:clamp(10px,1.7cqi,30px);">
+        <h2 class="h1" data-r>Say it. See it. <em>Send it.</em></h2>
+
+        <div data-r style="--d:120ms">
+          <p class="said">“Tuma elfu mbili kwa Mama Boi.”
+            <small>Send two thousand to Mama Boi — one sentence, no menu.</small></p>
+        </div>
+
+        <canvas class="wave" id="wave" aria-hidden="true" data-r style="--d:200ms"></canvas>
+
+        <div class="flow">
+          <div class="step" data-r style="--d:280ms">
+            <span class="n">STEP 01</span>
+            <span class="t">Speak</span>
+            <span class="d">The voice agent pulls out the <b>amount</b>, the <b>recipient</b> and the <b>rail</b> — and resolves “Mama Boi” against your saved contacts. English, Kiswahili, Sheng.</span>
+            <span class="m">INTENT + ENTITIES · CONTACT MATCH</span>
+          </div>
+          <div class="step" data-r style="--d:360ms">
+            <span class="n">STEP 02</span>
+            <span class="t">Verify</span>
+            <span class="d">We read it back and hold. Nothing moves without a <b>PIN or Face/Touch ID</b>. The biometric match happens on your handset — we hold a public key, <b>never a face</b>.</span>
+            <span class="m">STEP-UP TOKEN · SHORT-LIVED</span>
+          </div>
+          <div class="step" data-r style="--d:440ms">
+            <span class="n">STEP 03</span>
+            <span class="t">Done</span>
+            <span class="d">The payment leaves on the right rail, the balance updates live, and the receipt is already in your history before you’ve put the phone down.</span>
+            <span class="m">LOOP · M-PESA · PESALINK · TILL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>One sentence of your own language</span>
+      <span>03 / 08</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 05 · LOOP ══════════════════ -->
+<section class="slide" id="s5" aria-label="Built on LOOP">
+  <div class="stage">
+    <div class="eyebrow">
+      <span><b>04</b> &nbsp;·&nbsp; Built on LOOP</span>
+      <span class="mark">NCBA · sandbox verified</span>
+    </div>
+
+    <div class="body">
+      <div style="display:grid; gap:clamp(9px,1.35cqi,22px); min-height:0;">
+        <h2 class="h1" data-r style="font-size:clamp(22px,4.1cqi,64px)">The voice is ours.<br><em>The rails are LOOP’s.</em></h2>
+        <p class="lede" data-r style="--d:110ms; max-width:70ch">LOOP is <strong>NCBA’s developer platform</strong> — the licensed pipe that actually moves the shillings. We wired it end to end in the LOOP sandbox: money in, money out, and a status lookup that tells us the truth about what happened.</p>
+
+        <div class="cols" style="grid-template-columns: 1.45fr .8fr; gap:clamp(12px,1.8cqi,30px); align-items:start; min-height:0;">
+          <table class="rails" data-r style="--d:200ms">
+            <thead>
+              <tr><th scope="col">Operation</th><th scope="col">serviceCode</th><th scope="col">Direction</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>LOOP Prompt — request to pay</td><td><code>NEO_MRCHNT_RTP</code></td><td><span class="dir in">money in</span></td></tr>
+              <tr><td>Send Money — LOOP wallet</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td>Send Money — M-Pesa</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td>Send Money — PesaLink (bank)</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td>Pay to LOOP Till</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td>Pay to M-Pesa Till</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td>Pay to M-Pesa Paybill</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td>Transaction Status Inquiry</td><td><code>MRCHNT_TXN_INQUIRY</code></td><td><span class="dir read">read only</span></td></tr>
+            </tbody>
+          </table>
+
+          <div class="env" data-r style="--d:300ms">
+            <dl>
+              <div>
+                <dt>Sandbox</dt>
+                <dd>sandbox.loop.co.ke<span class="fade">/gateway/…</span></dd>
+              </div>
+              <div>
+                <dt>Production</dt>
+                <dd>api.loop.co.ke<span class="fade">/gateway/…</span></dd>
+              </div>
+              <div>
+                <dt>Auth</dt>
+                <dd>OAuth 2.0 <span class="fade">client_credentials → short-lived Bearer</span></dd>
+              </div>
+              <div>
+                <dt>Signing</dt>
+                <dd>HMAC-SHA256 <span class="fade">merchantTill|timestamp|nonce</span></dd>
+              </div>
+            </dl>
+            <p class="small" style="color:var(--lt-muted); font-size:clamp(8.5px,.96cqi,13px); line-height:1.45">Routing comes down to one question: is the destination a LOOP wallet, an M-Pesa number, a bank account, or a till?</p>
+          </div>
+        </div>
+
+        <div class="links" data-r style="--d:380ms">
+          <a class="chip" href="https://sandbox.loop.co.ke/devportal/docs/loop-api/">LOOP developer portal</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill">unleashed-loop.dev-skill</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/INDEX.md">Reference index</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/api-flows.md">api-flows</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/authorisation.md">authorisation</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/overview.md">overview</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>8 endpoints wired · sandbox to production is a base-URL swap</span>
+      <span>04 / 08</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 06 · RIGOUR ══════════════════ -->
+<section class="slide" id="s6" aria-label="Why it does not guess">
+  <div class="stage">
+    <div class="amb" style="background-image:url('__TRUST__')"></div>
+    <div class="scrim"></div>
+
+    <div class="eyebrow">
+      <span><b>05</b> &nbsp;·&nbsp; Why it doesn’t guess</span>
+      <span class="mark">loop-api · open source</span>
+    </div>
+
+    <div class="body">
+      <div style="display:grid; gap:clamp(10px,1.5cqi,26px);">
+        <h2 class="h1" data-r style="font-size:clamp(22px,4.2cqi,66px)">A banking API punishes guessing.<br><em>So we took the guessing out.</em></h2>
+        <p class="lede" data-r style="--d:110ms; max-width:74ch">Ask any AI assistant about LOOP and it will invent an endpoint that sounds right. We built and open-sourced <strong>loop-api</strong> — a skill that hands the assistant LOOP’s real documentation and one rule: <strong>never state an endpoint, a field or an error code from memory.</strong> Every answer cites the page it came from.</p>
+
+        <div class="traps">
+          <div class="trap" data-r style="--d:200ms">
+            <span class="t">HTTP 200 doesn’t mean it worked</span>
+            <span class="d">The gateway answers <code>200</code> for failures too. Branch on <code>statusCode</code> inside the body — or you book failed payments as paid.</span>
+          </div>
+          <div class="trap" data-r style="--d:280ms">
+            <span class="t">Retrying wrong pays twice</span>
+            <span class="d">On a timeout, retry with the <b>same</b> <code>txnReference</code>. A fresh one can send the money again. A “duplicate” rejection is good news.</span>
+          </div>
+          <div class="trap" data-r style="--d:360ms">
+            <span class="t">It says RSA. It is not RSA</span>
+            <span class="d">Every page repeats the line. The real scheme is <code>HMAC-SHA256</code> over <code>merchantTill|timestamp|nonce</code>, lowercase hex — and the fields go <b>inside</b> requestParameters.</span>
+          </div>
+        </div>
+
+        <div class="proof" data-r style="--d:440ms">
+          <span class="pill"><b>11/13</b> doc pages</span>
+          <span class="pill"><b>4/4</b> HMAC vectors reproduced</span>
+          <span class="pill"><b>15</b> doc conflicts logged</span>
+          <span class="pill"><b>35</b> tests passing</span>
+          <span class="pill">MIT · runs offline</span>
+          <span class="pill">never touches your keys</span>
+        </div>
+
+        <div class="links" data-r style="--d:520ms">
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/SKILL.md">SKILL.md</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/conventions.md">conventions</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/signing.md">signing</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/doc-conflicts.md">doc-conflicts</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/coverage.md">coverage</a>
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/security-testing.md">security-testing</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Unofficial · not affiliated with LOOP or NCBA · confirm fees &amp; limits with LOOP</span>
+      <span>05 / 08</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 07 · EXTRAS ══════════════════ -->
+<section class="slide" id="s7" aria-label="What else we built">
+  <div class="stage">
+    <div class="eyebrow">
+      <span><b>06</b> &nbsp;·&nbsp; And then some</span>
+      <span class="mark">Beyond the send</span>
+    </div>
+
+    <div class="body">
+      <div style="display:grid; gap:clamp(10px,1.6cqi,28px);">
+        <h2 class="h1" data-r style="font-size:clamp(20px,3.6cqi,58px)">Everything else we built<br><em>while we were in there.</em></h2>
+
+        <div class="grid6">
+          <div class="card" data-r style="--d:160ms">
+            <span class="ix">SCAN</span>
+            <span class="t">Point at the bill</span>
+            <span class="d">Gemini Vision reads paybills, tills, QR codes, receipts and bank slips — account, amount and reference come out filled in. Pay now, or save it for later.</span>
+            <span class="m">GEMINI VISION · CONFIDENCE-SCORED</span>
+          </div>
+          <div class="card" data-r style="--d:220ms">
+            <span class="ix">CHAMA</span>
+            <span class="t">The group, handled</span>
+            <span class="d">Start a collection and every member gets their own prompt. Cycles, contributions and rotating payouts tracked without a WhatsApp argument.</span>
+            <span class="m">STK PER MEMBER · CYCLES · PAYOUTS</span>
+          </div>
+          <div class="card" data-r style="--d:280ms">
+            <span class="ix">ESCROW</span>
+            <span class="t">Money that waits</span>
+            <span class="d">Funds park against milestones and only release when both sides agree. Disputes have an actual path instead of a phone call.</span>
+            <span class="m">MILESTONES · PARTICIPANTS · DISPUTES</span>
+          </div>
+          <div class="card" data-r style="--d:340ms">
+            <span class="ix">SECURITY</span>
+            <span class="t">Step-up before it spends</span>
+            <span class="d">A PIN or passkey mints a short-lived token, and no send or withdrawal moves without one. Five bad tries locks the account for fifteen minutes.</span>
+            <span class="m">PIN · WEBAUTHN PASSKEY · LOCKOUT</span>
+          </div>
+          <div class="card" data-r style="--d:400ms">
+            <span class="ix">DATA</span>
+            <span class="t">Locked by default</span>
+            <span class="d">Row-level security on all 22 tables, so a user’s rows are reachable only by that user. Every sensitive action writes an audit event.</span>
+            <span class="m">RLS ON 22 TABLES · AUDIT LOG</span>
+          </div>
+          <div class="card" data-r style="--d:460ms">
+            <span class="ix">ORCHESTRATION</span>
+            <span class="t">One nervous system</span>
+            <span class="d">A 145-node workflow routes voice intents, provider callbacks and reconciliation. A result that arrives twice is only ever counted once.</span>
+            <span class="m">n8n · CALLBACKS · RECONCILIATION</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>Async results reconcile by provider reference — idempotent, both directions</span>
+      <span>06 / 08</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 08 · THANK YOU ══════════════════ -->
+<section class="slide" id="s8" aria-label="Thank you">
+  <div class="stage">
+    <div class="amb" style="background-image:url('__CHAMA__'); opacity:.42"></div>
+    <div class="scrim" style="background:radial-gradient(62% 82% at 50% 54%, rgba(10,26,31,.30) 0%, rgba(10,26,31,.66) 58%, rgba(5,14,18,.92) 100%)"></div>
+
+    <div class="eyebrow">
+      <span><b>Asante sana</b></span>
+      <span class="mark">ongeapesa.com</span>
+    </div>
+
+    <div class="body">
+      <div class="centered" style="display:grid; gap:clamp(10px,1.6cqi,28px); justify-items:center;">
+        <p class="kicker" data-r>Fewer taps · fewer wrong digits · more people who can just ask</p>
+        <h2 class="asante" data-r style="--d:120ms">ASANTE</h2>
+        <p class="cover-sw" data-r style="--d:200ms; text-align:center">The bank that listens.</p>
+
+        <div class="voices" data-r style="--d:300ms" aria-label="Examples of what people say to Ongea Pesa">
+          <span class="voice"><span class="dot"></span>“Tuma elfu mbili kwa Mama Boi.”</span>
+          <span class="voice"><span class="dot"></span>“Lipa hii bill ya stima.”</span>
+          <span class="voice"><span class="dot"></span>“Chama yetu, collect for June.”</span>
+          <span class="voice"><span class="dot"></span>“Balance yangu ni ngapi?”</span>
+          <span class="voice"><span class="dot"></span>“Nitumie change, haraka.”</span>
+        </div>
+
+        <p class="small" data-r style="--d:380ms; max-width:64ch; text-align:center">Five sentences. No menus, no typing, no wrong digits. That is the whole product.</p>
+
+        <div class="links" data-r style="--d:460ms; justify-content:center">
+          <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill">unleashed-loop.dev-skill</a>
+          <a class="chip" href="https://sandbox.loop.co.ke/devportal/docs/loop-api/">LOOP developer portal</a>
+          <a class="chip" href="https://nsait.co.ke">nsait.co.ke</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>hello@ongeapesa.com · @OngeaPesa</span>
+      <span>Built in Nairobi 🇰🇪 by NSAIT · Nairobi Space of AI Tools</span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav class="rail" id="rail" aria-label="Slide navigation"></nav>
+<div class="counter" id="counter" aria-hidden="true"><b>01</b> / 08</div>
+
+<script>
+(function () {
+  var deck    = document.getElementById('deck');
+  var slides  = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var rail    = document.getElementById('rail');
+  var counter = document.getElementById('counter');
+  var titles  = ['Cover','Background','Problem','Solution','Built on LOOP','Why it doesn’t guess','And then some','Thank you'];
+  var current = 0;
+
+  /* ---- nav rail ---- */
+  slides.forEach(function (s, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Go to slide ' + (i + 1) + ': ' + titles[i]);
+    b.addEventListener('click', function () { go(i); });
+    rail.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(rail.children);
+
+  function setCurrent(i) {
+    current = i;
+    dots.forEach(function (d, j) { d.setAttribute('aria-current', j === i ? 'true' : 'false'); });
+    counter.innerHTML = '<b>' + String(i + 1).padStart(2, '0') + '</b> / 08';
+  }
+  function go(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    slides[i].scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    setCurrent(i);
+  }
+
+  /* ---- reveal + current-slide tracking ---- */
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('live');
+        if (e.intersectionRatio > 0.55) setCurrent(slides.indexOf(e.target));
+      }
+    });
+  }, { threshold: [0.2, 0.6] });
+  slides.forEach(function (s) { io.observe(s); });
+  slides[0].classList.add('live');
+  setCurrent(0);
+
+  /* ---- keyboard ---- */
+  addEventListener('keydown', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
+        e.preventDefault(); go(current + 1); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        e.preventDefault(); go(current - 1); break;
+      case 'Home': e.preventDefault(); go(0); break;
+      case 'End':  e.preventDefault(); go(slides.length - 1); break;
+    }
+  });
+
+  /* ---- the voice rule: a waveform drawn to canvas, not hand-authored SVG ---- */
+  var cv = document.getElementById('wave');
+  if (cv) {
+    var ctx = cv.getContext('2d');
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var phase = 0;
+
+    /* The rule is the timeline: its three bands sit directly above the three
+       step columns below it. Left third = the sentence being spoken. Middle
+       third = the hold while you confirm. Right third = the send, resolving
+       into a settled line. Deterministic — same shape on every load. */
+    function env(t, ph) {
+      if (t < 0.34) {
+        var u = t / 0.34;
+        var grain = 0.20
+          + 0.42 * Math.abs(Math.sin(u * 11.3 + ph * 2.2))
+          + 0.24 * Math.abs(Math.sin(u * 27.7 + 1.1))
+          + 0.14 * Math.abs(Math.sin(u * 58.1 + 2.4));
+        /* syllable envelope — reads as words, not as a hairbrush */
+        var syllable = 0.22 + 0.78 * Math.pow(Math.abs(Math.sin(u * 8.4 + 0.35)), 0.65);
+        return grain * syllable;
+      }
+      if (t < 0.66) {
+        /* held: a quiet pulse while the confirmation waits on you */
+        var v = (t - 0.34) / 0.32;
+        return 0.06 + 0.05 * Math.abs(Math.sin(v * 9 - ph * 5));
+      }
+      /* the send: one clean burst that settles flat */
+      var s = (t - 0.66) / 0.34;
+      return 0.06 + 0.80 * Math.pow(Math.sin(Math.min(s / 0.62, 1) * Math.PI), 1.5) * (1 - s * 0.35);
+    }
+
+    function band(t) { return t < 0.34 ? 0 : (t < 0.66 ? 1 : 2); }
+    var BAND_RGB = ['34,211,238', '15,181,166', '52,211,153']; /* cyan · teal · signal green */
+
+    function draw() {
+      var dpr = Math.min(devicePixelRatio || 1, 2);
+      var w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return;
+      cv.width = w * dpr; cv.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      var mid = h / 2;
+      var gap = Math.max(4, w / 150);
+      var bars = Math.floor(w / gap);
+
+      /* the settled baseline the whole thing resolves onto */
+      ctx.strokeStyle = 'rgba(138,174,176,.16)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, mid + .5); ctx.lineTo(w, mid + .5); ctx.stroke();
+
+      /* band boundaries, aligned with the step columns below */
+      [0.335, 0.672].forEach(function (b) {
+        ctx.strokeStyle = 'rgba(138,174,176,.16)';
+        ctx.beginPath();
+        ctx.moveTo(Math.round(b * w) + .5, mid - h * 0.34);
+        ctx.lineTo(Math.round(b * w) + .5, mid + h * 0.34);
+        ctx.stroke();
+      });
+
+      ctx.lineCap = 'round';
+      for (var i = 0; i < bars; i++) {
+        var x = i * gap + gap / 2;
+        var t = i / bars;
+        /* dissolve at both ends rather than stopping dead */
+        var fade = Math.min(1, Math.min(t, 1 - t) * 9);
+        var a = env(t, phase) * fade;
+        var bar = Math.max(0.6, a * h * 0.44);
+        var rgb = BAND_RGB[band(t)];
+        ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.28 + 0.62 * Math.min(a * 1.6, 1)) + ')';
+        ctx.lineWidth = Math.max(1.4, gap * 0.4);
+        ctx.beginPath();
+        ctx.moveTo(x, mid - bar);
+        ctx.lineTo(x, mid + bar);
+        ctx.stroke();
+      }
+
+      /* terminal dot — the transaction, settled */
+      ctx.fillStyle = 'rgba(52,211,153,.95)';
+      ctx.beginPath(); ctx.arc(w - 9, mid, Math.max(2.2, h * 0.045), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(52,211,153,.18)';
+      ctx.beginPath(); ctx.arc(w - 9, mid, Math.max(6, h * 0.13), 0, Math.PI * 2); ctx.fill();
+    }
+
+    function tick() { phase += 0.010; draw(); requestAnimationFrame(tick); }
+
+    draw();
+    addEventListener('resize', draw);
+    if (!reduced) requestAnimationFrame(tick);
+  }
+})();
+</script>
