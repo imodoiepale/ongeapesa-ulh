@@ -155,8 +155,11 @@ async def report_tts_cost(ctx: UserContext, characters: int) -> None:
             logger.warning("FISH_USD_PER_1K_CHARS not set — TTS cost not recorded")
         return
 
+    # Attribute the cost to whichever TTS actually spoke, or the economics
+    # dashboard credits Fish Audio for spend it never incurred.
     payload = {
-        "provider": "fish_audio",
+        "provider": {"fish": "fish_audio", "openai": "openai", "elevenlabs": "elevenlabs"}
+        .get(tts_provider(), "other"),
         "category": "tts",
         "quantity": characters,
         "unit": "characters",
@@ -312,6 +315,63 @@ def build_stt():
     )
 
 
+def tts_provider() -> str:
+    return os.environ.get("ONGEA_TTS", "fish").lower()
+
+
+def build_tts():
+    """TTS is swappable, for the same reason STT is.
+
+    Fish Audio is the nicest voice for the money and stays the default, but it
+    is a separate vendor account — and being unable to speak at all because one
+    signup is pending is a bad way to be blocked. `openai` reuses the key the
+    LLM already needs, so it costs no new account.
+
+    Voice quality differs; the money path does not. Switching is safe.
+    """
+    provider = tts_provider()
+
+    if provider == "fish":
+        return fishaudio.TTS(
+            model=os.environ.get("FISH_TTS_MODEL", "s2.1-pro"),
+            # A cloned Ongea Pesa voice; see README for creating one.
+            reference_id=os.environ.get("FISH_VOICE_ID") or None,
+            latency=os.environ.get("FISH_LATENCY", "balanced"),
+        )
+
+    if provider == "openai":
+        from livekit.plugins import openai
+
+        # Falls back to the LLM key: one OpenAI key covers both.
+        api_key = (
+            os.environ.get("OPENAI_API_KEY")
+            or os.environ.get("ONGEA_LLM_API_KEY")
+            or None
+        )
+        return openai.TTS(
+            model=os.environ.get("ONGEA_TTS_MODEL", "gpt-4o-mini-tts"),
+            voice=os.environ.get("ONGEA_TTS_VOICE", "alloy"),
+            api_key=api_key,
+        )
+
+    if provider == "elevenlabs":
+        # You already pay for ElevenLabs as the default engine. Using it here
+        # keeps ONE voice across both runtimes, which matters while you are
+        # A/B testing them — otherwise you are comparing voices as well as
+        # engines and cannot tell which changed.
+        # Needs: pip install livekit-plugins-elevenlabs
+        from livekit.plugins import elevenlabs
+
+        return elevenlabs.TTS(
+            voice_id=os.environ.get("ELEVENLABS_VOICE_ID") or None,
+            api_key=os.environ.get("ELEVENLABS_API_KEY"),
+        )
+
+    raise ValueError(
+        f"Unknown ONGEA_TTS provider: {provider!r}. Use one of: fish, openai, elevenlabs."
+    )
+
+
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect()
 
@@ -334,12 +394,7 @@ async def entrypoint(ctx: JobContext) -> None:
             api_key=os.environ["ONGEA_LLM_API_KEY"],
             base_url=os.environ.get("ONGEA_LLM_BASE_URL") or None,
         ),
-        tts=fishaudio.TTS(
-            model=os.environ.get("FISH_TTS_MODEL", "s2.1-pro"),
-            # A cloned Ongea Pesa voice; see README for creating one.
-            reference_id=os.environ.get("FISH_VOICE_ID") or None,
-            latency=os.environ.get("FISH_LATENCY", "balanced"),
-        ),
+        tts=build_tts(),
         # VAD detects speech presence and drives barge-in; the turn detector adds
         # the semantic "have they actually finished?" signal on top, which is what
         # stops the agent interrupting mid-sentence.
@@ -380,8 +435,19 @@ def preflight() -> None:
         "LIVEKIT_API_KEY": "from the same LiveKit project",
         "LIVEKIT_API_SECRET": "from the same LiveKit project",
         "ONGEA_LLM_API_KEY": "OpenAI (or compatible) key for intent + tool calling",
-        "FISH_API_KEY": "fish.audio -> Developers -> API keys (TTS)",
     }
+    # Only demand the key for the TTS actually selected — the same way STT works
+    # below. Blocking startup on a vendor you are not using is noise.
+    tts = tts_provider()
+    if tts == "fish":
+        required["FISH_API_KEY"] = (
+            "fish.audio -> Developers -> API keys. "
+            "No account? Set ONGEA_TTS=openai to reuse your OpenAI key instead."
+        )
+    elif tts == "elevenlabs":
+        required["ELEVENLABS_API_KEY"] = "elevenlabs.io (ONGEA_TTS=elevenlabs)"
+    # openai TTS falls back to ONGEA_LLM_API_KEY, already required above.
+
     stt = os.environ.get("ONGEA_STT", "deepgram").lower()
     if stt == "deepgram":
         required["DEEPGRAM_API_KEY"] = "deepgram.com -> API keys (ONGEA_STT=deepgram)"
