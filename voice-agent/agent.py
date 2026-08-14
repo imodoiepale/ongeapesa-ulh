@@ -407,6 +407,15 @@ def preflight() -> None:
     raise SystemExit(1)
 
 
+# Subcommands that do not connect to anything and therefore need no credentials.
+# `download-files` runs during `docker build`, where no environment exists yet —
+# gating it behind preflight fails the image build instead of the container.
+_NO_CREDENTIALS_NEEDED = {"download-files", "help", "--help", "-h"}
+
+
 if __name__ == "__main__":
-    preflight()
+    import sys
+
+    if len(sys.argv) < 2 or sys.argv[1] not in _NO_CREDENTIALS_NEEDED:
+        preflight()
     agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
