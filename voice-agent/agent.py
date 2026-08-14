@@ -49,10 +49,18 @@ COST_URL = f"{APP_URL}/api/costs/record"
 WEBHOOK_TOKEN = os.environ.get("N8N_WEBHOOK_AUTH_TOKEN", "")
 CALLBACK_SECRET = os.environ.get("N8N_CALLBACK_SECRET", "")
 
-# Fish Audio bills per character synthesised. Set this from your actual plan —
-# an inaccurate rate produces a confidently wrong margin, which is worse than a
-# blank one, so it is required rather than defaulted to a guess.
-FISH_USD_PER_1K_CHARS = float(os.environ.get("FISH_USD_PER_1K_CHARS", "0") or 0)
+# TTS is billed per character synthesised. Set this from your provider's actual
+# pricing — an inaccurate rate produces a confidently wrong margin, which is
+# worse than a blank one, so it is required rather than guessed.
+#
+# Provider-neutral name, with the old Fish-specific one still honoured: the
+# default TTS is OpenAI now, and a log line reading "FISH_..." while OpenAI is
+# speaking sends you looking in the wrong place.
+TTS_USD_PER_1K_CHARS = float(
+    os.environ.get("ONGEA_TTS_USD_PER_1K_CHARS")
+    or os.environ.get("FISH_USD_PER_1K_CHARS", "0")
+    or 0
+)
 
 # Mirrors the ElevenLabs agent prompt (scripts/configure-elevenlabs-agent.mjs).
 # Keep the two in sync deliberately: a behavioural difference between engines is
@@ -176,11 +184,14 @@ async def report_tts_cost(ctx: UserContext, characters: int) -> None:
     if not CALLBACK_SECRET:
         logger.warning("N8N_CALLBACK_SECRET not set — skipping cost reporting")
         return
-    if characters <= 0 or FISH_USD_PER_1K_CHARS <= 0:
+    if characters <= 0 or TTS_USD_PER_1K_CHARS <= 0:
         # No rate configured means we cannot state a cost honestly. Skip rather
         # than record a zero that would read as "this was free".
-        if FISH_USD_PER_1K_CHARS <= 0:
-            logger.warning("FISH_USD_PER_1K_CHARS not set — TTS cost not recorded")
+        if TTS_USD_PER_1K_CHARS <= 0:
+            logger.warning(
+                "ONGEA_TTS_USD_PER_1K_CHARS not set (tts=%s) — TTS cost not recorded",
+                tts_provider(),
+            )
         return
 
     # Attribute the cost to whichever TTS actually spoke, or the economics
@@ -191,7 +202,7 @@ async def report_tts_cost(ctx: UserContext, characters: int) -> None:
         "category": "tts",
         "quantity": characters,
         "unit": "characters",
-        "unit_cost_usd": FISH_USD_PER_1K_CHARS / 1000.0,
+        "unit_cost_usd": TTS_USD_PER_1K_CHARS / 1000.0,
         "reference_type": "voice_session",
         "reference_id": ctx.voice_session_id,
         "user_id": ctx.user_id or None,
@@ -614,8 +625,30 @@ async def entrypoint(ctx: JobContext) -> None:
         agent=OngeaAgent(user, room=ctx.room, participant_identity=participant.identity),
     )
 
+    # Log the greeting end to end. "No voice" has three distinct causes that all
+    # look identical from the browser — TTS never ran, TTS ran but published no
+    # track, or a track was published and the client never played it — and the
+    # logs so far could not tell them apart. These three lines can.
     greeting = f"Niaje {user.user_name.split(' ')[0]}, ni Ongea Pesa. Nikusaidie aje?"
-    await session.say(greeting, allow_interruptions=True)
+    logger.info("greeting: synthesising via tts=%s", tts_provider())
+    try:
+        handle = session.say(greeting, allow_interruptions=True)
+        await handle.wait_for_playout()
+        logger.info("greeting: playout finished — audio WAS published")
+    except Exception:
+        logger.exception("greeting FAILED — the agent produced no audio")
+
+    # What the agent actually published. If this is empty the client had nothing
+    # to play, and the problem is here; if it lists an audio track, the problem
+    # is on the browser side instead.
+    try:
+        pubs = list(ctx.room.local_participant.track_publications.values())
+        logger.info(
+            "agent published %d track(s): %s",
+            len(pubs), [f"{p.kind}/{p.source}" for p in pubs] or "NONE",
+        )
+    except Exception:
+        logger.exception("could not read published tracks")
 
     # Report cost when the room empties, whichever way the call ended.
     async def _on_shutdown() -> None:
