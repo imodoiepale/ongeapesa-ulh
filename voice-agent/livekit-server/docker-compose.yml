@@ -92,11 +92,12 @@ services:
         max-size: '10m'
         max-file: '3'
 
-# Traefik discovers containers on its own network. If your Traefik runs on a
-# named external network rather than the default bridge, uncomment and set it —
-# the `docker inspect` command above will show which network n8n is attached to.
+# NO `networks:` BLOCK — deliberate, verified on this VPS 2026-08-14.
 #
-# networks:
-#   default:
-#     external: true
-#     name: <traefik-network-name>
+# Traefik here runs in `host` network mode (`docker inspect` on the traefik
+# container reports its network as "host"). A host-networked Traefik reaches
+# other containers at their bridge IP, so LiveKit belongs on the default bridge
+# and needs no shared network.
+#
+# Do not "fix" this by adding `networks: {default: {external: true, name: host}}`
+# — host is not attachable that way, and Compose fails before anything starts.

@@ -26,7 +26,7 @@ browser  ──POST /api/voice/livekit-token──▶  Next.js (Vercel)
 ```
 
 **Both halves run on your VPS.** The SFU is self-hosted
-(`livekit-server/docker-compose.hostinger.yml`) at
+(`livekit-server/docker-compose.yml`) at
 `wss://livekit.srv1631847.hstgr.cloud`, not LiveKit Cloud. Deploy it before the
 worker — the worker exits at startup if it has no server to dial.
 
@@ -140,11 +140,11 @@ The worker is useless without a LiveKit server. Stand that up before anything
 below — Docker Manager → Compose → "Compose from URL":
 
 ```
-https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/livekit-server/docker-compose.hostinger.yml
+https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/livekit-server/docker-compose.yml
 ```
 
 Full instructions, including the Traefik label check and key generation, are in
-`livekit-server/docker-compose.hostinger.yml` itself and in
+`livekit-server/docker-compose.yml` itself and in
 `docs/deployment/VPS_VOICE_WORKER.md`.
 
 The one thing worth repeating here: **UDP 7882 must be published directly.**

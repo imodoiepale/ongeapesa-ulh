@@ -49,7 +49,7 @@ docker run --rm livekit/livekit-server generate-keys
 **Deploy** via Docker Manager → Compose → "Compose from URL", project `livekit`:
 
 ```
-https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/livekit-server/docker-compose.hostinger.yml
+https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/livekit-server/docker-compose.yml
 ```
 
 Add one panel variable, exact `KEY: SECRET` form including the space:
