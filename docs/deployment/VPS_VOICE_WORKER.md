@@ -14,12 +14,69 @@ Get these before touching the VPS, or step 5 will block:
 
 | Key | Where | Notes |
 |---|---|---|
-| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | livekit.io → new project → Settings → Keys | Free tier is enough. **Also add these three to Vercel.** |
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | **self-hosted** — see §0b below | `wss://livekit.srv1631847.hstgr.cloud` + your generated pair. **Also add these three to Vercel.** |
 | `FISH_API_KEY` | fish.audio → Developers → API keys | TTS only — Fish Audio does not do speech recognition |
 | `DEEPGRAM_API_KEY` | deepgram.com → API keys | This is the STT. Free tier has credit |
 | `ONGEA_LLM_API_KEY` | your LLM provider | |
 | `N8N_CALLBACK_SECRET` | copy the value already in Vercel | Must match exactly or cost reporting 401s |
 | `FISH_USD_PER_1K_CHARS` | your fish.audio plan pricing page | Without it, TTS cost is not recorded |
+
+---
+
+## 0b. Stand up the LiveKit SFU (do this first)
+
+We self-host the media server on this box. The worker exits at startup if there
+is nothing to dial, so this comes before everything below.
+
+**Check what Traefik actually calls its entrypoint and certresolver.** Hostinger
+does not document these, and guessing is the most likely way this fails:
+
+```bash
+docker inspect $(docker ps --filter name=n8n --format '{{.Names}}' | head -1) \
+  --format '{{json .Config.Labels}}' | tr ',' '\n' | grep -i traefik
+```
+
+The compose file assumes `websecure` / `letsencrypt`. If yours differ, edit the
+two label lines before deploying.
+
+**Generate the key pair** — on the VPS, and never paste the output into a chat
+window or commit it:
+
+```bash
+docker run --rm livekit/livekit-server generate-keys
+```
+
+**Deploy** via Docker Manager → Compose → "Compose from URL", project `livekit`:
+
+```
+https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/livekit-server/docker-compose.yml
+```
+
+Add one panel variable, exact `KEY: SECRET` form including the space:
+
+```
+LIVEKIT_KEYS = APIxxxxxxxx: <the generated secret>
+```
+
+### Ports, and the one that gets forgotten
+
+| Port | Purpose | Exposure |
+|---|---|---|
+| 7880/tcp | signalling (HTTP + WebSocket) | behind Traefik, which supplies TLS |
+| 7881/tcp | WebRTC over TCP — the fallback when UDP is blocked | published directly |
+| 7882/udp | **the actual media** | published directly |
+
+Traefik proxies HTTP and TCP. It **cannot** carry the UDP media. If 7882/udp is
+not published — or if `rtc.use_external_ip` is not true, so clients get handed a
+`172.x` container address — the call connects normally and then has no audio.
+That symptom looks like a client bug and is miserable to trace, so verify:
+
+```bash
+docker port livekit-server            # must list 7882/udp
+curl -sI https://livekit.srv.../rtc   # 101, not 200 or a Traefik 404
+```
+
+No DNS record is needed: `*.srv1631847.hstgr.cloud` already resolves to this box.
 
 ---
 

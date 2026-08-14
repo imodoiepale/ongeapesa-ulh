@@ -367,5 +367,46 @@ async def entrypoint(ctx: JobContext) -> None:
     ctx.add_shutdown_callback(_on_shutdown)
 
 
+def preflight() -> None:
+    """Name every missing variable at once, before the SDK dies on the first one.
+
+    The LiveKit worker raises on one variable at a time - fix LIVEKIT_API_KEY and
+    it restarts only to die on LIVEKIT_URL. Under `restart: unless-stopped` that
+    is an endless crash-loop where each round reveals exactly one more thing, and
+    the traceback buries the real cause. This reports the whole set once.
+    """
+    required = {
+        "LIVEKIT_URL": "wss://<project>.livekit.cloud - from livekit.io Settings -> Keys",
+        "LIVEKIT_API_KEY": "from the same LiveKit project",
+        "LIVEKIT_API_SECRET": "from the same LiveKit project",
+        "ONGEA_LLM_API_KEY": "OpenAI (or compatible) key for intent + tool calling",
+        "FISH_API_KEY": "fish.audio -> Developers -> API keys (TTS)",
+    }
+    stt = os.environ.get("ONGEA_STT", "deepgram").lower()
+    if stt == "deepgram":
+        required["DEEPGRAM_API_KEY"] = "deepgram.com -> API keys (ONGEA_STT=deepgram)"
+    elif stt in ("openai", "whisper"):
+        required["OPENAI_API_KEY"] = "platform.openai.com (ONGEA_STT=openai)"
+
+    missing = [k for k in required if not (os.environ.get(k) or "").strip()]
+    if not missing:
+        logger.info(
+            "preflight ok - stt=%s llm=%s app=%s",
+            stt, os.environ.get("ONGEA_LLM_MODEL", "gpt-4o-mini"), APP_URL,
+        )
+        return
+
+    logger.error("=" * 68)
+    logger.error("CANNOT START - %d required environment variable(s) missing:", len(missing))
+    for k in missing:
+        logger.error("  %-22s %s", k, required[k])
+    logger.error("")
+    logger.error("Set these in Hostinger: Docker Manager -> ongea-voice-agent ->")
+    logger.error("Environment variables, then redeploy. Full list: voice-agent/.env.example")
+    logger.error("=" * 68)
+    raise SystemExit(1)
+
+
 if __name__ == "__main__":
+    preflight()
     agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))

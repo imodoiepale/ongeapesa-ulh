@@ -17,10 +17,18 @@ browser  ──POST /api/voice/livekit-token──▶  Next.js (Vercel)
    │                                            │ opens voice_sessions row
    │        ◀── token + room + wss url ─────────┘
    │
-   └──WebRTC──▶  LiveKit Cloud  ◀──WebRTC──  voice-agent (Hostinger VPS)
-                                                  │
-                                                  └──POST /api/voice/webhook──▶ Next.js ──▶ n8n
+   │        ┌──────── Hostinger VPS srv1631847 ────────┐
+   └──WebRTC┼──▶  livekit-server  ◀──WebRTC──  voice-agent
+            │     (self-hosted SFU)                 │  │
+            └───────────────────────────────────────┼──┘
+                                                    │
+                            ──POST /api/voice/webhook──▶ Next.js ──▶ n8n
 ```
+
+**Both halves run on your VPS.** The SFU is self-hosted
+(`livekit-server/docker-compose.yml`) at
+`wss://livekit.srv1631847.hstgr.cloud`, not LiveKit Cloud. Deploy it before the
+worker — the worker exits at startup if it has no server to dial.
 
 The last hop is the important one: **the worker never talks to n8n, Supabase or
 NCBA directly.** It posts to the same `/api/voice/webhook` the ElevenLabs agent
@@ -125,6 +133,24 @@ Neither is the destination. Both are holding positions until the fine-tune from
 
 **A is the recommended path on Hostinger.** The panel shows the worker next to
 your other applications, with logs, restart and terminal in the UI.
+
+### Deploy the SFU first
+
+The worker is useless without a LiveKit server. Stand that up before anything
+below — Docker Manager → Compose → "Compose from URL":
+
+```
+https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/livekit-server/docker-compose.yml
+```
+
+Full instructions, including the Traefik label check and key generation, are in
+`livekit-server/docker-compose.yml` itself and in
+`docs/deployment/VPS_VOICE_WORKER.md`.
+
+The one thing worth repeating here: **UDP 7882 must be published directly.**
+Traefik proxies HTTP and TCP; it cannot carry WebRTC media. Miss that port and
+the call connects normally and then carries no audio, which is a genuinely
+confusing failure to debug from the client side.
 
 ### A. Hostinger Docker Manager
 
