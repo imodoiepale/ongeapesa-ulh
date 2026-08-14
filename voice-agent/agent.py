@@ -422,15 +422,23 @@ def build_stt():
         # text comes back — roughly 0.5-1.5s of dead air per turn. The 4o
         # transcribe models stream and cover Swahili.
         #
-        # language is deliberately OPTIONAL. Pinning it to "sw" (which this
-        # branch previously did) locks every utterance to Swahili and destroys
-        # exactly the English/Sheng code-switching Kenyan users actually speak.
-        # Left unset it auto-detects; set ONGEA_STT_LANGUAGE only to force one.
+        # Language handling, verified against the plugin signature:
+        #   language: str | list[str] = "en"      <- NOT auto-detect
+        #   detect_language: bool = False
+        #
+        # Leaving `language` unset does NOT auto-detect — it pins to English.
+        # This branch exists precisely for the Swahili coverage Deepgram lacks,
+        # so unset must mean detect_language=True. Otherwise Swahili would be
+        # transcribed as English and read as a bad model rather than a bad flag.
+        # Pinning it to "sw" is equally wrong: it kills the English/Sheng
+        # code-switching Kenyan users actually speak.
         kwargs: dict[str, Any] = {
             "model": os.environ.get("ONGEA_STT_MODEL", "gpt-4o-transcribe"),
         }
         if language := os.environ.get("ONGEA_STT_LANGUAGE"):
             kwargs["language"] = language
+        else:
+            kwargs["detect_language"] = True
         # Falls back to the plugin's own OPENAI_API_KEY lookup when unset.
         if api_key := os.environ.get("ONGEA_STT_API_KEY"):
             kwargs["api_key"] = api_key
@@ -454,7 +462,17 @@ def build_stt():
 
 
 def tts_provider() -> str:
-    return os.environ.get("ONGEA_TTS", "fish").lower()
+    """Default is OPENAI, not Fish.
+
+    Fish Audio returned HTTP 402 (Payment Required) on every synthesis — the key
+    authenticated, the account had no credit — so the agent joined, listened and
+    billed the user while never speaking. The stack is now LiveKit + Deepgram +
+    OpenAI: three vendors already paid for and proven, rather than a fourth that
+    can silence voice when its balance runs out.
+
+    Fish remains selectable with ONGEA_TTS=fish for a funded account.
+    """
+    return os.environ.get("ONGEA_TTS", "openai").lower()
 
 
 def build_tts():
@@ -484,7 +502,8 @@ def build_tts():
         # rename from taking voice down again.
         wanted = {
             "model": os.environ.get("FISH_TTS_MODEL", "s2.1-pro"),
-            "latency": os.environ.get("FISH_LATENCY", "balanced"),
+            # Real parameter name is latency_mode; "latency" was silently dropped.
+            "latency_mode": os.environ.get("FISH_LATENCY", "balanced"),
         }
         # The cloned-voice id has gone by several names; use whichever exists.
         voice_id = os.environ.get("FISH_VOICE_ID") or None
@@ -572,12 +591,23 @@ async def entrypoint(ctx: JobContext) -> None:
     )
 
     # Tally synthesised characters so the session's TTS cost can be reported.
+    #
+    # This previously listened to "speech_created" and read event.text — but
+    # SpeechCreatedEvent carries only type/user_initiated/source/speech_handle/
+    # created_at. There is no .text, so the count was ALWAYS zero and
+    # report_tts_cost() returned early every time. The economics dashboard
+    # showed voice revenue with no TTS cost against it, which is exactly the
+    # failure that function was written to prevent — and it failed silently.
+    #
+    # TTSMetrics.characters_count is the documented figure for character-based
+    # billing, so use that.
     spoken_chars = {"n": 0}
 
-    @session.on("speech_created")
+    @session.on("metrics_collected")
     def _count_speech(event) -> None:  # noqa: ANN001 - LiveKit event object
-        text = getattr(event, "text", None) or ""
-        spoken_chars["n"] += len(text)
+        m = getattr(event, "metrics", None)
+        if getattr(m, "type", None) == "tts_metrics":
+            spoken_chars["n"] += int(getattr(m, "characters_count", 0) or 0)
 
     await session.start(
         room=ctx.room,
@@ -592,6 +622,49 @@ async def entrypoint(ctx: JobContext) -> None:
         await report_tts_cost(user, spoken_chars["n"])
 
     ctx.add_shutdown_callback(_on_shutdown)
+
+
+def _preflight_construct() -> None:
+    """Instantiate every plugin once at startup so a bad signature or key fails
+    HERE, loudly, instead of on a live call.
+
+    This is the check that would have caught the whole recent class of bug. The
+    plugins are otherwise only built inside entrypoint() when a job arrives, so
+    a wrong keyword argument stayed invisible until a real user pressed the mic —
+    and then presented as a session that connected, listened, billed, and never
+    spoke.
+
+    Note the evaluation order that hid it: AgentSession(stt=…, llm=…, tts=…,
+    vad=…, turn_detection=…) evaluates arguments left to right, so a crash in
+    tts meant vad and turn_detection were never reached and stayed unverified.
+    Building them here covers all four.
+    """
+    checks = (
+        ("stt", build_stt),
+        ("tts", build_tts),
+        ("vad", silero.VAD.load),
+        ("turn_detector", MultilingualModel),
+    )
+    for name, factory in checks:
+        try:
+            factory()
+        except Exception as exc:
+            logger.error("=" * 68)
+            logger.error("CANNOT START - %s failed to initialise: %s", name, exc)
+            if isinstance(exc, TypeError):
+                logger.error("")
+                logger.error(
+                    "A TypeError here means a plugin's arguments changed. Check the "
+                    "installed signature rather than the docs:",
+                )
+                logger.error(
+                    "  docker exec ongea-voice-agent python -c "
+                    "\"import inspect;from livekit.plugins import fishaudio;"
+                    "print(inspect.signature(fishaudio.TTS.__init__))\"",
+                )
+            logger.error("=" * 68)
+            raise SystemExit(1) from exc
+    logger.info("preflight: stt/tts/vad/turn_detector all constructed OK")
 
 
 def preflight() -> None:
@@ -628,9 +701,11 @@ def preflight() -> None:
 
     missing = [k for k in required if not (os.environ.get(k) or "").strip()]
     if not missing:
+        # Build the plugins now, not on the first user's first sentence.
+        _preflight_construct()
         logger.info(
-            "preflight ok - stt=%s llm=%s app=%s",
-            stt, os.environ.get("ONGEA_LLM_MODEL", "gpt-4o-mini"), APP_URL,
+            "preflight ok - stt=%s tts=%s llm=%s app=%s",
+            stt, tts, os.environ.get("ONGEA_LLM_MODEL", "gpt-4o-mini"), APP_URL,
         )
         return
 
