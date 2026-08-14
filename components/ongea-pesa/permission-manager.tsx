@@ -9,7 +9,7 @@ import DependantsSheet from "./dependants-sheet"
 import PhoneSetupDialog from "./phone-setup-dialog"
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from "@/components/providers/auth-provider"
-import { ScreenShell } from "@/components/foundation"
+import { FluidNav, ScreenShell, SubScreenHeader, mobileNavItems } from "@/components/foundation"
 import { cn } from "@/lib/utils"
 import { displayPhone } from "@/lib/phone"
 import { setPin as apiSetPin, setEmailOtpEnabled as apiSetEmailOtpEnabled } from "@/lib/security-client"
@@ -185,24 +185,23 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
 
   return (
     <main id="main-content" className="orbital-page min-h-[100dvh] pb-nav">
-      <ScreenShell>
-        {/* Header */}
-        <div className="pt-6 mb-6 text-center">
-          <span className="orbital-label text-[hsl(var(--teal))]">Account &amp; trust</span>
-          <h1 className="orbital-display mt-4 text-5xl">Permissions</h1>
-          <p className="text-sm text-muted-foreground mt-1">Ongea Pesa needs access to some features to work correctly.</p>
-        </div>
+      <ScreenShell className="pt-safe">
+        <SubScreenHeader
+          eyebrow="Account & trust"
+          title="Permissions"
+          subtitle="Ongea Pesa needs access to some features to work correctly."
+        />
 
         {/* Account & Security */}
-        <div className="mb-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Account &amp; Security</p>
-          <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
+        <div className="mb-5 mt-8">
+          <p className="orbital-label mb-3 opacity-50">Account &amp; Security</p>
+          <div className="orbital-panel divide-y divide-black/[.07] dark:divide-white/[.07]">
 
             {/* PIN row */}
             <div>
               <div className="flex items-center gap-3 px-4 py-3">
-                <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                  <KeyRound className="h-4 w-4 text-brand" />
+                <div className="w-11 h-11 rounded-2xl bg-[hsl(var(--teal))]/10 text-[hsl(var(--teal))] dark:bg-[hsl(var(--mint))]/10 dark:text-[hsl(var(--mint))] flex items-center justify-center shrink-0">
+                  <KeyRound className="h-5 w-5" strokeWidth={1.6} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">Wallet PIN</p>
@@ -276,8 +275,8 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
 
             {/* Email OTP row */}
             <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                <Mail className="h-4 w-4 text-brand" />
+              <div className="w-11 h-11 rounded-2xl bg-[hsl(var(--teal))]/10 text-[hsl(var(--teal))] dark:bg-[hsl(var(--mint))]/10 dark:text-[hsl(var(--mint))] flex items-center justify-center shrink-0">
+                <Mail className="h-5 w-5" strokeWidth={1.6} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">Email OTP</p>
@@ -292,8 +291,8 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
 
             {/* Phone / STK Number row */}
             <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                <Smartphone className="h-4 w-4 text-brand" />
+              <div className="w-11 h-11 rounded-2xl bg-[hsl(var(--teal))]/10 text-[hsl(var(--teal))] dark:bg-[hsl(var(--mint))]/10 dark:text-[hsl(var(--mint))] flex items-center justify-center shrink-0">
+                <Smartphone className="h-5 w-5" strokeWidth={1.6} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">Phone / STK Number</p>
@@ -312,8 +311,8 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
 
             {/* Family & Friends row */}
             <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                <Users className="h-4 w-4 text-brand" />
+              <div className="w-11 h-11 rounded-2xl bg-[hsl(var(--teal))]/10 text-[hsl(var(--teal))] dark:bg-[hsl(var(--mint))]/10 dark:text-[hsl(var(--mint))] flex items-center justify-center shrink-0">
+                <Users className="h-5 w-5" strokeWidth={1.6} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">Family &amp; Friends</p>
@@ -332,8 +331,8 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
         </div>
 
         {/* M-Pesa Number setup */}
-        <div className="rounded-2xl border border-brand/20 bg-brand/5 px-4 py-3 mb-5 flex items-center gap-3">
-          <Phone className="h-5 w-5 text-brand shrink-0" />
+        <div className="orbital-panel px-4 py-4 mb-5 flex items-center gap-3">
+          <Phone className="h-5 w-5 text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))] shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">M-Pesa Number</p>
             <p className="text-xs text-muted-foreground">{mpesaNumber ? mpesaNumber : 'Not set — tap to add'}</p>
@@ -348,8 +347,8 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
         </div>
 
         {/* Privacy & Security banner */}
-        <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 mb-5 flex items-center gap-3">
-          <Shield className="h-5 w-5 text-brand shrink-0" />
+        <div className="orbital-panel px-4 py-4 mb-5 flex items-center gap-3">
+          <Shield className="h-5 w-5 text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))] shrink-0" />
           <div>
             <p className="text-sm font-semibold text-foreground">Privacy & Security</p>
             <p className="text-xs text-muted-foreground">All permissions can be managed through voice commands</p>
@@ -358,17 +357,17 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
 
         {/* Permissions list */}
         <div className="mb-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Permissions</p>
-          <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
+          <p className="orbital-label mb-3 opacity-50">Permissions</p>
+          <div className="orbital-panel divide-y divide-black/[.07] dark:divide-white/[.07]">
             {permissions.map((permission) => {
               const Icon = permission.icon;
               return (
                 <div key={permission.id} className="flex items-center gap-3 px-4 py-3">
                   <div className={cn(
                     "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                    permission.enabled ? "bg-brand/10" : "bg-muted"
+                    permission.enabled ? "bg-[hsl(var(--teal))]/10 dark:bg-[hsl(var(--mint))]/10" : "bg-black/5 dark:bg-white/5"
                   )}>
-                    <Icon className={cn("h-4 w-4", permission.enabled ? "text-brand" : "text-muted-foreground")} />
+                    <Icon className={cn("h-5 w-5", permission.enabled ? "text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))]" : "text-muted-foreground")} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -378,7 +377,7 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{permission.description}</p>
-                    <p className="text-[10px] text-brand/70 italic mt-0.5">Voice: "{permission.voicePrompt}"</p>
+                    <p className="text-[10px] italic mt-0.5 text-[hsl(var(--teal))]/70 dark:text-[hsl(var(--mint))]/70">Voice: "{permission.voicePrompt}"</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
@@ -402,7 +401,7 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
 
         {/* Voice commands help */}
         <div className="mb-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Voice Permission Commands</p>
+          <p className="orbital-label mb-3 opacity-50">Voice Permission Commands</p>
           <div className="space-y-2">
             {[
               { label: 'Grant Permission', example: '"Ongea Pesa, ruhusu kutumia [permission]"', color: 'brand' },
@@ -410,16 +409,12 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
               { label: 'Check Status', example: '"Ongea Pesa, onyesha ruhusa zote"', color: 'blue' },
             ].map((cmd) => (
               <div key={cmd.label} className={cn(
-                "rounded-2xl border px-4 py-3",
-                cmd.color === 'brand' ? "border-brand/20 bg-brand/5" :
-                cmd.color === 'destructive' ? "border-destructive/20 bg-destructive/5" :
-                "border-blue-500/20 bg-blue-500/8"
+                "orbital-panel px-4 py-4",
+                cmd.color === 'destructive' ? "border-destructive/25" : ""
               )}>
                 <p className={cn(
                   "text-sm font-semibold",
-                  cmd.color === 'brand' ? "text-brand" :
-                  cmd.color === 'destructive' ? "text-destructive" :
-                  "text-blue-600 dark:text-blue-400"
+                  cmd.color === 'destructive' ? "text-destructive" : "text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))]"
                 )}>{cmd.label}</p>
                 <p className="text-xs text-muted-foreground mt-1">{cmd.example}</p>
               </div>
@@ -429,8 +424,8 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
 
         {/* Privacy notice */}
         <div className="mb-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Privacy Notice</p>
-          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 space-y-1.5">
+          <p className="orbital-label mb-3 opacity-50">Privacy Notice</p>
+          <div className="orbital-panel px-4 py-4 space-y-1.5">
             {[
               'Voice commands are processed locally when possible',
               'Financial data is encrypted end-to-end',
@@ -467,6 +462,8 @@ export default function PermissionManager({ onNavigate }: PermissionManagerProps
         isOpen={isDependantsOpen}
         onClose={() => setIsDependantsOpen(false)}
       />
+
+      <FluidNav items={mobileNavItems} />
     </main>
   )
 }

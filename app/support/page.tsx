@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { FluidNav, ScreenShell, SubScreenHeader, mobileNavItems } from '@/components/foundation';
 
 export default function Support() {
   const [selectedCategory, setSelectedCategory] = useState('general');
@@ -65,25 +66,24 @@ export default function Support() {
   };
 
   return (
-    <div id="main-content" className="orbital-page min-h-[100dvh] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
-        <div className="text-center mb-12">
-          <span className="orbital-label text-[hsl(var(--teal))]">Help &amp; support</span>
-          <h1 className="orbital-display mt-4 text-5xl text-foreground mb-4">How can we help?</h1>
-          <p className="text-lg text-muted-foreground">Find answers to common questions or contact our support team</p>
-        </div>
+    <main id="main-content" className="orbital-page min-h-[100dvh] pb-nav">
+      <ScreenShell className="pt-safe" wide>
+
+        <SubScreenHeader
+          eyebrow="Help & support"
+          title="How can we help?"
+          subtitle="Find answers to common questions or contact our support team"
+        />
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-12">
+        <div className="mb-10 mt-8">
           <div className="relative">
             <input
               type="text"
               placeholder="Search for help..."
               className="orbital-field w-full px-6 py-4 text-lg"
             />
-            <button className="absolute right-4 top-1/2 transform -translate-y-1/2 text-brand">
+            <button aria-label="Search help" className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))]">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -92,7 +92,7 @@ export default function Support() {
         </div>
 
         {/* Category Tabs */}
-        <div className="flex flex-wrap gap-3 mb-8 justify-center">
+        <div className="flex flex-wrap gap-2 mb-8">
           {[
             { id: 'general', label: 'General', icon: '💬' },
             { id: 'billing', label: 'Billing & Pricing', icon: '💳' },
@@ -102,10 +102,10 @@ export default function Support() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-6 py-3 rounded-xl font-medium transition-all ${
+              className={`min-h-12 px-5 rounded-full text-sm font-medium transition-all ${
                 selectedCategory === cat.id
-                  ? 'bg-brand text-white shadow-lg'
-                  : 'bg-card text-foreground hover:bg-muted'
+                  ? 'bg-[hsl(var(--ink))] text-white dark:bg-[hsl(var(--mint))] dark:text-[hsl(var(--ink))]'
+                  : 'orbital-panel hover:opacity-80'
               }`}
             >
               {cat.icon} {cat.label}
@@ -114,14 +114,14 @@ export default function Support() {
         </div>
 
         {/* FAQs */}
-        <div className="orbital-panel p-8 mb-12">
-          <h2 className="text-2xl font-semibold text-foreground mb-6">Frequently Asked Questions</h2>
+        <div className="orbital-panel p-6 sm:p-8 mb-10">
+          <h2 className="orbital-display text-2xl mb-6">Frequently asked questions</h2>
           <div className="space-y-4">
             {faqs[selectedCategory as keyof typeof faqs].map((faq, idx) => (
               <details key={idx} className="group border-b border-border/60 pb-4">
                 <summary className="flex justify-between items-center cursor-pointer list-none">
                   <span className="text-lg font-medium text-foreground">{faq.q}</span>
-                  <span className="text-brand group-open:rotate-180 transition-transform">▼</span>
+                  <span className="text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))] group-open:rotate-180 transition-transform">▼</span>
                 </summary>
                 <p className="mt-3 text-muted-foreground leading-relaxed">{faq.a}</p>
               </details>
@@ -130,43 +130,44 @@ export default function Support() {
         </div>
 
         {/* Contact Options */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-card rounded-2xl shadow-sm p-6 text-center">
+        <div className="grid md:grid-cols-3 gap-4 mb-10">
+          <div className="orbital-panel p-6 text-center">
             <div className="text-4xl mb-4">📧</div>
             <h3 className="text-lg font-semibold text-foreground mb-2">Email Support</h3>
             <p className="text-sm text-muted-foreground mb-4">Average response: 2-4 hours</p>
-            <a href="mailto:support@ongeapesa.com" className="text-brand hover:underline">
+            <a href="mailto:support@ongeapesa.com" className="text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))] hover:underline">
               support@ongeapesa.com
             </a>
           </div>
 
-          <div className="bg-card rounded-2xl shadow-sm p-6 text-center">
+          <div className="orbital-panel p-6 text-center">
             <div className="text-4xl mb-4">💬</div>
             <h3 className="text-lg font-semibold text-foreground mb-2">Live Chat</h3>
             <p className="text-sm text-muted-foreground mb-4">Available 24/7</p>
-            <a href="/voice" className="text-brand hover:underline">Start voice support</a>
+            <a href="/voice" className="text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))] hover:underline">Start voice support</a>
           </div>
 
-          <div className="bg-card rounded-2xl shadow-sm p-6 text-center">
+          <div className="orbital-panel p-6 text-center">
             <div className="text-4xl mb-4">📞</div>
             <h3 className="text-lg font-semibold text-foreground mb-2">Phone Support</h3>
             <p className="text-sm text-muted-foreground mb-4">Mon-Fri, 8AM-8PM EAT</p>
-            <a href="tel:+254700123456" className="text-brand hover:underline">
+            <a href="tel:+254700123456" className="text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))] hover:underline">
               +254 700 123 456
             </a>
           </div>
         </div>
 
         {/* Status Page */}
-        <div className="bg-brand/5 rounded-2xl p-8 text-center">
+        <div className="orbital-panel p-8 text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-3 h-3 bg-brand rounded-full animate-pulse mr-3"></div>
+            <div className="w-3 h-3 bg-[hsl(var(--mint))] rounded-full animate-pulse mr-3"></div>
             <h3 className="text-xl font-semibold text-foreground">Service status</h3>
           </div>
           <p className="text-muted-foreground">Live provider availability is checked whenever you start a payment.</p>
         </div>
 
-      </div>
-    </div>
+      </ScreenShell>
+      <FluidNav items={mobileNavItems} />
+    </main>
   );
 }

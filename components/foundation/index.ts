@@ -1,5 +1,6 @@
 export { ScreenShell } from "./ScreenShell"
 export { PageHeader } from "./PageHeader"
+export { BackLink, SubScreenHeader } from "./SubScreenHeader"
 export { MoneyAmount } from "./MoneyAmount"
 export { DataRow, DataRows } from "./DataRow"
 export { GlassCard } from "./GlassCard"

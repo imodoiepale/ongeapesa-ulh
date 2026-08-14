@@ -11,15 +11,25 @@ import ContactImport from "@/components/ongea-pesa/contact-import"
 
 type Screen = "dashboard" | "voice" | "send" | "recurring" | "analytics" | "test" | "permissions" | "scanner";
 
-interface SendMoneyProps {
-  onNavigate: (screen: Screen) => void;
+export interface SendPrefill {
+  /** Recipient / biller name to seed the form with. */
+  name?: string;
+  /** Recipient phone in any local format — normalised to the field's convention. */
+  phone?: string;
 }
 
-export default function SendMoney({ onNavigate }: SendMoneyProps) {
+interface SendMoneyProps {
+  onNavigate: (screen: Screen) => void;
+  /** Seeded by the home screen's quick-transfer and billings shortcuts. */
+  prefill?: SendPrefill;
+}
+
+export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
   const [amount, setAmount] = useState("")
   const [selectedContact, setSelectedContact] = useState<SearchableContact | null>(null)
-  const [phoneNumber, setPhoneNumber] = useState("")    // for manual entry (displayed WITHOUT leading 0)
-  const [recipientName, setRecipientName] = useState("") // for manual / personal-contact entry
+  // The field renders a fixed +254 prefix, so strip whichever local prefix came in.
+  const [phoneNumber, setPhoneNumber] = useState(prefill?.phone?.replace(/^(\+?254|0)/, "") ?? "")
+  const [recipientName, setRecipientName] = useState(prefill?.name ?? "")
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [voiceCommand, setVoiceCommand] = useState("")
 

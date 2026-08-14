@@ -11,7 +11,7 @@ const groups = [
   {
     title: "Account",
     rows: [
-      { label: "Security center", detail: "PIN, passkeys and account protection", href: "/security-setup", icon: ShieldCheck },
+      { label: "Security center", detail: "PIN, passkeys and account protection", href: "/settings/security", icon: ShieldCheck },
       { label: "Permissions", detail: "Microphone, camera and notifications", href: "/permissions", icon: Mic2 },
       { label: "Family & friends", detail: "People you support", href: "/?screen=dependants", icon: UsersRound },
     ],
@@ -93,7 +93,7 @@ export default function Settings() {
             <small className="mt-1 block truncate text-xs opacity-55">{email}</small>
           </span>
           <button
-            onClick={() => router.push("/security-setup")}
+            onClick={() => router.push("/settings/security")}
             aria-label="Manage account"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition-colors hover:bg-black/5 dark:border-white/12 dark:hover:bg-white/5"
           >

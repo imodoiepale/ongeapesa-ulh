@@ -25,9 +25,13 @@ function sceneForPath(pathname: string): OrbitalBackdropScene | null {
     pathname.startsWith("/scheduler") ||
     pathname.startsWith("/batch")
   ) return "planning"
+  // The whole Settings branch — including the screens it links out to — shares
+  // one backdrop, so moving between them doesn't swap the scene underfoot.
   if (
     pathname.startsWith("/settings") ||
     pathname.startsWith("/support") ||
+    pathname.startsWith("/feedback") ||
+    pathname.startsWith("/training") ||
     pathname.includes("permissions")
   ) return "trust"
   if (

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { FluidNav, PageHeader, ScreenShell, mobileNavItems } from "@/components/foundation"
+import { FluidNav, ScreenShell, SubScreenHeader, mobileNavItems } from "@/components/foundation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useAudioRecorder } from "@/hooks/use-audio-recorder"
@@ -185,11 +185,15 @@ export default function TrainingPage() {
     return (
       <main className="orbital-page min-h-[100dvh] pb-nav">
         <ScreenShell className="pt-safe">
-          <PageHeader title="Teach Ongea Sheng" subtitle="Help the assistant understand how you actually speak" />
+          <SubScreenHeader
+            eyebrow="Voice training"
+            title="Teach Ongea Sheng"
+            subtitle="Help the assistant understand how you actually speak"
+          />
 
-          <div className="mt-4 rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
+          <div className="orbital-panel mt-8 p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Shield className="h-5 w-5 text-brand" />
+              <Shield className="h-5 w-5 text-[hsl(var(--teal))] dark:text-[hsl(var(--mint))]" />
               <h2 className="text-base font-semibold text-foreground">Before you record</h2>
             </div>
 
@@ -234,7 +238,11 @@ export default function TrainingPage() {
   return (
     <main className="orbital-page min-h-[100dvh] pb-nav">
       <ScreenShell className="pt-safe">
-        <PageHeader title="Teach Ongea Sheng" subtitle={`${contributions.length} recordings contributed`} />
+        <SubScreenHeader
+          eyebrow="Voice training"
+          title="Teach Ongea Sheng"
+          subtitle={`${contributions.length} recordings contributed`}
+        />
 
         {error && (
           <div className="mt-3 rounded-xl border border-red-500/40 bg-red-500/5 p-3 text-xs text-red-600 dark:text-red-400">
@@ -248,7 +256,7 @@ export default function TrainingPage() {
         )}
 
         {/* Prompt */}
-        <div className="mt-4 rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
+        <div className="orbital-panel mt-8 p-5">
           {prompt ? (
             <>
               <div className="flex items-center justify-between mb-3">
@@ -271,7 +279,7 @@ export default function TrainingPage() {
         </div>
 
         {/* Recorder */}
-        <div className="mt-4 rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
+        <div className="orbital-panel mt-4 p-5">
           <div className="flex flex-col items-center gap-4">
             {!audioBlob ? (
               <button
@@ -343,7 +351,7 @@ export default function TrainingPage() {
 
         {/* History */}
         {contributions.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
+          <div className="orbital-panel mt-4 p-5">
             <h2 className="mb-3 text-sm font-semibold text-foreground">Your recordings</h2>
             <ul className="divide-y divide-border/40">
               {contributions.map((c) => (

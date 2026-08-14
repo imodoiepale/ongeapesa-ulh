@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import GlobalVoiceWidget from "./global-voice-widget"
 import MainDashboard from "./main-dashboard"
 import VoiceInterface from "./voice-interface"
-import SendMoney from "./send-money"
+import SendMoney, { type SendPrefill } from "./send-money"
 import RecurringPayments from "./recurring-payments"
 import Analytics from "./analytics"
 import VoiceTest from "./voice-test"
@@ -37,6 +37,8 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
   const [checkingMpesa, setCheckingMpesa] = useState(true)
   // Batch: pre-populated payments + results from voice-triggered send_batch
   const [pendingBatch, setPendingBatch] = useState<{ payments?: BatchItem[]; results?: BatchResponse } | null>(null)
+  // Seeded by the home screen's quick-transfer / billings shortcuts, consumed once by SendMoney.
+  const [sendPrefill, setSendPrefill] = useState<SendPrefill | null>(null)
   // Voice-triggered scan overlay — null = hidden
   // { autoStart?: boolean, mode?: string | null }
   //   autoStart: true (default) → camera starts immediately (voice path)
@@ -54,7 +56,9 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
     }
   }, [mounted, user?.id])
 
-  const navigate = (screen: Screen) => setCurrentScreen(screen)
+  // Any ordinary navigation drops a pending prefill, so tapping "Send" from the
+  // quick actions never inherits the recipient of an earlier quick-transfer tap.
+  const navigate = (screen: Screen) => { setSendPrefill(null); setCurrentScreen(screen) }
 
   // Effect A — stable handlers that don't depend on scan overlay state
   useEffect(() => {
@@ -152,12 +156,13 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
             onNavigate={navigate}
             onVoiceActivate={() => setIsListening(true)}
             onOpenScanner={() => setScanOverlay({ autoStart: false })}
+            onQuickSend={(prefill) => { setSendPrefill(prefill); setCurrentScreen("send") }}
           />
         )
       case "voice":
         return <VoiceInterface onNavigate={navigate} />
       case "send":
-        return <SendMoney onNavigate={navigate} />
+        return <SendMoney key={sendPrefill?.phone ?? sendPrefill?.name ?? "blank"} onNavigate={navigate} prefill={sendPrefill ?? undefined} />
       case "recurring":
         return <RecurringPayments onNavigate={navigate} />
       case "analytics":
@@ -182,6 +187,7 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
             onNavigate={navigate}
             onVoiceActivate={() => setIsListening(true)}
             onOpenScanner={() => setScanOverlay({ autoStart: false })}
+            onQuickSend={(prefill) => { setSendPrefill(prefill); setCurrentScreen("send") }}
           />
         )
     }
