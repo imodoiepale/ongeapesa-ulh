@@ -184,9 +184,14 @@ async def report_tts_cost(ctx: UserContext, characters: int) -> None:
 class OngeaAgent(Agent):
     """Tool surface cloned from the ElevenLabs agent configuration."""
 
-    def __init__(self, user: UserContext) -> None:
+    def __init__(self, user: UserContext, room=None, participant_identity: str = "") -> None:
         super().__init__(instructions=SYSTEM_PROMPT)
         self.user = user
+        # Bound at session start so the client tools know which tab to call.
+        # RPC is point-to-point: it needs the exact participant identity, not
+        # just the room, or a second device on the same account would answer.
+        self._room = room
+        self._participant_identity = participant_identity
 
     @function_tool()
     async def send_money(
@@ -232,11 +237,116 @@ class OngeaAgent(Agent):
 
     @function_tool()
     async def read_balance(self, context: RunContext) -> str:
-        """Tell the user their current wallet balance."""
+        """Return the user's current Ongea Pesa wallet balance."""
+        # Prefer the browser: it holds the figure the user is looking at, so the
+        # spoken number and the on-screen number cannot disagree. Fall back to
+        # the webhook if no screen answered.
+        spoken = await self._call_browser("read_balance")
+        if spoken:
+            return spoken
         result = await call_app_webhook(self.user, {"type": "balance", "amount": 0})
         if result.get("agent_message"):
             return str(result["agent_message"])
         return f"Your balance is {self.user.balance} shillings."
+
+    # ── Client tools ─────────────────────────────────────────────────────────
+    #
+    # These run in the BROWSER, not here. ElevenLabs calls them through its
+    # `clientTools` map; we reach the same functions over LiveKit RPC. Both land
+    # in lib/voice-tools.ts, so the two engines cannot drift.
+    #
+    # Descriptions are copied verbatim from the ElevenLabs tool definitions in
+    # scripts/configure-elevenlabs-agent.mjs — the model's guidance must be
+    # identical on both engines, or they behave differently for the same words.
+
+    @function_tool()
+    async def open_scanner(self, context: RunContext) -> str:
+        """Open the in-app camera/scanner so the user can scan a payment target
+        (till, paybill, QR, phone, or receipt). Call when the user asks to scan,
+        'piga hii', 'soma hii', or 'use the camera'."""
+        return await self._call_browser("open_scanner") or "I couldn't open the scanner."
+
+    @function_tool()
+    async def start_scan(self, context: RunContext, mode: str = "auto") -> str:
+        """Start scanning the camera image. The image is read by Vision OCR which
+        returns the payment type, numbers and amount. Omit mode (or "auto") to
+        auto-detect any document.
+
+        Args:
+            mode: auto, till, paybill, send_phone, withdraw, bank_to_mpesa,
+                  bank_to_bank, qr, receipt
+        """
+        return await self._call_browser("start_scan", {"mode": mode}) or "The scan didn't complete."
+
+    @function_tool()
+    async def confirm_payment(self, context: RunContext) -> str:
+        """Confirm and send the payment currently displayed from the last scan,
+        routing it through the user's wallet. Only call after the user agrees."""
+        return await self._call_browser("confirm_payment") or "I couldn't confirm that payment."
+
+    @function_tool()
+    async def stage_payment(
+        self,
+        context: RunContext,
+        amount: float = 0,
+        phone: str = "",
+        till: str = "",
+        paybill: str = "",
+        account: str = "",
+        type: str = "",
+        recipientName: str = "",
+    ) -> str:
+        """Fill the on-screen payment form as the user speaks, WITHOUT sending.
+        Use it to show what you understood so they can see it before confirming."""
+        slots = {
+            "amount": amount or None, "phone": phone or None, "till": till or None,
+            "paybill": paybill or None, "account": account or None,
+            "type": type or None, "recipientName": recipientName or None,
+        }
+        return await self._call_browser(
+            "stage_payment", {k: v for k, v in slots.items() if v is not None}
+        ) or "staged"
+
+    @function_tool()
+    async def send_batch(self, context: RunContext, payments: list[dict] = None) -> str:
+        """Dispatch multiple payments in one interaction. Each payment becomes an
+        individual request (not a single combined call). Call after the user has
+        confirmed the full list of recipients and amounts. Returns a spoken
+        summary of which succeeded and which failed.
+
+        Args:
+            payments: list of {amount, phone|till|paybill, account, recipientName}
+        """
+        if not payments:
+            return "No payments specified. Please tell me who to send to and how much."
+        # Runs browser-side: /api/payments/batch authenticates by session cookie,
+        # which this worker does not have.
+        return await self._call_browser("send_batch", {"payments": payments}) \
+            or "I couldn't dispatch those payments."
+
+    async def _call_browser(self, method: str, payload: dict[str, Any] | None = None) -> str:
+        """Invoke a client tool in the user's browser over LiveKit RPC.
+
+        Returns "" on any failure so the caller can fall back or speak an honest
+        error. Never raises into the agent loop — a dropped tab or a screen that
+        has not registered a handler must not kill a live call.
+        """
+        room = self._room
+        identity = self._participant_identity
+        if room is None or not identity:
+            logger.error("rpc %s: no room/participant bound", method)
+            return ""
+        try:
+            return await room.local_participant.perform_rpc(
+                destination_identity=identity,
+                method=method,
+                payload=json.dumps(payload or {}),
+                # Scanner + OCR is slow; ElevenLabs allows 20s (60s for batch).
+                response_timeout=60.0 if method == "send_batch" else 20.0,
+            )
+        except Exception:
+            logger.exception("rpc %s failed", method)
+            return ""
 
 
 def build_stt():
@@ -410,7 +520,10 @@ async def entrypoint(ctx: JobContext) -> None:
         text = getattr(event, "text", None) or ""
         spoken_chars["n"] += len(text)
 
-    await session.start(room=ctx.room, agent=OngeaAgent(user))
+    await session.start(
+        room=ctx.room,
+        agent=OngeaAgent(user, room=ctx.room, participant_identity=participant.identity),
+    )
 
     greeting = f"Niaje {user.user_name.split(' ')[0]}, ni Ongea Pesa. Nikusaidie aje?"
     await session.say(greeting, allow_interruptions=True)

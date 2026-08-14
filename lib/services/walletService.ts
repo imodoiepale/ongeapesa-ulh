@@ -316,8 +316,15 @@ export class WalletService {
       | { kind: 'till'; till: string; recipientName?: string }
       | { kind: 'bill'; billType: string; meterNumber?: string; eslip?: string; customerRef?: string; account?: string; phone?: string };
     narration?: string;
+    /**
+     * Which payment rail to use. Defaults to NCBA — Loop is OPT-IN per request
+     * on purpose, so a bug here cannot silently move live traffic off a rail
+     * that already works. Loop is sandbox-only until LOOP Config in the
+     * "loop Hackathon - Ongeapesa" workflow is pointed at api.loop.co.ke.
+     */
+    rail?: 'ncba' | 'loop';
   }): Promise<any> {
-    const { userId, amount, destination, narration } = params;
+    const { userId, amount, destination, narration, rail: railChoice = 'ncba' } = params;
     const n8nBase = process.env.N8N_WEBHOOK_BASE_URL || 'https://n8n-lc5r.srv1631847.hstgr.cloud';
 
     // Internal in-app transfer → existing atomic RPC path
@@ -344,9 +351,30 @@ export class WalletService {
     let txType: string;
     let webhook: string;
     let payload: Record<string, any>;
-    const provider = destination.kind === 'bill' ? 'ncba' : 'ncba';
+    const useLoop = railChoice === 'loop' && destination.kind !== 'bill';
+    // Loop does not cover utility bills, so a bill request stays on NCBA even
+    // when Loop was asked for, rather than failing.
+    const provider = useLoop ? 'loop' : 'ncba';
 
-    if (destination.kind === 'phone') {
+    if (useLoop) {
+      // The loop_* routes translate these friendly fields into LOOP's own
+      // parameter names (recipientMobileNo / merchantRcvTill / channel / ...).
+      // See "loop Hackathon - Ongeapesa" -> Route <slug> nodes.
+      const common = { user_id: userId, amount: String(amount), narration };
+      if (destination.kind === 'phone') {
+        txType = 'send_phone';
+        webhook = `${n8nBase}/webhook/loop_send_mpesa`;
+        payload = { ...common, phone: destination.phone };
+      } else if (destination.kind === 'paybill') {
+        txType = 'paybill';
+        webhook = `${n8nBase}/webhook/loop_pay_paybill`;
+        payload = { ...common, paybill: destination.paybill, account: destination.account };
+      } else {
+        txType = 'buy_goods_till';
+        webhook = `${n8nBase}/webhook/loop_pay_mpesa_till`;
+        payload = { ...common, till: (destination as any).till };
+      }
+    } else if (destination.kind === 'phone') {
       txType = 'send_phone';
       webhook = `${n8nBase}/webhook/ncba_withdraw`;
       payload = { userId, destinationType: 'phone', amount, phoneNumber: destination.phone, recipientName: destination.recipientName, narration };
@@ -405,6 +433,14 @@ export class WalletService {
       .select()
       .single();
     if (txError) throw txError;
+
+    // The Loop workflow books its own ledger row when called directly (e.g. by
+    // curl during testing). Handing it the id of the row we just inserted tells
+    // it to UPDATE that one instead — otherwise a single payment produces two
+    // transactions and the balance reconciles wrong.
+    if (useLoop) {
+      payload = { ...payload, transaction_id: tx.id };
+    }
 
     // 2. Call the rail
     let result: any = {};

@@ -110,8 +110,17 @@ export async function POST() {
     roomJoin: true,
     canPublish: true,
     canSubscribe: true,
-    // The agent worker owns the room; the browser only speaks and listens.
-    canPublishData: false,
+    // Required for the agent's client tools (open_scanner, start_scan,
+    // confirm_payment, stage_payment, send_batch, read_balance). LiveKit RPC
+    // travels over the data channel, so without this the browser can receive a
+    // tool call but cannot answer it — the agent would hang on every scan.
+    //
+    // This does NOT widen the money path. Tools stay server-authoritative:
+    // send_money posts to /api/voice/webhook, which owns fee calculation and
+    // step-up staging, and send_batch posts to /api/payments/batch, which is
+    // session-authenticated. A malicious data message cannot move funds; it can
+    // only drive this user's own UI.
+    canPublishData: true,
   })
 
   return NextResponse.json({

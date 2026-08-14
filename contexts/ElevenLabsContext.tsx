@@ -3,8 +3,9 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import { useUser } from './UserContext';
-import { normalizeVoiceItem, summariseBatchResults } from '@/lib/batch-payments';
 import type { BatchItem, BatchResponse } from '@/lib/batch-payments';
+import { createVoiceTools } from '@/lib/voice-tools';
+import type { PaymentSlots, ToolHandlers } from '@/lib/voice-tools';
 import { PLATFORM_FEE_RATE } from '@/lib/transaction-fees';
 import { VOICE_RATE_PER_MINUTE } from '@/lib/voice-funding';
 
@@ -15,25 +16,9 @@ interface Message {
   timestamp: Date;
 }
 
-export interface PaymentSlots {
-  amount?: number;
-  phone?: string;
-  till?: string;
-  paybill?: string;
-  account?: string;
-  type?: string;
-  recipientName?: string;
-}
-
-interface ToolHandlers {
-  openScanner?: () => void;
-  startScan?: (mode?: string | null) => void;
-  confirmPayment?: () => void;
-  getBalance?: () => number;
-  /** Called after send_batch completes — navigate to batch screen and show results */
-  showBatch?: (payments: BatchItem[], results?: BatchResponse) => void;
-  stagePayment?: (slots: PaymentSlots & { index?: number }) => void;
-}
+// Both types now live in lib/voice-tools.ts, shared with the LiveKit engine.
+// Re-exported so existing importers of this module keep working.
+export type { PaymentSlots, ToolHandlers } from '@/lib/voice-tools';
 
 interface ElevenLabsContextType {
   isConnected: boolean;
@@ -72,6 +57,21 @@ export function ElevenLabsProvider({ children }: { children: ReactNode }) {
   const unregisterToolHandlers = (keys: (keyof ToolHandlers)[]) => {
     keys.forEach(k => { delete toolHandlersRef.current[k]; });
   };
+
+  // Mirror of userBalance readable from inside the tools. The tool closures are
+  // created once, so reading the state variable directly would pin them to its
+  // value at mount and read_balance would go stale mid-call.
+  const userBalanceRef = useRef(0);
+  useEffect(() => { userBalanceRef.current = userBalance; }, [userBalance]);
+
+  // The ONE tool implementation — shared with the LiveKit engine via
+  // lib/voice-tools.ts. This context only supplies the transport.
+  const voiceToolsRef = useRef(
+    createVoiceTools({
+      handlers: () => toolHandlersRef.current,
+      fallbackBalance: () => userBalanceRef.current,
+    }),
+  );
 
   const settleVoiceSession = useCallback(async () => {
     const voiceSessionId = voiceSessionIdRef.current;
@@ -144,66 +144,10 @@ export function ElevenLabsProvider({ children }: { children: ReactNode }) {
     onStatusChange: (status: any) => {
       console.log('📊 ElevenLabs status changed:', status);
     },
-    clientTools: {
-      open_scanner: async () => {
-        toolHandlersRef.current.openScanner?.();
-        return 'Opening scanner now';
-      },
-      start_scan: async (params: { mode?: string }) => {
-        const mode = params?.mode ?? null;
-        toolHandlersRef.current.startScan?.(mode);
-        return `Starting ${mode ?? 'auto'} scan`;
-      },
-      confirm_payment: async () => {
-        toolHandlersRef.current.confirmPayment?.();
-        return 'Confirming payment';
-      },
-      read_balance: async () => {
-        const bal = toolHandlersRef.current.getBalance?.() ?? userBalance;
-        return `Your balance is KSH ${bal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`;
-      },
-      /**
-       * send_batch — dispatches multiple payments as individual requests.
-       * The agent passes { payments: Array<{ amount, kind?, phone?, till?, paybill?, account?, ... }> }.
-       * Each item is normalised by normalizeVoiceItem and sent to /api/payments/batch.
-       * Returns a spoken summary the agent can read back directly.
-       */
-      stage_payment: async (params: PaymentSlots) => {
-        toolHandlersRef.current.stagePayment?.(params);
-        return 'staged';
-      },
-      send_batch: async (params: { payments?: Record<string, any>[]; narration?: string }) => {
-        const rawItems = params?.payments ?? [];
-        if (rawItems.length === 0) return 'No payments specified. Please tell me who to send to and how much.';
-
-        const items: BatchItem[] = rawItems.map(normalizeVoiceItem);
-        const total = items.reduce((s, p) => s + p.amount, 0);
-        const n = items.length;
-
-        console.log(`🎙️ send_batch: ${n} items, KES ${total}`);
-
-        let json: BatchResponse;
-        try {
-          const res = await fetch('/api/payments/batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payments: items, narration: params?.narration }),
-          });
-          json = await res.json();
-        } catch (err: any) {
-          return `Network error — payments not sent. Please try again.`;
-        }
-
-        // Notify any mounted component (e.g. BatchSend screen) with the results
-        toolHandlersRef.current.showBatch?.(items, json);
-
-        if (!json.success && json.error === 'Insufficient funds') {
-          return `Insufficient funds. You need KES ${json.shortfall?.toFixed(2) ?? '?'} more to cover all ${n} payments.`;
-        }
-
-        return summariseBatchResults(json.results ?? []);
-      },
-    },
+    // Transport only. The handlers themselves live in lib/voice-tools.ts and
+    // are shared byte-for-byte with the LiveKit engine, so the two runtimes
+    // cannot drift in what a tool actually does.
+    clientTools: voiceToolsRef.current,
   });
 
   // Add message to chat

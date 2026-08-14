@@ -37,6 +37,8 @@ const PROVIDER_LABELS: Record<string, string> = {
   mpesa: "M-Pesa",
   indexpay: "IndexPay",
   internal: "Internal Wallet",
+  loop: "LOOP (NCBA)",
+  fish_audio: "Fish Audio",
 }
 
 const providerLabel = (provider?: string | null) => {
