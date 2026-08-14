@@ -370,6 +370,17 @@
   --font-data: var(--font-mono), ui-monospace, monospace;
 }
 
+/* Money figures. .orbital-display is a Bodoni serif — beautiful for headings,
+   but its hairline strokes and old-style numerals make a balance hard to read
+   at a glance, so amounts opt out of it and into a rounded sans.
+   --font-money is the Nunito variable declared in app/layout.tsx. */
+.orbital-money {
+  font-family: var(--font-money), "Nunito", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Paint the root the same as the theme so iOS never shows a white strip in
    the safe-area / overscroll zones (html is what shows behind the page). */
 html { scroll-behavior: smooth; background: hsl(var(--pearl)); }
@@ -480,14 +491,18 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
    which a tight dark shadow destroys. Two layers: a 1px contact shadow that
    keeps the edge crisp, and a large diffuse one that carries the height.
    Dark mode needs more opacity for the same apparent lift, because the shadow
-   has far less contrast to work against. */
+   has far less contrast to work against.
+   Card fill is glass, not paint: a low-opacity white over a 20px blur, so the
+   backdrop art stays legible through it. Anything opaque enough to read as a
+   solid colour has stopped being glassmorphic. */
 .orbital-panel {
-  border-radius: 1.5rem; border: 1px solid hsl(var(--ink) / .09); background: hsl(0 0% 100% / .66); backdrop-filter: blur(20px);
-  box-shadow: 0 1px 2px hsl(var(--ink) / .05), 0 10px 28px -6px hsl(var(--ink) / .11);
+  border-radius: 1.5rem; border: 1px solid hsl(0 0% 100% / .5); backdrop-filter: blur(20px) saturate(140%);
+  background: hsl(0 0% 100% / .42);
+  box-shadow: 0 1px 2px hsl(var(--ink) / .04), 0 10px 28px -6px hsl(var(--ink) / .1);
 }
 .dark .orbital-panel {
-  border-color: hsl(0 0% 100% / .08); background: hsl(188 45% 6% / .62);
-  box-shadow: 0 1px 2px hsl(0 0% 0% / .3), 0 14px 34px -8px hsl(0 0% 0% / .5);
+  border-color: hsl(0 0% 100% / .1); background: hsl(0 0% 100% / .07);
+  box-shadow: 0 1px 2px hsl(0 0% 0% / .28), 0 14px 34px -8px hsl(0 0% 0% / .45);
 }
 /* Same treatment one step down, for the circular icon tiles and pills that sit
    *inside* a panel and so need less separation than the panel itself. */

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Bodoni_Moda, Inter, JetBrains_Mono, Sora } from "next/font/google"
+import { Bodoni_Moda, Inter, JetBrains_Mono, Nunito, Sora } from "next/font/google"
 import "./globals.css"
 // Motion + surface system ported from DepthMe. Loaded after globals.css so its
 // tokens can reference --teal/--abyss/--deep-sea defined there.
@@ -16,6 +16,9 @@ const inter = Inter({
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" })
 const bodoni = Bodoni_Moda({ subsets: ["latin"], variable: "--font-bodoni", display: "swap" })
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" })
+// Money figures: a rounded sans reads faster at large sizes than the Bodoni
+// serif, whose thin strokes and old-style numerals fight legibility on a balance.
+const nunito = Nunito({ subsets: ["latin"], variable: "--font-money", display: "swap" })
 
 export const metadata: Metadata = {
   title: "Ongea Pesa — Voice-Activated M-Pesa",
@@ -84,7 +87,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${sora.variable} ${bodoni.variable} ${mono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${sora.variable} ${bodoni.variable} ${mono.variable} ${nunito.variable}`} suppressHydrationWarning>
       {/* Apple splash screens — kept as raw links (no Metadata API equivalent) */}
       <head>
         <link

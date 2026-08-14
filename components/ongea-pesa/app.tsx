@@ -31,7 +31,6 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
   const { user } = useAuth()
   const { registerToolHandlers, unregisterToolHandlers } = useElevenLabs()
   const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen)
-  const [isListening, setIsListening] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isPhoneSetupOpen, setIsPhoneSetupOpen] = useState(false)
   const [checkingMpesa, setCheckingMpesa] = useState(true)
@@ -154,9 +153,7 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
         return (
           <MainDashboard
             onNavigate={navigate}
-            onVoiceActivate={() => setIsListening(true)}
             onOpenScanner={() => setScanOverlay({ autoStart: false })}
-            onQuickSend={(prefill) => { setSendPrefill(prefill); setCurrentScreen("send") }}
           />
         )
       case "voice":
@@ -185,9 +182,7 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
         return (
           <MainDashboard
             onNavigate={navigate}
-            onVoiceActivate={() => setIsListening(true)}
             onOpenScanner={() => setScanOverlay({ autoStart: false })}
-            onQuickSend={(prefill) => { setSendPrefill(prefill); setCurrentScreen("send") }}
           />
         )
     }
