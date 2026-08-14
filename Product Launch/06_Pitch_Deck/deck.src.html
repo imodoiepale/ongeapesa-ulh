@@ -205,8 +205,8 @@ body {
   border-radius: clamp(8px, .8cqi, 14px);
   padding: clamp(11px, 1.5cqi, 24px);
   display: grid;
+  grid-template-rows: auto auto 1fr auto;
   gap: clamp(4px, .55cqi, 9px);
-  align-content: start;
 }
 .card .t {
   font-family: var(--display);
@@ -308,65 +308,66 @@ body {
 /* ============================================================
    02 — BACKGROUND
    ============================================================ */
-.three { grid-template-columns: repeat(3, 1fr); }
+.three { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
 
 /* ============================================================
    03 — PROBLEM
    ============================================================ */
-.prob { grid-template-columns: 1.05fr .95fr; align-items: center; }
-.prob > * { min-width: 0; }
-#s3 .h1 { font-size: clamp(20px, 3.62cqi, 57px); }
-.ussd {
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: clamp(34px, 9.4cqi, 152px);
-  line-height: .8;
-  letter-spacing: -.04em;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(138,174,176,.30);
-  user-select: none;
-  margin: 0;
-}
-.ussd-sub {
-  font-family: var(--mono);
-  font-size: clamp(8.5px, .95cqi, 14px);
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin: clamp(6px,.9cqi,14px) 0 0;
-}
-.rows { display: grid; gap: 0; }
-.row {
+#s3 .h1 { font-size: clamp(20px, 4.05cqi, 63px); }
+
+/* five clusters: three across, then two across — both rows full width */
+.probs {
   display: grid;
-  /* auto, not a ch measure — the value is set much larger than the row's own
-     font-size, so a ch-based track under-measures it and the label collides */
-  grid-template-columns: auto 1fr;
-  gap: clamp(10px, 1.6cqi, 26px);
-  align-items: baseline;
-  padding: clamp(7px, .95cqi, 16px) 0;
-  border-bottom: 1px solid var(--rule-2);
+  grid-template-columns: repeat(6, 1fr);
+  gap: clamp(10px, 1.5cqi, 26px);
 }
-.row:first-child { border-top: 1px solid var(--rule-2); }
-.row .v {
+.probs > * { min-width: 0; }
+.pitem {
+  display: grid;
+  gap: clamp(3px, .45cqi, 7px);
+  align-content: start;
+  border-top: 1px solid var(--rule);
+  padding-top: clamp(7px, .95cqi, 16px);
+}
+.pitem .ix {
   font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  font-size: clamp(13px, 1.9cqi, 30px);
-  letter-spacing: -.02em;
-  color: var(--cyan);
-  white-space: nowrap;
+  font-size: clamp(8px, .88cqi, 12.5px);
+  letter-spacing: .2em;
+  color: var(--teal);
 }
-.row .l {
-  font-size: clamp(9.5px, 1.12cqi, 17px);
-  line-height: 1.4;
+.pitem .t {
+  font-family: var(--display);
+  font-weight: 640;
+  font-size: clamp(11px, 1.34cqi, 21px);
+  letter-spacing: -.015em;
+  line-height: 1.12;
+  color: var(--mist);
+}
+.pitem .d {
+  font-size: clamp(9px, 1.04cqi, 15.5px);
+  line-height: 1.45;
   color: var(--muted);
 }
+
+.consq {
+  font-family: var(--mono);
+  font-size: clamp(8px, .94cqi, 13.5px);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  line-height: 1.9;
+  color: var(--faint);
+  border-top: 1px solid var(--rule-2);
+  padding-top: clamp(8px, 1.1cqi, 18px);
+  margin: 0;
+}
+.consq b { color: var(--cyan); font-weight: 600; letter-spacing: .24em; margin-right: 1.4em; }
+.consq em { font-style: normal; color: var(--mist); }
 
 /* ============================================================
    04 — SOLUTION
    ============================================================ */
 .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(12px, 2cqi, 34px); }
-.step { display: grid; gap: clamp(5px, .7cqi, 11px); align-content: start; }
+.step { display: grid; grid-template-rows: auto auto 1fr auto; gap: clamp(5px, .7cqi, 11px); }
 .step .n {
   font-family: var(--mono);
   font-size: clamp(8.5px, .95cqi, 14px);
@@ -392,15 +393,23 @@ body {
   margin-top: clamp(2px, .35cqi, 6px);
 }
 
-.said {
+.says { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(10px, 1.6cqi, 28px); }
+.says > * { min-width: 0; }
+.say { display: grid; gap: clamp(3px, .45cqi, 7px); align-content: start; }
+.say .q {
   font-family: var(--display);
   font-weight: 620;
-  font-size: clamp(13px, 1.85cqi, 29px);
-  letter-spacing: -.02em;
+  font-size: clamp(11px, 1.48cqi, 24px);
+  letter-spacing: -.018em;
+  line-height: 1.18;
   color: var(--cyan);
-  line-height: 1.2;
 }
-.said small { display: block; font-family: var(--sans); font-weight: 400; font-size: .5em; letter-spacing: 0; color: var(--faint); margin-top: .5em; }
+.say .a {
+  font-family: var(--mono);
+  font-size: clamp(8px, .9cqi, 12.5px);
+  letter-spacing: .18em;
+  color: var(--faint);
+}
 
 .wave { display: block; width: 100%; height: clamp(30px, 5.4cqi, 96px); }
 
@@ -650,11 +659,11 @@ body {
     <div class="body">
       <div class="cover-grid">
         <div style="display:grid; gap:clamp(10px,1.5cqi,26px);">
-          <p class="kicker" data-r style="--d:60ms">Voice-first money · Kenya</p>
+          <p class="kicker" data-r style="--d:60ms">Conversational payments · Kenya</p>
           <h1 class="wordmark" data-r style="--d:140ms">ONGEA<br>PESA</h1>
           <div class="rule-glow" data-r style="--d:220ms"></div>
           <p class="cover-sw" data-r style="--d:300ms">Ongea. Pesa itembee.<br><span>Speak. Let money move.</span></p>
-          <p class="lede" data-r style="--d:380ms; max-width:42ch">You say the payment in your own words. We show it back to you. Then it goes out over <strong>LOOP</strong> — NCBA’s licensed banking rails.</p>
+          <p class="lede" data-r style="--d:380ms; max-width:44ch">Say it or type it — <strong>“Send KES 2,000 to Mum.”</strong> It reads the instruction back, you confirm, and it settles over <strong>LOOP</strong> — NCBA’s licensed banking rails.</p>
         </div>
         <div class="orb-wrap" data-r style="--d:200ms">
           <div class="orb" style="background-image:url('__ORB__')" role="img" aria-label="The Ongea Pesa orbital mark: a glowing core wrapped in soundwave rings"></div>
@@ -682,34 +691,34 @@ body {
 
     <div class="body">
       <div class="cols" style="grid-template-columns: 1fr; gap:clamp(12px,2cqi,34px);">
-        <h2 class="h1" data-r style="font-size:clamp(22px,4.5cqi,72px)">Money here already moves by phone.<br><em>It just doesn’t move by voice.</em></h2>
-        <p class="lede" data-r style="--d:120ms">Kenya runs on mobile money — but every shilling still travels through a menu tree you type your way down. Ongea Pesa is the layer on top: <strong>a payment you can simply say out loud</strong>, in English, Kiswahili or Sheng, on any phone with a browser.</p>
+        <h2 class="h1" data-r style="font-size:clamp(21px,4.3cqi,68px)">Money already moves through chat, feeds and phones.<br><em>The experience hasn’t caught up.</em></h2>
+        <p class="lede" data-r style="--d:120ms; max-width:76ch">Individuals, merchants and small businesses increasingly pay and get paid across mobile, online and social-commerce channels. <strong>The rails work.</strong> What sits on top of them is still fragmented, technical and hard to manage — and for anyone who can’t rely on a screen, often impossible.</p>
 
         <div class="cols three" style="margin-top:clamp(2px,.6cqi,10px)">
           <div class="card" data-r style="--d:220ms">
-            <span class="ix">WHO IT’S FOR</span>
-            <span class="t">The M-Pesa generation</span>
-            <span class="d">Hustlers, chama members, mama mbogas, small traders. Mobile-only, Sheng-fluent, and far more comfortable speaking than typing.</span>
-            <span class="m">MOBILE-ONLY · SHENG-FLUENT</span>
+            <span class="ix">INDIVIDUALS</span>
+            <span class="t">Send, request, understand</span>
+            <span class="d">Paying a person, asking to be paid, and knowing where the month went. Today those are three different places, and none of them talk to each other.</span>
+            <span class="m">PAY · REQUEST · TRACK</span>
           </div>
           <div class="card" data-r style="--d:300ms">
-            <span class="ix">WHAT IT DOES</span>
-            <span class="t">Say it, confirm it, sent</span>
-            <span class="d">One sentence carries the whole instruction — amount, recipient, rail. You review it on screen before a single shilling moves.</span>
-            <span class="m">ENGLISH · KISWAHILI · SHENG</span>
+            <span class="ix">MERCHANTS &amp; SMALL BUSINESSES</span>
+            <span class="t">Sold in the conversation</span>
+            <span class="d">The order arrives on WhatsApp or Instagram. The money lands somewhere else entirely, with nothing attaching it back to the customer.</span>
+            <span class="m">SOCIAL COMMERCE · ORDERS</span>
           </div>
           <div class="card" data-r style="--d:380ms">
-            <span class="ix">WHERE IT RUNS</span>
-            <span class="t">A PWA, built in Nairobi</span>
-            <span class="d">No app store, no 200MB download. It installs from the browser and works on the handsets people already carry.</span>
-            <span class="m">INSTALLABLE PWA · OFFLINE-TOLERANT</span>
+            <span class="ix">BLIND &amp; LOW-VISION USERS</span>
+            <span class="t">Shut out by design</span>
+            <span class="d">Unlabelled controls and journeys built around seeing the screen exclude people who navigate by ear and by touch — from ordinary payments.</span>
+            <span class="m">SCREEN READERS · VOICE-ONLY PATHS</span>
           </div>
         </div>
       </div>
     </div>
 
     <div class="foot">
-      <span>Positioning · The bank that listens</span>
+      <span>Individuals · merchants · small businesses</span>
       <span>01 / 08</span>
     </div>
   </div>
@@ -720,46 +729,47 @@ body {
   <div class="stage">
     <div class="eyebrow">
       <span><b>02</b> &nbsp;·&nbsp; The problem</span>
-      <span class="mark">Friction, measured</span>
+      <span class="mark">Five places it breaks</span>
     </div>
 
     <div class="body">
-      <div class="cols prob">
-        <div style="display:grid; gap:clamp(10px,1.6cqi,26px);">
-          <h2 class="h1" data-r>To send one payment,<br>you press <em>twelve things</em><br>and hope.</h2>
-          <p class="lede" data-r style="--d:140ms">The technology isn’t the hard part. <strong>The typing is.</strong> Every wrong digit is somebody’s rent landing in a stranger’s account.</p>
-          <p class="ussd" aria-hidden="true" data-r style="--d:240ms">*334#</p>
-          <p class="ussd-sub" data-r style="--d:300ms">Still the front door to most people’s money</p>
+      <div style="display:grid; gap:clamp(11px,1.8cqi,30px);">
+        <h2 class="h1" data-r>Payments still ask you to<br><em>see it, remember it and retype it.</em></h2>
+
+        <div class="probs">
+          <div class="pitem" data-r style="--d:150ms; grid-column:span 2">
+            <span class="ix">NAVIGATION</span>
+            <span class="t">Menus before money</span>
+            <span class="d">Steps to remember, account details keyed in by hand, and confirmation messages written for systems rather than for people.</span>
+          </div>
+          <div class="pitem" data-r style="--d:210ms; grid-column:span 2">
+            <span class="ix">ACCESSIBILITY</span>
+            <span class="t">Journeys that assume you can see</span>
+            <span class="d">Inaccessible interfaces, poorly labelled controls and payment flows that depend on visual interaction leave blind and visually impaired users stranded.</span>
+          </div>
+          <div class="pitem" data-r style="--d:270ms; grid-column:span 2">
+            <span class="ix">LANGUAGE</span>
+            <span class="t">Nothing like ordinary talk</span>
+            <span class="d">“Send KES 2,000 to Mum” is how a person thinks. Every app makes you translate that into screens, fields and menus first.</span>
+          </div>
+          <div class="pitem" data-r style="--d:330ms; grid-column:span 3">
+            <span class="ix">MERCHANTS</span>
+            <span class="t">The payment arrives on its own</span>
+            <span class="d">Money from a WhatsApp or Instagram sale lands with no customer, no order and no conversation attached — so merchants fall back on screenshots and searching records by hand to work out who paid, what for, and whether to ship.</span>
+          </div>
+          <div class="pitem" data-r style="--d:390ms; grid-column:span 3">
+            <span class="ix">AFTERWARDS</span>
+            <span class="t">Nobody closes the loop</span>
+            <span class="d">Once the money has moved, there is no simple, accessible way to check status, understand spending, watch cash flow, spot the requests that went unpaid, or reconcile what came in against what went out.</span>
+          </div>
         </div>
 
-        <div class="rows">
-          <div class="row" data-r style="--d:180ms">
-            <span class="v">7–12</span>
-            <span class="l">menu steps to complete a single send</span>
-          </div>
-          <div class="row" data-r style="--d:250ms">
-            <span class="v">2–3 min</span>
-            <span class="l">start to finish, if nothing goes wrong</span>
-          </div>
-          <div class="row" data-r style="--d:320ms">
-            <span class="v">15–20%</span>
-            <span class="l">of attempts carry a wrong digit or a wrong amount</span>
-          </div>
-          <div class="row" data-r style="--d:390ms">
-            <span class="v">~40%</span>
-            <span class="l">of users struggle with the menus — elderly, low-vision, low-literacy</span>
-          </div>
-          <div class="row" data-r style="--d:460ms">
-            <span class="v">100%</span>
-            <span class="l">of a paper bill is still keyed in by hand, digit by digit</span>
-          </div>
-          <p class="small" data-r style="--d:530ms; margin-top:clamp(8px,1.2cqi,20px); color:var(--faint); font-size:clamp(8.5px,.95cqi,13px)">Ongea Pesa internal product research, 2026.</p>
-        </div>
+        <p class="consq" data-r style="--d:470ms"><b>What it costs</b> <em>Payment errors</em> · <em>Delayed fulfilment</em> · <em>Fraud exposure</em> · <em>Poor financial visibility</em> · <em>Users with disabilities left out</em></p>
       </div>
     </div>
 
     <div class="foot">
-      <span>Nobody’s problem is the technology</span>
+      <span>The rails are not the problem — the surface is</span>
       <span>02 / 08</span>
     </div>
   </div>
@@ -770,16 +780,26 @@ body {
   <div class="stage">
     <div class="eyebrow">
       <span><b>03</b> &nbsp;·&nbsp; The solution</span>
-      <span class="mark">Speak · Verify · Done</span>
+      <span class="mark">Say it · Hear it back · Done</span>
     </div>
 
     <div class="body">
-      <div style="display:grid; gap:clamp(10px,1.7cqi,30px);">
-        <h2 class="h1" data-r>Say it. See it. <em>Send it.</em></h2>
+      <div style="display:grid; gap:clamp(10px,1.6cqi,28px);">
+        <h2 class="h1" data-r style="font-size:clamp(21px,4.5cqi,72px)">Say it. Hear it back. <em>Send it.</em></h2>
 
-        <div data-r style="--d:120ms">
-          <p class="said">“Tuma elfu mbili kwa Mama Boi.”
-            <small>Send two thousand to Mama Boi — one sentence, no menu.</small></p>
+        <div class="says" data-r style="--d:120ms">
+          <div class="say">
+            <span class="q">“Send KES 2,000 to Mum.”</span>
+            <span class="a">PAYS OUT · SEND MONEY</span>
+          </div>
+          <div class="say">
+            <span class="q">“Request KES 5,000 from John.”</span>
+            <span class="a">ASKS TO BE PAID · LOOP PROMPT</span>
+          </div>
+          <div class="say">
+            <span class="q">“How much did I spend this week?”</span>
+            <span class="a">ANSWERS · NO MENU, NO EXPORT</span>
+          </div>
         </div>
 
         <canvas class="wave" id="wave" aria-hidden="true" data-r style="--d:200ms"></canvas>
@@ -787,28 +807,28 @@ body {
         <div class="flow">
           <div class="step" data-r style="--d:280ms">
             <span class="n">STEP 01</span>
-            <span class="t">Speak</span>
-            <span class="d">The voice agent pulls out the <b>amount</b>, the <b>recipient</b> and the <b>rail</b> — and resolves “Mama Boi” against your saved contacts. English, Kiswahili, Sheng.</span>
-            <span class="m">INTENT + ENTITIES · CONTACT MATCH</span>
+            <span class="t">Say it or type it</span>
+            <span class="d">One sentence carries the <b>amount</b>, the <b>counterparty</b> and the <b>intent</b> — pay, request, or just answer a question. Typed and spoken take exactly the same path. English, Kiswahili or Sheng.</span>
+            <span class="m">VOICE OR TEXT · SAME RESULT</span>
           </div>
           <div class="step" data-r style="--d:360ms">
             <span class="n">STEP 02</span>
-            <span class="t">Verify</span>
-            <span class="d">We read it back and hold. Nothing moves without a <b>PIN or Face/Touch ID</b>. The biometric match happens on your handset — we hold a public key, <b>never a face</b>.</span>
-            <span class="m">STEP-UP TOKEN · SHORT-LIVED</span>
+            <span class="t">Hear it back</span>
+            <span class="d">It reads the whole instruction back before anything moves, then holds for a <b>PIN or Face/Touch ID</b>. Every confirmation is spoken as well as shown, so <b>no step needs the screen</b>. The biometric match stays on your handset.</span>
+            <span class="m">STEP-UP TOKEN · SCREEN-READER SAFE</span>
           </div>
           <div class="step" data-r style="--d:440ms">
             <span class="n">STEP 03</span>
-            <span class="t">Done</span>
-            <span class="d">The payment leaves on the right rail, the balance updates live, and the receipt is already in your history before you’ve put the phone down.</span>
-            <span class="m">LOOP · M-PESA · PESALINK · TILL</span>
+            <span class="t">Done, and accounted for</span>
+            <span class="d">It leaves on the right LOOP rail, the status is followed to settlement, and the record lands against the right customer, order or request — so it reconciles itself instead of waiting for a screenshot.</span>
+            <span class="m">TRACKED · RECONCILED · AUDITED</span>
           </div>
         </div>
       </div>
     </div>
 
     <div class="foot">
-      <span>One sentence of your own language</span>
+      <span>One sentence, in your own language, however you navigate</span>
       <span>03 / 08</span>
     </div>
   </div>
@@ -825,7 +845,7 @@ body {
     <div class="body">
       <div style="display:grid; gap:clamp(9px,1.35cqi,22px); min-height:0;">
         <h2 class="h1" data-r style="font-size:clamp(22px,4.1cqi,64px)">The voice is ours.<br><em>The rails are LOOP’s.</em></h2>
-        <p class="lede" data-r style="--d:110ms; max-width:70ch">LOOP is <strong>NCBA’s developer platform</strong> — the licensed pipe that actually moves the shillings. We wired it end to end in the LOOP sandbox: money in, money out, and a status lookup that tells us the truth about what happened.</p>
+        <p class="lede" data-r style="--d:110ms; max-width:78ch">LOOP is <strong>NCBA’s developer platform</strong> — the licensed pipe that actually moves the shillings. Every sentence a user speaks lands on one of these eight endpoints: <strong>a send, a request to pay, a till or paybill, or a status check.</strong> We wired all eight end to end in the LOOP sandbox.</p>
 
         <div class="cols" style="grid-template-columns: 1.45fr .8fr; gap:clamp(12px,1.8cqi,30px); align-items:start; min-height:0;">
           <table class="rails" data-r style="--d:200ms">
@@ -863,7 +883,7 @@ body {
                 <dd>HMAC-SHA256 <span class="fade">merchantTill|timestamp|nonce</span></dd>
               </div>
             </dl>
-            <p class="small" style="color:var(--lt-muted); font-size:clamp(8.5px,.96cqi,13px); line-height:1.45">Routing comes down to one question: is the destination a LOOP wallet, an M-Pesa number, a bank account, or a till?</p>
+            <p class="small" style="color:var(--lt-muted); font-size:clamp(8.5px,.96cqi,13px); line-height:1.45">Paying out is one question: is the destination a LOOP wallet, an M-Pesa number, a bank account, or a till? <strong style="color:var(--lt-ink)">“Request KES 5,000 from John”</strong> inverts it — LOOP Prompt asks the payer instead.</p>
           </div>
         </div>
 
@@ -944,53 +964,53 @@ body {
 </section>
 
 <!-- ══════════════════ 07 · EXTRAS ══════════════════ -->
-<section class="slide" id="s7" aria-label="What else we built">
+<section class="slide" id="s7" aria-label="Closing the loop">
   <div class="stage">
     <div class="eyebrow">
-      <span><b>06</b> &nbsp;·&nbsp; And then some</span>
-      <span class="mark">Beyond the send</span>
+      <span><b>06</b> &nbsp;·&nbsp; Closing the loop</span>
+      <span class="mark">After the money moves</span>
     </div>
 
     <div class="body">
       <div style="display:grid; gap:clamp(10px,1.6cqi,28px);">
-        <h2 class="h1" data-r style="font-size:clamp(20px,3.6cqi,58px)">Everything else we built<br><em>while we were in there.</em></h2>
+        <h2 class="h1" data-r style="font-size:clamp(20px,3.6cqi,58px)">A payment isn’t finished<br><em>when the money leaves.</em></h2>
 
         <div class="grid6">
           <div class="card" data-r style="--d:160ms">
-            <span class="ix">SCAN</span>
-            <span class="t">Point at the bill</span>
-            <span class="d">Gemini Vision reads paybills, tills, QR codes, receipts and bank slips — account, amount and reference come out filled in. Pay now, or save it for later.</span>
-            <span class="m">GEMINI VISION · CONFIDENCE-SCORED</span>
+            <span class="ix">ACCESSIBILITY</span>
+            <span class="t">Built for ears, not just eyes</span>
+            <span class="d">Every journey completes by voice alone. Controls are labelled, confirmations are spoken, and nothing depends on seeing where a button sits.</span>
+            <span class="m">VOICE-ONLY PATHS · LABELLED CONTROLS</span>
           </div>
           <div class="card" data-r style="--d:220ms">
-            <span class="ix">CHAMA</span>
-            <span class="t">The group, handled</span>
-            <span class="d">Start a collection and every member gets their own prompt. Cycles, contributions and rotating payouts tracked without a WhatsApp argument.</span>
-            <span class="m">STK PER MEMBER · CYCLES · PAYOUTS</span>
+            <span class="ix">INSIGHT</span>
+            <span class="t">Ask about your own money</span>
+            <span class="d">“How much did I spend this week?” gets a plain answer. Spending, cash flow and category breakdowns without a single export or spreadsheet.</span>
+            <span class="m">SPEND · CASH FLOW · CATEGORIES</span>
           </div>
           <div class="card" data-r style="--d:280ms">
-            <span class="ix">ESCROW</span>
-            <span class="t">Money that waits</span>
-            <span class="d">Funds park against milestones and only release when both sides agree. Disputes have an actual path instead of a phone call.</span>
-            <span class="m">MILESTONES · PARTICIPANTS · DISPUTES</span>
+            <span class="ix">REQUESTS</span>
+            <span class="t">Requests that don’t go quiet</span>
+            <span class="d">A request to pay stays visible until it settles, so unpaid ones surface on their own instead of being remembered by whoever is owed.</span>
+            <span class="m">LOOP PROMPT · UNPAID SURFACED</span>
           </div>
           <div class="card" data-r style="--d:340ms">
-            <span class="ix">SECURITY</span>
-            <span class="t">Step-up before it spends</span>
-            <span class="d">A PIN or passkey mints a short-lived token, and no send or withdrawal moves without one. Five bad tries locks the account for fifteen minutes.</span>
-            <span class="m">PIN · WEBAUTHN PASSKEY · LOCKOUT</span>
+            <span class="ix">MERCHANTS</span>
+            <span class="t">The payment knows the order</span>
+            <span class="d">Money arriving from a chat or a social sale carries its customer and its order with it, so fulfilment stops depending on screenshots and manual searching.</span>
+            <span class="m">CUSTOMER · ORDER · CONVERSATION</span>
           </div>
           <div class="card" data-r style="--d:400ms">
-            <span class="ix">DATA</span>
-            <span class="t">Locked by default</span>
-            <span class="d">Row-level security on all 22 tables, so a user’s rows are reachable only by that user. Every sensitive action writes an audit event.</span>
-            <span class="m">RLS ON 22 TABLES · AUDIT LOG</span>
+            <span class="ix">TRUST</span>
+            <span class="t">Traceable by default</span>
+            <span class="d">A PIN or passkey mints a short-lived token and nothing spends without one. Row-level security on all 22 tables; every sensitive action writes an audit event.</span>
+            <span class="m">STEP-UP · RLS · AUDIT LOG</span>
           </div>
           <div class="card" data-r style="--d:460ms">
-            <span class="ix">ORCHESTRATION</span>
-            <span class="t">One nervous system</span>
-            <span class="d">A 145-node workflow routes voice intents, provider callbacks and reconciliation. A result that arrives twice is only ever counted once.</span>
-            <span class="m">n8n · CALLBACKS · RECONCILIATION</span>
+            <span class="ix">AND STILL</span>
+            <span class="t">Chama, escrow, scan-a-bill</span>
+            <span class="d">Group collections with rotating payouts, milestone escrow for deals that need holding, and Gemini Vision reading paybills, tills and receipts so nothing is typed.</span>
+            <span class="m">CHAMA · ESCROW · GEMINI VISION</span>
           </div>
         </div>
       </div>
@@ -1016,19 +1036,18 @@ body {
 
     <div class="body">
       <div class="centered" style="display:grid; gap:clamp(10px,1.6cqi,28px); justify-items:center;">
-        <p class="kicker" data-r>Fewer taps · fewer wrong digits · more people who can just ask</p>
+        <p class="kicker" data-r>Fewer steps · fewer errors · nobody locked out</p>
         <h2 class="asante" data-r style="--d:120ms">ASANTE</h2>
         <p class="cover-sw" data-r style="--d:200ms; text-align:center">The bank that listens.</p>
 
-        <div class="voices" data-r style="--d:300ms" aria-label="Examples of what people say to Ongea Pesa">
-          <span class="voice"><span class="dot"></span>“Tuma elfu mbili kwa Mama Boi.”</span>
-          <span class="voice"><span class="dot"></span>“Lipa hii bill ya stima.”</span>
+        <div class="voices" data-r style="--d:300ms" aria-label="Examples of what people say or type to Ongea Pesa">
+          <span class="voice"><span class="dot"></span>“Send KES 2,000 to Mum.”</span>
+          <span class="voice"><span class="dot"></span>“Request KES 5,000 from John.”</span>
+          <span class="voice"><span class="dot"></span>“How much did I spend this week?”</span>
           <span class="voice"><span class="dot"></span>“Chama yetu, collect for June.”</span>
-          <span class="voice"><span class="dot"></span>“Balance yangu ni ngapi?”</span>
-          <span class="voice"><span class="dot"></span>“Nitumie change, haraka.”</span>
         </div>
 
-        <p class="small" data-r style="--d:380ms; max-width:64ch; text-align:center">Five sentences. No menus, no typing, no wrong digits. That is the whole product.</p>
+        <p class="small" data-r style="--d:380ms; max-width:66ch; text-align:center">Said out loud or typed with a thumb, in English, Kiswahili or Sheng — and readable end to end by a screen reader. That is the whole product.</p>
 
         <div class="links" data-r style="--d:460ms; justify-content:center">
           <a class="chip" href="https://github.com/imodoiepale/unleashed-loop.dev-skill">unleashed-loop.dev-skill</a>

@@ -22,15 +22,15 @@ deck. They are reproduced exactly below. Keep them typographic if you edit.
 **Eyebrow left** · Ongea Pesa · pitch deck
 **Eyebrow right** · by NSAIT · Nairobi
 
-[Kicker] Voice-first money · Kenya
+[Kicker] Conversational payments · Kenya
 
 # ONGEA PESA
 
 [Sub, line 1] **Ongea. Pesa itembee.**
 [Sub, line 2] Speak. Let money move.
 
-[Lede] You say the payment in your own words. We show it back to you. Then it goes
-out over **LOOP** — NCBA’s licensed banking rails.
+[Lede] Say it or type it — **“Send KES 2,000 to Mum.”** It reads the instruction
+back, you confirm, and it settles over **LOOP** — NCBA’s licensed banking rails.
 
 [Art] The orbital mark — a glowing core wrapped in soundwave rings.
 
@@ -44,30 +44,31 @@ out over **LOOP** — NCBA’s licensed banking rails.
 **Eyebrow left** · 01 · Background
 **Eyebrow right** · Ongea Pesa
 
-# Money here already moves by phone.<br>*It just doesn’t move by voice.*
+# Money already moves through chat, feeds and phones.<br>*The experience hasn’t caught up.*
 
-[Lede] Kenya runs on mobile money — but every shilling still travels through a menu
-tree you type your way down. Ongea Pesa is the layer on top: **a payment you can
-simply say out loud**, in English, Kiswahili or Sheng, on any phone with a browser.
+[Lede] Individuals, merchants and small businesses increasingly pay and get paid
+across mobile, online and social-commerce channels. **The rails work.** What sits on
+top of them is still fragmented, technical and hard to manage — and for anyone who
+can’t rely on a screen, often impossible.
 
 ### Three cards
 
-**WHO IT’S FOR — The M-Pesa generation**
-Hustlers, chama members, mama mbogas, small traders. Mobile-only, Sheng-fluent, and
-far more comfortable speaking than typing.
-`MOBILE-ONLY · SHENG-FLUENT`
+**INDIVIDUALS — Send, request, understand**
+Paying a person, asking to be paid, and knowing where the month went. Today those
+are three different places, and none of them talk to each other.
+`PAY · REQUEST · TRACK`
 
-**WHAT IT DOES — Say it, confirm it, sent**
-One sentence carries the whole instruction — amount, recipient, rail. You review it
-on screen before a single shilling moves.
-`ENGLISH · KISWAHILI · SHENG`
+**MERCHANTS & SMALL BUSINESSES — Sold in the conversation**
+The order arrives on WhatsApp or Instagram. The money lands somewhere else
+entirely, with nothing attaching it back to the customer.
+`SOCIAL COMMERCE · ORDERS`
 
-**WHERE IT RUNS — A PWA, built in Nairobi**
-No app store, no 200MB download. It installs from the browser and works on the
-handsets people already carry.
-`INSTALLABLE PWA · OFFLINE-TOLERANT`
+**BLIND & LOW-VISION USERS — Shut out by design**
+Unlabelled controls and journeys built around seeing the screen exclude people who
+navigate by ear and by touch — from ordinary payments.
+`SCREEN READERS · VOICE-ONLY PATHS`
 
-**Footer left** · Positioning · The bank that listens
+**Footer left** · Individuals · merchants · small businesses
 **Footer right** · 01 / 08
 
 ---
@@ -75,29 +76,40 @@ handsets people already carry.
 ## Slide 3 — The problem
 
 **Eyebrow left** · 02 · The problem
-**Eyebrow right** · Friction, measured
+**Eyebrow right** · Five places it breaks
 
-# To send one payment,<br>you press *twelve things*<br>and hope.
+# Payments still ask you to<br>*see it, remember it and retype it.*
 
-[Lede] The technology isn’t the hard part. **The typing is.** Every wrong digit is
-somebody’s rent landing in a stranger’s account.
+### Five clusters — three across, then two across
 
-[Ghost type] `*334#`
-[Caption] Still the front door to most people’s money
+**NAVIGATION — Menus before money**
+Steps to remember, account details keyed in by hand, and confirmation messages
+written for systems rather than for people.
 
-### The numbers
+**ACCESSIBILITY — Journeys that assume you can see**
+Inaccessible interfaces, poorly labelled controls and payment flows that depend on
+visual interaction leave blind and visually impaired users stranded.
 
-| | |
-|---|---|
-| **7–12** | menu steps to complete a single send |
-| **2–3 min** | start to finish, if nothing goes wrong |
-| **15–20%** | of attempts carry a wrong digit or a wrong amount |
-| **~40%** | of users struggle with the menus — elderly, low-vision, low-literacy |
-| **100%** | of a paper bill is still keyed in by hand, digit by digit |
+**LANGUAGE — Nothing like ordinary talk**
+“Send KES 2,000 to Mum” is how a person thinks. Every app makes you translate that
+into screens, fields and menus first.
 
-[Source note] Ongea Pesa internal product research, 2026.
+**MERCHANTS — The payment arrives on its own**
+Money from a WhatsApp or Instagram sale lands with no customer, no order and no
+conversation attached — so merchants fall back on screenshots and searching records
+by hand to work out who paid, what for, and whether to ship.
 
-**Footer left** · Nobody’s problem is the technology
+**AFTERWARDS — Nobody closes the loop**
+Once the money has moved, there is no simple, accessible way to check status,
+understand spending, watch cash flow, spot the requests that went unpaid, or
+reconcile what came in against what went out.
+
+### Consequence strip
+
+**What it costs** Payment errors · Delayed fulfilment · Fraud exposure · Poor
+financial visibility · Users with disabilities left out
+
+**Footer left** · The rails are not the problem — the surface is
 **Footer right** · 02 / 08
 
 ---
@@ -105,12 +117,17 @@ somebody’s rent landing in a stranger’s account.
 ## Slide 4 — The solution
 
 **Eyebrow left** · 03 · The solution
-**Eyebrow right** · Speak · Verify · Done
+**Eyebrow right** · Say it · Hear it back · Done
 
-# Say it. See it. *Send it.*
+# Say it. Hear it back. *Send it.*
 
-[Spoken line] **“Tuma elfu mbili kwa Mama Boi.”**
-[Gloss] Send two thousand to Mama Boi — one sentence, no menu.
+### Three utterances, and what each one does
+
+| Said or typed | What it does |
+|---|---|
+| “Send KES 2,000 to Mum.” | `PAYS OUT · SEND MONEY` |
+| “Request KES 5,000 from John.” | `ASKS TO BE PAID · LOOP PROMPT` |
+| “How much did I spend this week?” | `ANSWERS · NO MENU, NO EXPORT` |
 
 [Art] The voice rule: a waveform in three bands sitting directly above the three
 steps. The left band is the sentence being spoken, the middle is the hold while you
@@ -118,22 +135,25 @@ confirm, the right is the send resolving into a settled line and a green dot.
 
 ### Three steps
 
-**STEP 01 — Speak**
-The voice agent pulls out the **amount**, the **recipient** and the **rail** — and
-resolves “Mama Boi” against your saved contacts. English, Kiswahili, Sheng.
-`INTENT + ENTITIES · CONTACT MATCH`
+**STEP 01 — Say it or type it**
+One sentence carries the **amount**, the **counterparty** and the **intent** — pay,
+request, or just answer a question. Typed and spoken take exactly the same path.
+English, Kiswahili or Sheng.
+`VOICE OR TEXT · SAME RESULT`
 
-**STEP 02 — Verify**
-We read it back and hold. Nothing moves without a **PIN or Face/Touch ID**. The
-biometric match happens on your handset — we hold a public key, **never a face**.
-`STEP-UP TOKEN · SHORT-LIVED`
+**STEP 02 — Hear it back**
+It reads the whole instruction back before anything moves, then holds for a **PIN or
+Face/Touch ID**. Every confirmation is spoken as well as shown, so **no step needs
+the screen**. The biometric match stays on your handset.
+`STEP-UP TOKEN · SCREEN-READER SAFE`
 
-**STEP 03 — Done**
-The payment leaves on the right rail, the balance updates live, and the receipt is
-already in your history before you’ve put the phone down.
-`LOOP · M-PESA · PESALINK · TILL`
+**STEP 03 — Done, and accounted for**
+It leaves on the right LOOP rail, the status is followed to settlement, and the
+record lands against the right customer, order or request — so it reconciles itself
+instead of waiting for a screenshot.
+`TRACKED · RECONCILED · AUDITED`
 
-**Footer left** · One sentence of your own language
+**Footer left** · One sentence, in your own language, however you navigate
 **Footer right** · 03 / 08
 
 ---
@@ -148,24 +168,22 @@ already in your history before you’ve put the phone down.
 # The voice is ours.<br>*The rails are LOOP’s.*
 
 [Lede] LOOP is **NCBA’s developer platform** — the licensed pipe that actually moves
-the shillings. We wired it end to end in the LOOP sandbox: money in, money out, and
-a status lookup that tells us the truth about what happened.
+the shillings. Every sentence a user speaks lands on one of these eight endpoints:
+**a send, a request to pay, a till or paybill, or a status check.** We wired all
+eight end to end in the LOOP sandbox.
 
 ### The eight endpoints
 
 | Operation | serviceCode | Direction |
 |---|---|---|
+| LOOP Prompt — request to pay | `NEO_MRCHNT_RTP` | money in |
 | Send Money — LOOP wallet | `MRCHNT_SENDMONEY` | money out |
 | Send Money — M-Pesa | `MRCHNT_SENDMONEY` | money out |
 | Send Money — PesaLink (bank) | `MRCHNT_SENDMONEY` | money out |
-| LOOP Prompt — request to pay | `NEO_MRCHNT_RTP` | money in |
 | Pay to LOOP Till | `MRCHNT_PAYMENTS` | money out |
 | Pay to M-Pesa Till | `MRCHNT_PAYMENTS` | money out |
 | Pay to M-Pesa Paybill | `MRCHNT_PAYMENTS` | money out |
 | Transaction Status Inquiry | `MRCHNT_TXN_INQUIRY` | read only |
-
-*On the slide these run in the order: LOOP Prompt, the three Send Money rows, the
-three Pay to rows, then Transaction Status Inquiry.*
 
 ### Environments and auth
 
@@ -176,8 +194,9 @@ three Pay to rows, then Transaction Status Inquiry.*
 | Auth | `OAuth 2.0 client_credentials → short-lived Bearer` |
 | Signing | `HMAC-SHA256 merchantTill\|timestamp\|nonce` |
 
-[Panel note] Routing comes down to one question: is the destination a LOOP wallet,
-an M-Pesa number, a bank account, or a till?
+[Panel note] Paying out is one question: is the destination a LOOP wallet, an
+M-Pesa number, a bank account, or a till? **“Request KES 5,000 from John”** inverts
+it — LOOP Prompt asks the payer instead.
 
 ### Links
 
@@ -239,44 +258,44 @@ requestParameters.
 
 ---
 
-## Slide 7 — And then some
+## Slide 7 — Closing the loop
 
-**Eyebrow left** · 06 · And then some
-**Eyebrow right** · Beyond the send
+**Eyebrow left** · 06 · Closing the loop
+**Eyebrow right** · After the money moves
 
-# Everything else we built<br>*while we were in there.*
+# A payment isn’t finished<br>*when the money leaves.*
 
 ### Six cards
 
-**SCAN — Point at the bill**
-Gemini Vision reads paybills, tills, QR codes, receipts and bank slips — account,
-amount and reference come out filled in. Pay now, or save it for later.
-`GEMINI VISION · CONFIDENCE-SCORED`
+**ACCESSIBILITY — Built for ears, not just eyes**
+Every journey completes by voice alone. Controls are labelled, confirmations are
+spoken, and nothing depends on seeing where a button sits.
+`VOICE-ONLY PATHS · LABELLED CONTROLS`
 
-**CHAMA — The group, handled**
-Start a collection and every member gets their own prompt. Cycles, contributions and
-rotating payouts tracked without a WhatsApp argument.
-`STK PER MEMBER · CYCLES · PAYOUTS`
+**INSIGHT — Ask about your own money**
+“How much did I spend this week?” gets a plain answer. Spending, cash flow and
+category breakdowns without a single export or spreadsheet.
+`SPEND · CASH FLOW · CATEGORIES`
 
-**ESCROW — Money that waits**
-Funds park against milestones and only release when both sides agree. Disputes have
-an actual path instead of a phone call.
-`MILESTONES · PARTICIPANTS · DISPUTES`
+**REQUESTS — Requests that don’t go quiet**
+A request to pay stays visible until it settles, so unpaid ones surface on their own
+instead of being remembered by whoever is owed.
+`LOOP PROMPT · UNPAID SURFACED`
 
-**SECURITY — Step-up before it spends**
-A PIN or passkey mints a short-lived token, and no send or withdrawal moves without
-one. Five bad tries locks the account for fifteen minutes.
-`PIN · WEBAUTHN PASSKEY · LOCKOUT`
+**MERCHANTS — The payment knows the order**
+Money arriving from a chat or a social sale carries its customer and its order with
+it, so fulfilment stops depending on screenshots and manual searching.
+`CUSTOMER · ORDER · CONVERSATION`
 
-**DATA — Locked by default**
-Row-level security on all 22 tables, so a user’s rows are reachable only by that
-user. Every sensitive action writes an audit event.
-`RLS ON 22 TABLES · AUDIT LOG`
+**TRUST — Traceable by default**
+A PIN or passkey mints a short-lived token and nothing spends without one. Row-level
+security on all 22 tables; every sensitive action writes an audit event.
+`STEP-UP · RLS · AUDIT LOG`
 
-**ORCHESTRATION — One nervous system**
-A 145-node workflow routes voice intents, provider callbacks and reconciliation. A
-result that arrives twice is only ever counted once.
-`n8n · CALLBACKS · RECONCILIATION`
+**AND STILL — Chama, escrow, scan-a-bill**
+Group collections with rotating payouts, milestone escrow for deals that need
+holding, and Gemini Vision reading paybills, tills and receipts so nothing is typed.
+`CHAMA · ESCROW · GEMINI VISION`
 
 **Footer left** · Async results reconcile by provider reference — idempotent, both directions
 **Footer right** · 06 / 08
@@ -288,22 +307,21 @@ result that arrives twice is only ever counted once.
 **Eyebrow left** · Asante sana
 **Eyebrow right** · ongeapesa.com
 
-[Kicker] Fewer taps · fewer wrong digits · more people who can just ask
+[Kicker] Fewer steps · fewer errors · nobody locked out
 
 # ASANTE
 
 [Sub] **The bank that listens.**
 
-### What people say to it
+### What people say — or type
 
-- “Tuma elfu mbili kwa Mama Boi.”
-- “Lipa hii bill ya stima.”
+- “Send KES 2,000 to Mum.”
+- “Request KES 5,000 from John.”
+- “How much did I spend this week?”
 - “Chama yetu, collect for June.”
-- “Balance yangu ni ngapi?”
-- “Nitumie change, haraka.”
 
-[Closing line] Five sentences. No menus, no typing, no wrong digits. That is the
-whole product.
+[Closing line] Said out loud or typed with a thumb, in English, Kiswahili or Sheng —
+and readable end to end by a screen reader. That is the whole product.
 
 ### Links
 
@@ -318,11 +336,13 @@ whole product.
 
 ## Notes on the copy
 
-- The five lines on slide 8 are **spoken commands** — what people say to the
-  product. They are not testimonials and carry no attribution. Don’t add names to
-  them.
-- Slide 3’s figures are internal product research and are labelled as such on the
-  slide itself. Replace them with sourced figures before an investor sees this.
+- **Say *or* type.** Voice is the headline but typed input is a first-class path,
+  and the copy says so on slides 1, 4 and 8. Don’t reintroduce “no typing”.
+- **Accessibility is a pillar, not a feature.** It carries a cluster on slide 3, a
+  step on slide 4 and a card on slide 7. If a slide gets cut, don’t let it be the
+  accessible one.
+- The four lines on slide 8 are **spoken or typed commands** — what people say to
+  the product. They are not testimonials and carry no attribution. Don’t add names.
 - Slides 5 and 6 come from
   [`unleashed-loop.dev-skill`](https://github.com/imodoiepale/unleashed-loop.dev-skill),
   which transcribes LOOP’s published documentation. The skill is unofficial and not
@@ -330,3 +350,20 @@ whole product.
   confirmed with LOOP directly — slide 6’s footer carries both caveats and should
   stay.
 - The language is named **Kiswahili** throughout, not “Swahili”.
+
+### What changed, and why
+
+An earlier version of this deck framed the problem as USSD friction for the
+"M-Pesa generation", with a `*334#` graphic and a table of figures — 7–12 steps,
+2–3 minutes, 15–20% wrong digits, ~40% struggling, 100% manual entry — under the
+line "Ongea Pesa internal product research, 2026."
+
+Those figures came from the repository's own product overview. **The source line
+did not** — there is no such research document, and that attribution was invented.
+The whole USSD framing also missed what this is actually for: merchants and small
+businesses selling in chat, and blind and visually impaired users locked out of
+visual payment journeys.
+
+Slides 2, 3, 4, 7 and 8 were rewritten against the real brief. The invented source
+line is gone, and slide 3 now carries five named problem clusters rather than
+unsourced numbers. If you want numbers back on that slide, add ones you can cite.
