@@ -65,6 +65,9 @@ export function LiveKitVoiceProvider({ children }: { children: ReactNode }) {
 
   const roomRef = useRef<Room | null>(null);
   const toolHandlersRef = useRef<ToolHandlers>({});
+  // Audio elements created by track.attach(). Tracked so they can be removed on
+  // disconnect — otherwise every session leaves one behind in the DOM.
+  const audioElsRef = useRef<HTMLAudioElement[]>([]);
 
   const registerToolHandlers = useCallback((handlers: ToolHandlers) => {
     toolHandlersRef.current = { ...toolHandlersRef.current, ...handlers };
@@ -128,13 +131,48 @@ export function LiveKitVoiceProvider({ children }: { children: ReactNode }) {
         .on(RoomEvent.Disconnected, () => {
           setIsConnected(false);
           setIsSpeaking(false);
+          // Drop the playback elements with the session, or they pile up in the
+          // DOM one per call and can keep a dead stream referenced.
+          audioElsRef.current.forEach(e => e.remove());
+          audioElsRef.current = [];
           roomRef.current = null;
         })
         // The agent is the only other participant, so any remote audio is it.
-        .on(RoomEvent.TrackSubscribed, () => setIsSpeaking(true))
-        .on(RoomEvent.TrackUnsubscribed, () => setIsSpeaking(false));
+        // Subscribing to a track is NOT the same as playing it. LiveKit hands
+        // over a MediaStreamTrack and it stays silent until it is attached to
+        // an <audio> element in the DOM. Without this the session connects,
+        // shows "listening", bills the user — and plays nothing, which looks
+        // like a broken agent rather than a missing element.
+        .on(RoomEvent.TrackSubscribed, (track: any) => {
+          if (track?.kind !== 'audio') return;
+          const el: HTMLAudioElement = track.attach();
+          el.autoplay = true;
+          // Off-screen: this element is for playback, not for looking at.
+          el.style.display = 'none';
+          document.body.appendChild(el);
+          audioElsRef.current.push(el);
+          setIsSpeaking(true);
+        })
+        .on(RoomEvent.TrackUnsubscribed, (track: any) => {
+          if (track?.kind !== 'audio') return;
+          // detach() returns the elements it was attached to; remove them or
+          // they accumulate in the DOM across sessions.
+          (track.detach() as HTMLMediaElement[]).forEach(e => e.remove());
+          audioElsRef.current = audioElsRef.current.filter(e => e.isConnected);
+          setIsSpeaking(false);
+        });
 
       await room.connect(data.url, data.token);
+
+      // Browsers block autoplaying audio until a user gesture. startSession is
+      // called from a tap, so this is allowed here — but it must be called
+      // explicitly or the first greeting is silently dropped on mobile.
+      try {
+        await room.startAudio();
+      } catch (e) {
+        console.warn('startAudio blocked; audio resumes on next interaction', e);
+      }
+
       await room.localParticipant.setMicrophoneEnabled(true);
     } catch (err: any) {
       console.error('LiveKit session failed:', err);
