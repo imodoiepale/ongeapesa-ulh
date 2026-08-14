@@ -250,7 +250,7 @@ the experimental path even by crafting a request.
 Flip an account from the admin settings screen, or directly:
 
 ```bash
-curl -X PATCH https://ongeapesa.nsait.co.ke/api/admin/voice-engine \
+curl -X PATCH https://ongeapesa-ulh.nsait.co.ke/api/admin/voice-engine \
   -H 'Content-Type: application/json' \
   -d '{"user_id":"<uuid>","engine":"livekit"}'
 ```

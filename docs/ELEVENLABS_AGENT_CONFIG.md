@@ -145,7 +145,7 @@ Injected by the client SDK via signed URL at runtime. Values below are test/plac
 | Response timeout | 30 seconds |
 | Response body schema | **null** |
 | Disable interruptions | false |
-| Webhook URL | `https://ongeapesa.nsait.co.ke/api/voice/webhook` |
+| Webhook URL | `https://ongeapesa-ulh.nsait.co.ke/api/voice/webhook` |
 | Method | POST |
 | Content type | application/json |
 | Auth | none |
@@ -1283,7 +1283,7 @@ Matches the actual `app/api/voice/webhook/route.ts` response contract (lines 610
             "execution_mode": "async",
             "api_schema": {
               "request_headers": {},
-              "url": "https://ongeapesa.nsait.co.ke/api/voice/webhook",
+              "url": "https://ongeapesa-ulh.nsait.co.ke/api/voice/webhook",
               "method": "POST",
               "path_params_schema": {},
               "query_params_schema": {

@@ -23,7 +23,7 @@ export const EMAIL_BRAND = {
   muted:     '#64748b',
   bg:        '#f8fafc',
   card:      '#ffffff',
-  site:      'https://ongeapesa.nsait.co.ke',
+  site:      'https://ongeapesa-ulh.nsait.co.ke',
   from:      'Ongea Pesa <ongeapesa@nsait.co.ke>',
   replyTo:   'info@nsait.co.ke',
   /** Shown in the footer. Recipients and spam filters both expect a real sender identity. */

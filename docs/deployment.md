@@ -109,7 +109,7 @@ made by the service role. Flip an account from
 `/admin-analytics/settings` → Voice Engine, or:
 
 ```bash
-curl -X PATCH https://ongeapesa.nsait.co.ke/api/admin/voice-engine \
+curl -X PATCH https://ongeapesa-ulh.nsait.co.ke/api/admin/voice-engine \
   -H 'Content-Type: application/json' \
   -d '{"user_id":"<uuid>","engine":"livekit"}'
 ```

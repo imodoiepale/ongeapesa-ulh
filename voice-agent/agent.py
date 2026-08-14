@@ -42,7 +42,7 @@ load_dotenv()
 logger = logging.getLogger("ongea-agent")
 logging.basicConfig(level=logging.INFO)
 
-APP_URL = os.environ.get("ONGEA_APP_URL", "https://ongeapesa.nsait.co.ke")
+APP_URL = os.environ.get("ONGEA_APP_URL", "https://ongeapesa-ulh.nsait.co.ke")
 WEBHOOK_URL = f"{APP_URL}/api/voice/webhook"
 COST_URL = f"{APP_URL}/api/costs/record"
 WEBHOOK_TOKEN = os.environ.get("N8N_WEBHOOK_AUTH_TOKEN", "")
