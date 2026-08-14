@@ -38,14 +38,34 @@ export async function createClient() {
 
 // Service role client - bypasses RLS for admin operations
 export function createServiceClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  // Name the missing variable. Previously these were `!` assertions, so an empty
+  // value reached supabase-js and surfaced as a bare "supabaseKey is required"
+  // — an uncaught throw, which Next.js returns as a 500 with an EMPTY body. No
+  // message, no variable name, nothing in the response to act on.
+  //
+  // Vercel marks these vars "sensitive", meaning their values cannot be read
+  // back from the dashboard or the API, so a blank one is invisible until
+  // something breaks. Saying which is missing is the only cheap way to tell.
+  const missing = [
+    !url?.trim() && 'NEXT_PUBLIC_SUPABASE_URL',
+    !key?.trim() && 'SUPABASE_SERVICE_ROLE_KEY',
+  ].filter(Boolean)
+
+  if (missing.length) {
+    throw new Error(
+      `Supabase service client is not configured — missing: ${missing.join(', ')}. ` +
+      `Set it in the Vercel project environment and REDEPLOY (env changes do not ` +
+      `reach a running deployment on their own).`,
+    )
+  }
+
+  return createSupabaseClient(url!, key!, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
-  )
+  })
 }

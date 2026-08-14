@@ -20,6 +20,23 @@ import { ONGEA_ENV } from '@/lib/environment'
 const AGENT_IDENTITY_PREFIX = 'ongea-user'
 
 export async function POST() {
+  try {
+    return await mintToken()
+  } catch (err: any) {
+    // An uncaught throw here returns a 500 with an EMPTY body, which tells the
+    // caller nothing. Most often it is a blank env var — and because Vercel
+    // marks them "sensitive", a blank one cannot be spotted in the dashboard.
+    // Surfacing the message is the difference between a five-minute fix and an
+    // hour of guessing.
+    console.error('livekit-token failed:', err)
+    return NextResponse.json(
+      { error: err?.message || 'Could not start the voice session' },
+      { status: 500 },
+    )
+  }
+}
+
+async function mintToken() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
