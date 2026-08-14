@@ -649,6 +649,15 @@ def _preflight_construct() -> None:
         try:
             factory()
         except Exception as exc:
+            # Some components can only exist inside a running job — the turn
+            # detector resolves its model through the job context and raises
+            # "no job context found" at worker startup. That is not a fault;
+            # it just cannot be verified here, so skip it rather than refuse
+            # to boot. Getting this wrong took the worker down entirely, which
+            # is worse than the late failure this check exists to prevent.
+            if "job context" in str(exc).lower():
+                logger.info("preflight: %s can only be built inside a job — skipped", name)
+                continue
             logger.error("=" * 68)
             logger.error("CANNOT START - %s failed to initialise: %s", name, exc)
             if isinstance(exc, TypeError):
@@ -664,7 +673,7 @@ def _preflight_construct() -> None:
                 )
             logger.error("=" * 68)
             raise SystemExit(1) from exc
-    logger.info("preflight: stt/tts/vad/turn_detector all constructed OK")
+    logger.info("preflight: plugin construction check passed")
 
 
 def preflight() -> None:
