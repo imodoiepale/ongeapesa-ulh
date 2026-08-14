@@ -1,0 +1,102 @@
+# Self-hosted LiveKit SFU for Hostinger Docker Manager ("Compose from URL").
+#
+#   https://raw.githubusercontent.com/imodoiepale/ongeapesa-ulh/main/voice-agent/livekit-server/docker-compose.hostinger.yml
+#
+# Project name: livekit
+#
+# ── Before deploying ──────────────────────────────────────────────────────────
+#
+# 1. Generate a key/secret pair. Run this in the panel Terminal — do NOT paste
+#    the output into a chat window, and do not commit it:
+#
+#      docker run --rm livekit/livekit-server generate-keys
+#
+#    Then add ONE panel environment variable, in "KEY: SECRET" form exactly
+#    (space after the colon):
+#
+#      LIVEKIT_KEYS = APIxxxxxxxxxxxx: <the generated secret>
+#
+# 2. Confirm your Traefik entrypoint and certresolver names, because the labels
+#    below have to match what is already running on this box:
+#
+#      docker inspect $(docker ps --filter name=n8n --format '{{.Names}}' | head -1) \
+#        --format '{{json .Config.Labels}}' | tr ',' '\n' | grep -i traefik
+#
+#    If that shows something other than `websecure` / `letsencrypt`, edit the two
+#    label lines below to match before deploying.
+#
+# ── Why this looks different from the worker's compose ────────────────────────
+#
+# The worker dials OUT and needs no inbound ports. An SFU is the opposite: it
+# terminates WebRTC, so it needs real ports on the host.
+#
+#   7880/tcp  signalling (HTTP + WebSocket) — behind Traefik, which supplies TLS
+#   7881/tcp  WebRTC over TCP, the fallback when UDP is blocked (many corporate
+#             and some mobile networks). Published directly.
+#   7882/udp  the actual media. Published directly — Traefik proxies HTTP/TCP and
+#             CANNOT carry this. This is the one people forget, and the symptom is
+#             a call that connects and then has no audio.
+
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+
+    # Media ports must reach the container directly, not through the proxy.
+    ports:
+      - "7881:7881/tcp"
+      - "7882:7882/udp"
+
+    environment:
+      # Non-secret config only — this file is in a public repo. LIVEKIT_KEYS
+      # comes from the panel and is deliberately NOT listed here: an entry like
+      # `LIVEKIT_KEYS: ${LIVEKIT_KEYS}` resolves to an empty string when Compose
+      # cannot see the variable, and silently overwrites the panel's real value.
+      LIVEKIT_CONFIG: |
+        port: 7880
+        log_level: info
+        rtc:
+          tcp_port: 7881
+          udp_port: 7882
+          # Advertise the VPS's public IP, not the container's private one.
+          # Without this, clients are handed 172.x addresses they cannot reach
+          # and the call connects but carries no audio.
+          use_external_ip: true
+        # Single-node: no Redis needed. Add one only when running >1 instance.
+        turn:
+          enabled: false
+
+    labels:
+      - "traefik.enable=true"
+      # Wildcard DNS already resolves *.srv1631847.hstgr.cloud to this box, so
+      # no DNS record is needed. Traefik issues the Let's Encrypt cert.
+      - "traefik.http.routers.livekit.rule=Host(`livekit.srv1631847.hstgr.cloud`)"
+      - "traefik.http.routers.livekit.entrypoints=websecure"
+      - "traefik.http.routers.livekit.tls.certresolver=letsencrypt"
+      # Signalling only. Traefik upgrades WebSocket on this route natively.
+      - "traefik.http.services.livekit.loadbalancer.server.port=7880"
+
+    # An SFU relays every participant's audio. These ceilings keep it from
+    # starving n8n, traefik, evolution-api and the voice worker on the same box.
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+# Traefik discovers containers on its own network. If your Traefik runs on a
+# named external network rather than the default bridge, uncomment and set it —
+# the `docker inspect` command above will show which network n8n is attached to.
+#
+# networks:
+#   default:
+#     external: true
+#     name: <traefik-network-name>
