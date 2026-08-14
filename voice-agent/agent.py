@@ -24,6 +24,7 @@ Design constraints this file is built around:
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 import os
@@ -469,12 +470,43 @@ def build_tts():
     provider = tts_provider()
 
     if provider == "fish":
-        return fishaudio.TTS(
-            model=os.environ.get("FISH_TTS_MODEL", "s2.1-pro"),
-            # A cloned Ongea Pesa voice; see README for creating one.
-            reference_id=os.environ.get("FISH_VOICE_ID") or None,
-            latency=os.environ.get("FISH_LATENCY", "balanced"),
-        )
+        # Pass ONLY what this installed version actually accepts.
+        #
+        # A previous version hardcoded reference_id= and every job died with
+        #   TypeError: TTS.__init__() got an unexpected keyword argument 'reference_id'
+        # The agent still joined the room and logged "session start", so from the
+        # browser it looked like a connected session that simply never spoke —
+        # the hardest kind of failure to place.
+        #
+        # livekit-plugins-fishaudio has renamed these across releases, and
+        # README.md already warns that the API surface must be verified against
+        # what installs rather than assumed. Introspecting the signature keeps a
+        # rename from taking voice down again.
+        wanted = {
+            "model": os.environ.get("FISH_TTS_MODEL", "s2.1-pro"),
+            "latency": os.environ.get("FISH_LATENCY", "balanced"),
+        }
+        # The cloned-voice id has gone by several names; use whichever exists.
+        voice_id = os.environ.get("FISH_VOICE_ID") or None
+        if voice_id:
+            for alias in ("reference_id", "voice_id", "voice", "model_id"):
+                wanted[alias] = voice_id
+
+        accepted = inspect.signature(fishaudio.TTS.__init__).parameters
+        kwargs = {k: v for k, v in wanted.items() if k in accepted and v is not None}
+        # Only one voice alias can be right; drop the rest.
+        for alias in ("voice_id", "voice", "model_id"):
+            if "reference_id" in kwargs and alias in kwargs:
+                kwargs.pop(alias)
+
+        dropped = sorted(set(wanted) - set(kwargs))
+        if dropped:
+            logger.warning(
+                "fishaudio.TTS does not accept %s in this version — ignoring. "
+                "Accepted: %s", dropped, sorted(k for k in accepted if k != "self"),
+            )
+        logger.info("tts=fish kwargs=%s", sorted(kwargs))
+        return fishaudio.TTS(**kwargs)
 
     if provider == "openai":
         from livekit.plugins import openai
