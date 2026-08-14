@@ -1,0 +1,108 @@
+# ==============================================================================
+# Ongea Pesa — Vercel environment variables
+#
+# Copy-paste into Vercel → Project → Settings → Environment Variables.
+# Blank values are ones only you can supply. Filled values are safe defaults or
+# already-public identifiers.
+#
+# Scope every one of these to Production AND Preview unless noted otherwise.
+# ==============================================================================
+
+
+# ── Supabase ──────────────────────────────────────────────────────────────────
+# URL and anon key are public by design (the anon key is RLS-bound).
+NEXT_PUBLIC_SUPABASE_URL=https://efydvozipukolqmynvmv.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmeWR2b3ppcHVrb2xxbXludm12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MTU3ODEsImV4cCI6MjA3NDk5MTc4MX0._WNf0PJVFZcoN5DGwbR38NS8jUO9MoXTUTxuJqO2gJo
+
+# SECRET. Bypasses RLS. Every server route uses createServiceClient() and fails
+# without it. Dashboard → Settings → API → service_role.
+SUPABASE_SERVICE_ROLE_KEY=
+
+
+# ── Environment gate ──────────────────────────────────────────────────────────
+# lib/environment.ts DEFAULTS TO 'live' when unset. Set it explicitly on both
+# scopes or your preview deployments transact against live rails.
+#   Production = live      Preview = test
+ONGEA_ENVIRONMENT=live
+
+
+# ── App URLs ──────────────────────────────────────────────────────────────────
+NEXT_PUBLIC_SITE_URL=https://ongeapesa.nsait.co.ke
+NEXT_PUBLIC_APP_URL=https://ongeapesa.nsait.co.ke
+
+
+# ── n8n ───────────────────────────────────────────────────────────────────────
+# MUST be set explicitly. app/api/voice/webhook/route.ts falls back to the
+# Hostinger instance, while CLAUDE.md documents the live WALLET SYSTEM workflow
+# on Railway. An unset value silently routes payments to whichever the fallback
+# names. Pick the instance that actually owns /webhook/send_money:
+#   Railway    https://primary-production-579c.up.railway.app
+#   Hostinger  https://n8n-lc5r.srv1631847.hstgr.cloud
+N8N_WEBHOOK_BASE_URL=
+
+# Sent as the Authorization header on calls INTO n8n.
+N8N_WEBHOOK_AUTH_TOKEN=
+
+# Verifies callbacks coming BACK from n8n and the voice worker. Must match the
+# worker's .env byte for byte, or cost reporting 401s while all else looks fine.
+N8N_CALLBACK_SECRET=
+
+
+# ── LiveKit (parallel voice engine) ───────────────────────────────────────────
+# Same three values also go in the worker's environment on the VPS.
+# Without all three, /api/voice/livekit-token returns 500.
+LIVEKIT_URL=
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+
+
+# ── ElevenLabs (default voice engine) ─────────────────────────────────────────
+# Server-side name ONLY. Never add NEXT_PUBLIC_ELEVENLABS_API_KEY — any
+# NEXT_PUBLIC_* var is inlined into the browser bundle at build time, which
+# publishes the key to anyone who opens devtools.
+ELEVENLABS_API_KEY=
+NEXT_PUBLIC_AGENT_ID=
+
+
+# ── AI / OCR ──────────────────────────────────────────────────────────────────
+# OpenAI is required: app/api/scan/ocr/route.ts throws without it.
+OPENAI_API_KEY=
+GEMINI_API_KEY=
+NEXT_PUBLIC_GEMINI_API_KEY=
+
+
+# ── IndexPay (wallet / gate / pocket) ─────────────────────────────────────────
+# NOTE: do NOT set GATE_API_KEY / GATE_SECRET_KEY / GATE_API_URL. Those belong
+# to lib/services/gateWalletService.ts, a dead Gate.io CRYPTO EXCHANGE client
+# that nothing imports. The live integration is gateService.ts, below.
+INDEXPAY_API_KEY=
+NEXT_PUBLIC_INDEXPAY_URL=https://api.indexpay.co.ke
+
+
+# ── Security: passkeys + voice step-up ────────────────────────────────────────
+# RP_ID is the bare domain, ORIGIN includes the scheme. They must match the
+# deployed host or WebAuthn registration silently fails.
+WEBAUTHN_RP_ID=ongeapesa.nsait.co.ke
+WEBAUTHN_ORIGIN=https://ongeapesa.nsait.co.ke
+
+# Must be the literal string "true" to enable.
+VOICE_STEPUP_ENABLED=true
+# 0 = stage EVERY money-moving voice command for in-app confirm (safest).
+# 5000 = stage only when amount >= KSh 5000.
+VOICE_STEPUP_THRESHOLD=0
+
+
+# ── Email (Resend) ────────────────────────────────────────────────────────────
+RESEND_API_KEY=
+RESEND_FROM="Ongea Pesa <ongeapesa@nsait.co.ke>"
+RESEND_REPLY_TO=
+
+
+# ── Admin + cron ──────────────────────────────────────────────────────────────
+# Comma-separated; EXTENDS the hardcoded list in lib/admin.ts rather than
+# replacing it.
+ADMIN_EMAILS=info@nsait.co.ke
+CRON_API_KEY=
+
+# Used for USD→KES conversion on the economics dashboard. Defaults to 129.
+USD_TO_KES_RATE=129
