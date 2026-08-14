@@ -126,7 +126,7 @@ financial visibility · Users with disabilities left out
 | Said or typed | What it does |
 |---|---|
 | “Send KES 2,000 to Mum.” | `PAYS OUT · SEND MONEY` |
-| “Request KES 5,000 from John.” | `ASKS TO BE PAID · LOOP PROMPT` |
+| “Request KES 5,000 from John.” | `ASKS TO BE PAID · REQUEST TO PAY` |
 | “How much did I spend this week?” | `ANSWERS · NO MENU, NO EXPORT` |
 
 [Art] The voice rule: a waveform in three bands sitting directly above the three
@@ -163,26 +163,29 @@ instead of waiting for a screenshot.
 *The one light slide in the deck.*
 
 **Eyebrow left** · 04 · Built on LOOP
-**Eyebrow right** · NCBA · sandbox verified
+**Eyebrow right** · NCBA · sandbox
 
 # The voice is ours.<br>*The rails are LOOP’s.*
 
 [Lede] LOOP is **NCBA’s developer platform** — the licensed pipe that actually moves
-the shillings. Every sentence a user speaks lands on one of these eight endpoints:
-**a send, a request to pay, a till or paybill, or a status check.** We wired all
-eight end to end in the LOOP sandbox.
+the shillings. Its documented surface is eight endpoints. **Three carry traffic
+today**, behind a flag, with NCBA left as the default rail — so a bug in the new
+path cannot move live money.
 
-### The eight endpoints
+### The endpoints — live first, then documented
 
-| Operation | serviceCode | Direction |
+A ● marks a rail the app calls today. The rest are documented in the reference
+corpus and are next; they are not wired.
+
+| ● Live · then documented | serviceCode | Direction |
 |---|---|---|
+| ● Send Money — M-Pesa | `MRCHNT_SENDMONEY` | money out |
+| ● Pay to M-Pesa Till | `MRCHNT_PAYMENTS` | money out |
+| ● Pay to M-Pesa Paybill | `MRCHNT_PAYMENTS` | money out |
 | LOOP Prompt — request to pay | `NEO_MRCHNT_RTP` | money in |
 | Send Money — LOOP wallet | `MRCHNT_SENDMONEY` | money out |
-| Send Money — M-Pesa | `MRCHNT_SENDMONEY` | money out |
 | Send Money — PesaLink (bank) | `MRCHNT_SENDMONEY` | money out |
 | Pay to LOOP Till | `MRCHNT_PAYMENTS` | money out |
-| Pay to M-Pesa Till | `MRCHNT_PAYMENTS` | money out |
-| Pay to M-Pesa Paybill | `MRCHNT_PAYMENTS` | money out |
 | Transaction Status Inquiry | `MRCHNT_TXN_INQUIRY` | read only |
 
 ### Environments and auth
@@ -194,9 +197,9 @@ eight end to end in the LOOP sandbox.
 | Auth | `OAuth 2.0 client_credentials → short-lived Bearer` |
 | Signing | `HMAC-SHA256 merchantTill\|timestamp\|nonce` |
 
-[Panel note] Paying out is one question: is the destination a LOOP wallet, an
-M-Pesa number, a bank account, or a till? **“Request KES 5,000 from John”** inverts
-it — LOOP Prompt asks the payer instead.
+[Panel note] **Live today:** send to M-Pesa, pay a till, pay a paybill. **Next:**
+LOOP Prompt, which inverts a payment into *“Request KES 5,000 from John.”* Utility
+bills stay on NCBA — LOOP does not cover them.
 
 ### Links
 
@@ -207,7 +210,7 @@ it — LOOP Prompt asks the payer instead.
 - [authorisation](https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/authorisation.md)
 - [overview](https://github.com/imodoiepale/unleashed-loop.dev-skill/blob/main/skills/loop-api/references/overview.md)
 
-**Footer left** · 8 endpoints wired · sandbox to production is a base-URL swap
+**Footer left** · 3 rails live behind a flag · NCBA stays the default · 5 documented and next
 **Footer right** · 04 / 08
 
 ---
@@ -350,6 +353,17 @@ and readable end to end by a screen reader. That is the whole product.
   confirmed with LOOP directly — slide 6’s footer carries both caveats and should
   stay.
 - The language is named **Kiswahili** throughout, not “Swahili”.
+
+### The endpoint claim, corrected
+
+An earlier version of slide 5 said **“8 endpoints wired”** under the eyebrow
+“sandbox verified”. `lib/services/walletService.ts` on `main` routes to three LOOP
+webhooks — `loop_send_mpesa`, `loop_pay_paybill` and `loop_pay_mpesa_till` — opt-in
+behind `railChoice === 'loop'`, with NCBA as the default rail and utility bills
+staying on NCBA because LOOP does not cover them. Eight is what LOOP *documents*,
+not what the app calls. The slide now separates the two, and slide 4 names the
+capability (“request to pay”) rather than the LOOP Prompt endpoint, which is not
+yet wired.
 
 ### What changed, and why
 

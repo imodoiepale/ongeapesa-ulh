@@ -459,6 +459,17 @@ body {
   color: var(--lt-teal);
   letter-spacing: -.01em;
 }
+.live-dot {
+  display: inline-block;
+  width: .5em; height: .5em;
+  border-radius: 50%;
+  background: #0A7C74;
+  box-shadow: 0 0 0 .22em rgba(10,124,116,.18);
+  margin-right: .6em;
+  vertical-align: middle;
+}
+.rails tr.next td:first-child { color: var(--lt-muted); font-weight: 500; }
+.rails tr.next code { opacity: .62; }
 .dir {
   font-family: var(--mono);
   font-size: clamp(7.5px, .84cqi, 12px);
@@ -794,7 +805,7 @@ body {
           </div>
           <div class="say">
             <span class="q">“Request KES 5,000 from John.”</span>
-            <span class="a">ASKS TO BE PAID · LOOP PROMPT</span>
+            <span class="a">ASKS TO BE PAID · REQUEST TO PAY</span>
           </div>
           <div class="say">
             <span class="q">“How much did I spend this week?”</span>
@@ -839,28 +850,28 @@ body {
   <div class="stage">
     <div class="eyebrow">
       <span><b>04</b> &nbsp;·&nbsp; Built on LOOP</span>
-      <span class="mark">NCBA · sandbox verified</span>
+      <span class="mark">NCBA · sandbox</span>
     </div>
 
     <div class="body">
       <div style="display:grid; gap:clamp(9px,1.35cqi,22px); min-height:0;">
         <h2 class="h1" data-r style="font-size:clamp(22px,4.1cqi,64px)">The voice is ours.<br><em>The rails are LOOP’s.</em></h2>
-        <p class="lede" data-r style="--d:110ms; max-width:78ch">LOOP is <strong>NCBA’s developer platform</strong> — the licensed pipe that actually moves the shillings. Every sentence a user speaks lands on one of these eight endpoints: <strong>a send, a request to pay, a till or paybill, or a status check.</strong> We wired all eight end to end in the LOOP sandbox.</p>
+        <p class="lede" data-r style="--d:110ms; max-width:78ch">LOOP is <strong>NCBA’s developer platform</strong> — the licensed pipe that actually moves the shillings. Its documented surface is eight endpoints. <strong>Three carry traffic today</strong>, behind a flag, with NCBA left as the default rail — so a bug in the new path cannot move live money.</p>
 
         <div class="cols" style="grid-template-columns: 1.45fr .8fr; gap:clamp(12px,1.8cqi,30px); align-items:start; min-height:0;">
           <table class="rails" data-r style="--d:200ms">
             <thead>
-              <tr><th scope="col">Operation</th><th scope="col">serviceCode</th><th scope="col">Direction</th></tr>
+              <tr><th scope="col"><span class="live-dot"></span>Live · then documented</th><th scope="col">serviceCode</th><th scope="col">Direction</th></tr>
             </thead>
             <tbody>
-              <tr><td>LOOP Prompt — request to pay</td><td><code>NEO_MRCHNT_RTP</code></td><td><span class="dir in">money in</span></td></tr>
-              <tr><td>Send Money — LOOP wallet</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
-              <tr><td>Send Money — M-Pesa</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
-              <tr><td>Send Money — PesaLink (bank)</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
-              <tr><td>Pay to LOOP Till</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
-              <tr><td>Pay to M-Pesa Till</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
-              <tr><td>Pay to M-Pesa Paybill</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
-              <tr><td>Transaction Status Inquiry</td><td><code>MRCHNT_TXN_INQUIRY</code></td><td><span class="dir read">read only</span></td></tr>
+              <tr><td><span class="live-dot"></span>Send Money — M-Pesa</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td><span class="live-dot"></span>Pay to M-Pesa Till</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr><td><span class="live-dot"></span>Pay to M-Pesa Paybill</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr class="next"><td>LOOP Prompt — request to pay</td><td><code>NEO_MRCHNT_RTP</code></td><td><span class="dir in">money in</span></td></tr>
+              <tr class="next"><td>Send Money — LOOP wallet</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr class="next"><td>Send Money — PesaLink (bank)</td><td><code>MRCHNT_SENDMONEY</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr class="next"><td>Pay to LOOP Till</td><td><code>MRCHNT_PAYMENTS</code></td><td><span class="dir out">money out</span></td></tr>
+              <tr class="next"><td>Transaction Status Inquiry</td><td><code>MRCHNT_TXN_INQUIRY</code></td><td><span class="dir read">read only</span></td></tr>
             </tbody>
           </table>
 
@@ -883,7 +894,7 @@ body {
                 <dd>HMAC-SHA256 <span class="fade">merchantTill|timestamp|nonce</span></dd>
               </div>
             </dl>
-            <p class="small" style="color:var(--lt-muted); font-size:clamp(8.5px,.96cqi,13px); line-height:1.45">Paying out is one question: is the destination a LOOP wallet, an M-Pesa number, a bank account, or a till? <strong style="color:var(--lt-ink)">“Request KES 5,000 from John”</strong> inverts it — LOOP Prompt asks the payer instead.</p>
+            <p class="small" style="color:var(--lt-muted); font-size:clamp(8.5px,.96cqi,13px); line-height:1.45"><strong style="color:var(--lt-ink)">Live today:</strong> send to M-Pesa, pay a till, pay a paybill. <strong style="color:var(--lt-ink)">Next:</strong> LOOP Prompt, which inverts a payment into <em style="font-style:normal">“Request KES 5,000 from John.”</em> Utility bills stay on NCBA — LOOP does not cover them.</p>
           </div>
         </div>
 
@@ -899,7 +910,7 @@ body {
     </div>
 
     <div class="foot">
-      <span>8 endpoints wired · sandbox to production is a base-URL swap</span>
+      <span>3 rails live behind a flag · NCBA stays the default · 5 documented and next</span>
       <span>04 / 08</span>
     </div>
   </div>
