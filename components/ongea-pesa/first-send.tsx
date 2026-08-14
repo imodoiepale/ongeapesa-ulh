@@ -13,7 +13,7 @@ import { OnboardingProgress } from "./onboarding-progress"
 /**
  * First send — the last onboarding step.
  *
- * The user sends a small amount from their KSh 200 starter balance to their own
+ * The user sends a small amount from their KSH 200 starter balance to their own
  * M-Pesa number. Real rail, real SMS: it is the only way they learn that this
  * actually moves money, and it costs them nothing net beyond the fee.
  *
@@ -104,11 +104,11 @@ export function FirstSendScreen() {
     setError("")
 
     if (numericAmount < MIN_SEND) {
-      setError(`The smallest M-Pesa send is KSh ${MIN_SEND}.`)
+      setError(`The smallest M-Pesa send is KSH ${MIN_SEND}.`)
       return
     }
     if (fees.totalDebit > balance) {
-      setError(`That would need KSh ${fees.totalDebit.toFixed(2)} but you have KSh ${balance.toFixed(2)}.`)
+      setError(`That would need KSH ${fees.totalDebit.toFixed(2)} but you have KSH ${balance.toFixed(2)}.`)
       return
     }
     if (!phone) {
@@ -177,7 +177,7 @@ export function FirstSendScreen() {
             </div>
             <h1 className="text-2xl font-semibold text-foreground">Sent!</h1>
             <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-              KSh {numericAmount.toLocaleString()} is on its way to {formatPhoneForDisplay(phone)}. Check
+              KSH {numericAmount.toLocaleString()} is on its way to {formatPhoneForDisplay(phone)}. Check
               your M-Pesa messages.
             </p>
           </div>
@@ -216,7 +216,7 @@ export function FirstSendScreen() {
         {/* Amount */}
         <label className="mt-4 block text-xs font-medium text-muted-foreground">Amount</label>
         <div className="mt-1 flex items-center gap-2 rounded-2xl border border-border/50 bg-card px-4 py-3">
-          <span className="text-sm text-muted-foreground">KSh</span>
+          <span className="text-sm text-muted-foreground">KSH</span>
           <input
             type="number"
             inputMode="numeric"
@@ -232,15 +232,15 @@ export function FirstSendScreen() {
         <div className="mt-3 rounded-2xl bg-muted/40 p-4 text-xs">
           <div className="flex justify-between py-0.5">
             <span className="text-muted-foreground">You send</span>
-            <span className="font-medium text-foreground">KSh {numericAmount.toFixed(2)}</span>
+            <span className="font-medium text-foreground">KSH {numericAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between py-0.5">
             <span className="text-muted-foreground">Transaction cost</span>
-            <span className="font-medium text-foreground">KSh {fees.totalTransactionCost.toFixed(2)}</span>
+            <span className="font-medium text-foreground">KSH {fees.totalTransactionCost.toFixed(2)}</span>
           </div>
           <div className="mt-1 flex justify-between border-t border-border/50 pt-2">
             <span className="font-medium text-foreground">Left in wallet</span>
-            <span className="font-semibold text-brand">KSh {remaining.toFixed(2)}</span>
+            <span className="font-semibold text-brand">KSH {remaining.toFixed(2)}</span>
           </div>
           {voiceMinutesLeft > 0 && (
             <p className="mt-2 text-[11px] text-muted-foreground">
@@ -280,7 +280,7 @@ export function FirstSendScreen() {
           ) : (
             <Send className="h-5 w-5" />
           )}
-          {showPin ? "Confirm send" : `Send KSh ${numericAmount.toFixed(0)} to myself`}
+          {showPin ? "Confirm send" : `Send KSH ${numericAmount.toFixed(0)} to myself`}
         </button>
 
         <button

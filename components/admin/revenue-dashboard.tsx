@@ -86,9 +86,9 @@ const nfFull = new Intl.NumberFormat("en-KE", { maximumFractionDigits: 0 })
 const nfMoney = new Intl.NumberFormat("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const nfCompact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 })
 
-const kes = (n: number) => `KSh ${nfFull.format(n)}`
-const kesExact = (n: number) => `KSh ${nfMoney.format(n)}`
-const kesCompact = (n: number) => `KSh ${nfCompact.format(n)}`
+const kes = (n: number) => `KSH ${nfFull.format(n)}`
+const kesExact = (n: number) => `KSH ${nfMoney.format(n)}`
+const kesCompact = (n: number) => `KSH ${nfCompact.format(n)}`
 
 function bucketLabel(bucket: string, granularity: "hour" | "day" | "week") {
   if (granularity === "hour") return bucket.slice(11, 16)
@@ -404,7 +404,7 @@ export default function RevenueDashboard() {
           </div>
 
           {/* Revenue — single series, no legend (title names it) */}
-          <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Revenue (KSh)</p>
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Revenue (KSH)</p>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>

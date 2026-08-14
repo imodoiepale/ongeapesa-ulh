@@ -3,7 +3,7 @@
  *
  * Features:
  * - Tabular-nums (no layout shift as digits change)
- * - KSh locale formatting (en-KE)
+ * - KSH locale formatting (en-KE)
  * - Tight negative tracking for premium feel
  * - Optional delta badge (positive / negative change)
  * - Loading skeleton state
@@ -27,7 +27,7 @@ interface MoneyAmountProps {
   /** Show loading skeleton */
   loading?: boolean
   className?: string
-  /** Currency prefix — default "KSh" */
+  /** Currency prefix — default "KSH" */
   currency?: string
 }
 
@@ -45,7 +45,7 @@ export function MoneyAmount({
   delta,
   loading = false,
   className,
-  currency = "KSh",
+  currency = "KSH",
 }: MoneyAmountProps) {
   const formatted = value.toLocaleString("en-KE", {
     minimumFractionDigits: 2,

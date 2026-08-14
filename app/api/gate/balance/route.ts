@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       
       // Database wallet balance
       wallet_balance: walletBalance,
-      wallet_balance_formatted: `KSh ${walletBalance.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      wallet_balance_formatted: `KSH ${walletBalance.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       
       // Gate information
       gate_id: userData.gate_id,
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       // Gate balance from API
       gate_balance: gateBalance,
       gate_balance_formatted: gateBalance !== null 
-        ? `KSh ${gateBalance.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        ? `KSH ${gateBalance.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : null,
       gate_balance_error: gateBalanceError,
       
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     if (response.balances_match !== null) {
       console.log('   Match:', response.balances_match ? '✅ YES' : '❌ NO');
       if (!response.balances_match) {
-        console.log('   Difference: KSh', response.difference?.toFixed(2));
+        console.log('   Difference: KSH', response.difference?.toFixed(2));
       }
     }
     console.log('');

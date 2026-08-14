@@ -160,7 +160,7 @@ export function ElevenLabsProvider({ children }: { children: ReactNode }) {
       },
       read_balance: async () => {
         const bal = toolHandlersRef.current.getBalance?.() ?? userBalance;
-        return `Your balance is KSh ${bal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`;
+        return `Your balance is KSH ${bal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`;
       },
       /**
        * send_batch — dispatches multiple payments as individual requests.
@@ -330,7 +330,7 @@ export function ElevenLabsProvider({ children }: { children: ReactNode }) {
       const { signedUrl, balance, userName, userEmail, userId: returnedUserId, gateName, gateId, voiceSessionId } = await getSignedUrl();
       const firstMinuteDebit = VOICE_RATE_PER_MINUTE * (1 + PLATFORM_FEE_RATE);
       if (balance < firstMinuteDebit) {
-        throw new Error(`Add at least KSh ${firstMinuteDebit.toFixed(2)} to use voice.`);
+        throw new Error(`Add at least KSH ${firstMinuteDebit.toFixed(2)} to use voice.`);
       }
       sessionSettledRef.current = false;
       console.log('📝 Received signed URL (first 100 chars):', signedUrl.substring(0, 100));

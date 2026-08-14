@@ -57,7 +57,7 @@ export async function POST() {
   const firstMinuteDebit = VOICE_RATE_PER_MINUTE * (1 + PLATFORM_FEE_RATE)
   if (balance < firstMinuteDebit) {
     return NextResponse.json(
-      { error: `Add at least KSh ${firstMinuteDebit.toFixed(2)} to use voice.` },
+      { error: `Add at least KSH ${firstMinuteDebit.toFixed(2)} to use voice.` },
       { status: 402 },
     )
   }

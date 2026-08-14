@@ -374,7 +374,7 @@ export default function DependantsSheet({ isOpen, onClose }: DependantsSheetProp
                         </p>
                         {dep.total_contributed > 0 && (
                           <p className="text-[10px] text-brand font-semibold mt-0.5">
-                            Contributed KSh{" "}
+                            Contributed KSH{" "}
                             {dep.total_contributed.toLocaleString("en-KE", {
                               minimumFractionDigits: 0,
                               maximumFractionDigits: 0,
@@ -563,7 +563,7 @@ export default function DependantsSheet({ isOpen, onClose }: DependantsSheetProp
                   ))}
                 </div>
                 <div className="rounded-xl border border-border/60 bg-card px-3 py-2 flex items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">KSh</span>
+                  <span className="text-xs font-medium text-muted-foreground">KSH</span>
                   <input
                     type="number"
                     placeholder="0.00"
@@ -606,7 +606,7 @@ export default function DependantsSheet({ isOpen, onClose }: DependantsSheetProp
                 <div className="rounded-xl bg-brand/8 border border-brand/20 px-3 py-2.5 flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-brand shrink-0" />
                   <span className="text-sm font-medium text-brand">
-                    KSh {lastTopupAmount.toLocaleString()} received! Balance updated.
+                    KSH {lastTopupAmount.toLocaleString()} received! Balance updated.
                   </span>
                 </div>
               )}
@@ -626,7 +626,7 @@ export default function DependantsSheet({ isOpen, onClose }: DependantsSheetProp
                   onClick={handleRequestTopup}
                   disabled={!topupAmount || parseFloat(topupAmount) <= 0}
                 >
-                  Request KSh{" "}
+                  Request KSH{" "}
                   {topupAmount && parseFloat(topupAmount) > 0
                     ? parseFloat(topupAmount).toLocaleString("en-KE")
                     : "…"}{" "}

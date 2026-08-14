@@ -81,7 +81,7 @@ export default function RecurringPayments({ onNavigate }: RecurringPaymentsProps
       setBills(prev => prev.filter(b => b.id !== bill.id))
       toast({
         title: 'Payment sent',
-        description: `KSh ${Number(bill.amount).toLocaleString('en-KE', { minimumFractionDigits: 2 })} paid to ${bill.merchant || bill.type}`,
+        description: `KSH ${Number(bill.amount).toLocaleString('en-KE', { minimumFractionDigits: 2 })} paid to ${bill.merchant || bill.type}`,
       })
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Payment failed'
@@ -159,7 +159,7 @@ export default function RecurringPayments({ onNavigate }: RecurringPaymentsProps
                   </p>
                 </div>
                 <p className="text-lg font-bold text-white whitespace-nowrap">
-                  KSh {Number(bill.amount).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                  KSH {Number(bill.amount).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <button

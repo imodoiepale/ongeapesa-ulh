@@ -35,7 +35,7 @@ VALUES
   ('email_notifications_enabled', 'true'::jsonb,
    'Send admin email alerts for large transactions.'),
   ('large_transaction_threshold', '10000'::jsonb,
-   'KSh amount above which a transaction is considered large.'),
+   'KSH amount above which a transaction is considered large.'),
   ('auto_approve_enabled', 'false'::jsonb,
    'Auto-approve transactions under the threshold without manual review.')
 ON CONFLICT (key) DO NOTHING;

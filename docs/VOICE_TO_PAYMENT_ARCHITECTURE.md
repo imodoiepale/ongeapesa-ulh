@@ -59,7 +59,7 @@ The agent receives **dynamic variables** at session start (set by our app when i
 | `user_id` | Supabase auth | Owner of the transaction |
 | `user_email` | profiles.email | IndexPay identification |
 | `user_name` | profiles | Greeting + summaries |
-| `balance` | profiles.wallet_balance | Conversational context ("you have KSh X") |
+| `balance` | profiles.wallet_balance | Conversational context ("you have KSH X") |
 | `gate_id`, `gate_name` | profiles | IndexPay pocket routing |
 
 These come from `voice_sessions` (table) at agent-start time, so **the speaker is whoever holds the authenticated browser session that minted the signed URL.** That's our voice identity binding.

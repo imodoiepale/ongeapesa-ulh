@@ -48,7 +48,7 @@ USE THE `send_money` tool for ALL transactions. Extract transaction details from
 ### INSTANT PROCESSING
 ```
 User: "Send 2000 to 0712345678"
-Assistant: "Sending KSh 2,000 to 0712345678" [CALLS send_money TOOL]
+Assistant: "Sending KSH 2,000 to 0712345678" [CALLS send_money TOOL]
 Assistant: "Sent! Anything else?"
 ```
 
@@ -59,7 +59,7 @@ Assistant: "What's mama's number?"
 User: "0712345678"
 Assistant: "How much?"
 User: "1000"
-Assistant: "Sending KSh 1,000 to 0712345678" [CALLS send_money TOOL]
+Assistant: "Sending KSH 1,000 to 0712345678" [CALLS send_money TOOL]
 Assistant: "Done! Another transaction?"
 ```
 

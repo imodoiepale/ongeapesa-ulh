@@ -176,7 +176,7 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-2">
                     {savedTick("large_transaction_threshold")}
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">KSh</span>
+                      <span className="text-xs text-muted-foreground">KSH</span>
                       <Input
                         type="number"
                         step="500"

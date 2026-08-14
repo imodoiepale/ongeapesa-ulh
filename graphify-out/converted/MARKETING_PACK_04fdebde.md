@@ -61,7 +61,7 @@ For: Higgsfield storyboarding → TikTok / Instagram Reels / YouTube Shorts
 ### Script 1 — THE VOICE PAY HERO
 "She paid without looking at her phone"
 Duration: 28s  ·  Energy: Elegant, slow  ·  Music: Ambient jazz, soft piano
-Elegant rooftop restaurant, Nairobi night skyline. She speaks "Lipa bili." Slot panel fills: KSh 3,200 · Mulla's Kitchen. Agent confirms. She sets the phone down and raises her wine glass.
+Elegant rooftop restaurant, Nairobi night skyline. She speaks "Lipa bili." Slot panel fills: KSH 3,200 · Mulla's Kitchen. Agent confirms. She sets the phone down and raises her wine glass.
 
 ### Script 2 — THE SUPERMARKET MOMENT
 "No cash. No card. No problem."
@@ -86,22 +86,22 @@ Kitchen table. Taps Start Collection. 20 names turn green one by one — soft ch
 ### Script 6 — THE BODA RIDER
 "No more 'I have no change'"
 Duration: 27s  ·  Energy: Street energy  ·  Music: Gengetone / urban Kenyan
-Woman on boda scans fare board. Ongea Pesa reads KSh 150. Confirm. Rider's M-Pesa beeps. "Asante sana." She hops off. No coins exchanged.
+Woman on boda scans fare board. Ongea Pesa reads KSH 150. Confirm. Rider's M-Pesa beeps. "Asante sana." She hops off. No coins exchanged.
 
 ### Script 7 — THE ESCROW DEAL
-"KSh 500,000 locked until delivery. Smart."
+"KSH 500,000 locked until delivery. Smart."
 Duration: 30s  ·  Energy: Premium, serious  ·  Music: Cinematic strings
-Premium office, city view. Escrow created: KSh 500,000 locked. Both phones confirm. Goods arrive. Buyer taps Release. Funds land. "No disputes. No delays."
+Premium office, city view. Escrow created: KSH 500,000 locked. Both phones confirm. Goods arrive. Buyer taps Release. Funds land. "No disputes. No delays."
 
 ### Script 8 — THE NIGHT MARKET VENDOR
 "He got paid at 11 PM. Instantly."
 Duration: 28s  ·  Energy: Warm, authentic  ·  Music: Afropop, vibrant
-Nairobi night market, string lights. Customer scans vendor QR card. KSh 2,500. Confirm. Vendor's phone chimes. "Asante sana." Customer walks away happy.
+Nairobi night market, string lights. Customer scans vendor QR card. KSH 2,500. Confirm. Vendor's phone chimes. "Asante sana." Customer walks away happy.
 
 ### Script 9 — THE VOICE BIOMETRIC UNLOCK
 "Her voice is the key."
 Duration: 28s  ·  Energy: Tech-forward, sleek  ·  Music: Minimal electronic
-Step-up modal opens before large transfer. She chooses Voice. Waveform animation. Reads passphrase. Ring turns gold — "Voice matched ✓." Transfer: KSh 150,000. Done.
+Step-up modal opens before large transfer. She chooses Voice. Waveform animation. Reads passphrase. Ring turns gold — "Voice matched ✓." Transfer: KSH 150,000. Done.
 
 ### Script 10 — THE SCALE REVEAL
 "From parking to property. One app."

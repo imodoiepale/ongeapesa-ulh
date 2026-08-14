@@ -403,7 +403,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'Amount too large',
-          message: `The amount KSh ${requestedAmount.toLocaleString()} exceeds the maximum of KSh 999,999.`,
+          message: `The amount KSH ${requestedAmount.toLocaleString()} exceeds the maximum of KSH 999,999.`,
           current_balance: currentBalance,
           agent_message: `I'm sorry, but the amount of ${requestedAmount.toLocaleString()} shillings exceeds our maximum transaction limit of 999,999 shillings. Please try a smaller amount.`
         },
@@ -484,7 +484,7 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             error: 'Insufficient funds',
-            message: `Your current balance is KSh ${currentBalance.toLocaleString()}, but you need KSh ${totalRequired.toLocaleString()} including a KSh ${transactionCost.toLocaleString()} transaction cost. You need KSh ${shortfall.toLocaleString()} more.`,
+            message: `Your current balance is KSH ${currentBalance.toLocaleString()}, but you need KSH ${totalRequired.toLocaleString()} including a KSH ${transactionCost.toLocaleString()} transaction cost. You need KSH ${shortfall.toLocaleString()} more.`,
             current_balance: currentBalance,
             required_amount: totalRequired,
             shortfall: shortfall,
@@ -507,7 +507,7 @@ export async function POST(request: NextRequest) {
     // TRUST AI EXTRACTION - NO RE-CONFIRMATION
     // ============================================
     // The ElevenLabs AI already confirmed with user:
-    // "I'm sending KSh X to Y" means user already said YES
+    // "I'm sending KSH X to Y" means user already said YES
     // We just validate and execute immediately
     console.log('🤖 AI already confirmed transaction with user')
     console.log('⚡ Executing immediately - no re-confirmation needed')
@@ -590,7 +590,7 @@ export async function POST(request: NextRequest) {
       const admin = createServiceClient();
       const summary =
         body.summary ||
-        `${body.type} of KSh ${amountForStage}` +
+        `${body.type} of KSH ${amountForStage}` +
           (body.phone ? ` to ${body.phone}` : '') +
           (body.till ? ` to till ${body.till}` : '') +
           (body.paybill ? ` to paybill ${body.paybill}` : '');

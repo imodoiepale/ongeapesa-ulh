@@ -143,7 +143,7 @@ export function customerTransactionCost(transaction: StoredTransactionCost): num
 }
 
 export function formatFeesMessage(fees: TransactionFees): string {
-  return `Amount: KSh ${fees.amount.toLocaleString()}, Transaction cost: KSh ${fees.totalTransactionCost.toLocaleString()}, Total debit: KSh ${fees.totalDebit.toLocaleString()}`;
+  return `Amount: KSH ${fees.amount.toLocaleString()}, Transaction cost: KSH ${fees.totalTransactionCost.toLocaleString()}, Total debit: KSH ${fees.totalDebit.toLocaleString()}`;
 }
 
 export function formatFeesForVoice(fees: TransactionFees): string {

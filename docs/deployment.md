@@ -99,7 +99,7 @@ $N8N_CALLBACK_SECRET`. Add an n8n Schedule Trigger for each:
 The voice sweeper **refuses to bill** when a session's timestamps are not
 self-consistent, expiring it at zero instead. That guard exists because migration
 028 backfilled `started_at` with `now()`, and billing from it would have charged
-KSh 59,854 per session — KSh 1,616,078 across four real users. Do not relax it.
+KSH 59,854 per session — KSH 1,616,078 across four real users. Do not relax it.
 
 ## Step 4 — enable LiveKit for one account
 

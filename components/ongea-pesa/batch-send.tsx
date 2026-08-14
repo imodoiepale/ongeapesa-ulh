@@ -307,12 +307,12 @@ export default function BatchSend({ onNavigate, initialPayments, initialResults 
         >
           <div className="space-y-0.5">
             <p className="text-xs text-muted-foreground">Wallet Balance</p>
-            <p className="text-lg font-bold text-foreground">KSh {balance.toLocaleString()}</p>
+            <p className="text-lg font-bold text-foreground">KSH {balance.toLocaleString()}</p>
           </div>
           <div className="text-right space-y-0.5">
             <p className="text-xs text-muted-foreground">Batch Total</p>
             <p className={cn('text-lg font-bold', canAfford ? 'text-brand' : 'text-destructive')}>
-              KSh {total.toLocaleString()}
+              KSH {total.toLocaleString()}
             </p>
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function BatchSend({ onNavigate, initialPayments, initialResults 
         {!canAfford && total > 0 && (
           <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive">
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span>Insufficient funds — you need KSh {(total - balance).toLocaleString()} more.</span>
+            <span>Insufficient funds — you need KSH {(total - balance).toLocaleString()} more.</span>
           </div>
         )}
 
@@ -369,7 +369,7 @@ export default function BatchSend({ onNavigate, initialPayments, initialResults 
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Send All — KSh {total.toLocaleString()}
+                Send All — KSH {total.toLocaleString()}
               </>
             )}
           </Button>
@@ -398,7 +398,7 @@ export default function BatchSend({ onNavigate, initialPayments, initialResults 
                       {r.success ? (r.bank_ref ? `Ref: ${r.bank_ref}` : 'Completed') : r.error}
                     </p>
                   </div>
-                  <span className="text-sm font-semibold shrink-0">KSh {r.amount.toLocaleString()}</span>
+                  <span className="text-sm font-semibold shrink-0">KSH {r.amount.toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -612,7 +612,7 @@ function LineItemRow({ item, index, onUpdate, onRemove, canRemove, disabled, all
 
         {/* Amount */}
         <div className="relative">
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground select-none">KSh</span>
+          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground select-none">KSH</span>
           <Input
             placeholder="0"
             value={item.amount}

@@ -199,7 +199,7 @@ export default function FeedbackTriagePage() {
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
                     {r.reporter && <span>{r.reporter}</span>}
                     {r.route && <span className="font-mono">{r.route}</span>}
-                    {r.amount !== null && <span className="og-num">KSh {Number(r.amount).toLocaleString()}</span>}
+                    {r.amount !== null && <span className="og-num">KSH {Number(r.amount).toLocaleString()}</span>}
                   </div>
 
                   <Textarea

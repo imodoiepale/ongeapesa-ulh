@@ -11,7 +11,7 @@
 --   migration artifact, not a real start time.
 --
 --   Billing from it measures ~50 hours per session:
---     KSh 59,854 per session, KSh 1,616,078 total, across 4 real users.
+--     KSH 59,854 per session, KSH 1,616,078 total, across 4 real users.
 --
 -- So: repair the timestamp, expire the sessions at ZERO charge, and record why
 -- on the row itself. A user is never charged for a session whose duration we

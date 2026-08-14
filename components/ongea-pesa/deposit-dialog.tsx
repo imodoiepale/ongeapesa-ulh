@@ -241,7 +241,7 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
       }
 
       if (amountValue < 10) {
-        setError('Minimum deposit amount is KSh 10');
+        setError('Minimum deposit amount is KSH 10');
         setLoading(false);
         return;
       }
@@ -349,12 +349,12 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
                 <div className="flex items-start gap-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand/12 text-brand"><Mic2 size={18} /></span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground">KSh 200 voice starter</p>
+                    <p className="text-sm font-semibold text-foreground">KSH 200 voice starter</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                       Recommended so you can send money and support voice-service usage, including ElevenLabs. The full deposit is credited to your wallet; it is not an activation fee.
                     </p>
                     <button type="button" onClick={() => setAmount('200')} className="mt-3 text-xs font-semibold text-brand hover:underline">
-                      Use KSh 200
+                      Use KSH 200
                     </button>
                   </div>
                 </div>
@@ -397,7 +397,7 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
               {/* Amount Input */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Amount (KSh)
+                  Amount (KSH)
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
@@ -413,7 +413,7 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Minimum: KSh 10
+                  Minimum: KSH 10
                 </p>
               </div>
 
@@ -437,13 +437,13 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Deposit amount</span>
                     <span className="font-medium text-foreground">
-                      KSh {fees.amount.toLocaleString()}
+                      KSH {fees.amount.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">M-Pesa charge (paid to Safaricom)</span>
                     <span className="font-medium text-foreground">
-                      KSh {fees.mpesaCharge.toLocaleString()}
+                      KSH {fees.mpesaCharge.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
@@ -453,7 +453,7 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
                         Free
                       </span>
                       <span className="font-medium text-foreground">
-                        KSh {fees.ongeaFee.toLocaleString()}
+                        KSH {fees.ongeaFee.toLocaleString()}
                       </span>
                     </span>
                   </div>
@@ -461,13 +461,13 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-foreground">Total deducted from M-Pesa</span>
                       <span className="font-bold text-foreground">
-                        KSh {fees.totalFromMpesa.toLocaleString()}
+                        KSH {fees.totalFromMpesa.toLocaleString()}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-foreground">Credited to your wallet</span>
                       <span className="font-bold text-brand">
-                        KSh {fees.creditedToWallet.toLocaleString()}
+                        KSH {fees.creditedToWallet.toLocaleString()}
                       </span>
                     </div>
                   </div>

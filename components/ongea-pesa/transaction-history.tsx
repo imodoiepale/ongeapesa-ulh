@@ -112,7 +112,7 @@ export default function TransactionHistory() {
 
   const formatAmount = (amount: number, isDebit: boolean) => {
     const formatted = amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return isDebit ? `- KSh ${formatted}` : `+ KSh ${formatted}`;
+    return isDebit ? `- KSH ${formatted}` : `+ KSH ${formatted}`;
   };
 
   const visibleTransactions = transactions.filter((tx) => `${getTransactionDetails(tx)} ${tx.type} ${tx.status}`.toLowerCase().includes(query.toLowerCase()));
@@ -201,7 +201,7 @@ export default function TransactionHistory() {
                     <p className="text-sm font-medium text-foreground truncate">{getTransactionDetails(tx)}</p>
                     <p className="text-xs text-muted-foreground truncate">{formatDate(tx.created_at)}</p>
                     {isDebit && fee > 0 && (
-                      <p className="text-[10px] text-muted-foreground/60">Transaction cost: KSh {fee.toFixed(2)}</p>
+                      <p className="text-[10px] text-muted-foreground/60">Transaction cost: KSH {fee.toFixed(2)}</p>
                     )}
                   </div>
                   {/* amount + status */}

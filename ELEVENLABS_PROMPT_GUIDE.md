@@ -14,7 +14,7 @@ Your prompt is **PERFECT** and follows this flow:
 ```
 1. User speaks: "Send 2000 to 0712345678"
 2. AI extracts: type, amount, phone
-3. AI confirms ONCE: "Okay, I'm sending KSh 2,000 to 0712345678…"
+3. AI confirms ONCE: "Okay, I'm sending KSH 2,000 to 0712345678…"
 4. AI calls send_money tool
 5. AI confirms success: "Pesa imefika!"
 ```
@@ -97,7 +97,7 @@ AI (internal):
   - Extracts: type=send_phone, amount=2000, phone=0712345678
   - Checks: All required fields present ✅
 
-AI (speaks): "Okay, I'm sending KSh 2,000 to 0712345678…"
+AI (speaks): "Okay, I'm sending KSH 2,000 to 0712345678…"
 
 AI (action): Calls send_money tool
 
@@ -123,7 +123,7 @@ AI (speaks): "Done! Pesa imefika. Your balance is 3,000 shillings. You have 14 f
 ```
 User: "Send 10,000 to John"
 
-AI (speaks): "Alright, sending KSh 10,000 to John…"
+AI (speaks): "Alright, sending KSH 10,000 to John…"
 
 AI (action): Calls send_money tool
 
@@ -142,7 +142,7 @@ AI (speaks): "I'm sorry, but you don't have enough funds. Your balance is 5,000 
 ```
 User: "Pay KPLC bill 888880 account 123456789 amount 2450"
 
-AI (speaks): "Alright, paying KSh 2,450 to paybill 888880 account 123456789…"
+AI (speaks): "Alright, paying KSH 2,450 to paybill 888880 account 123456789…"
 
 AI (action): Calls send_money tool with:
   - type: "paybill"
@@ -187,7 +187,7 @@ AI (speaks): "Done! Pesa imefika sawa sawa. That was a free transaction!"
 ### Confirming Destination (ONCE only)
 ```
 "Sending to 0712345678, sawa?"
-"Paying KSh 500 to till 832909, right?"
+"Paying KSH 500 to till 832909, right?"
 "Paybill 888880 account 123456, yes?"
 ```
 

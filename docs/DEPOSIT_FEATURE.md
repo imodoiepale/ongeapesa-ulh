@@ -9,7 +9,7 @@ Users can add money to their Ongea Pesa wallet via M-Pesa through a beautiful, u
 
 1. **Deposit API Endpoint** (`/api/gate/deposit`)
    - Validates phone numbers (Kenyan format)
-   - Validates deposit amounts (min KSh 10)
+   - Validates deposit amounts (min KSH 10)
    - Auto-saves phone as default
    - Integrates with external gate API
    - Real-time M-Pesa STK push
@@ -109,7 +109,7 @@ Accepts Kenyan phone formats:
 
 ## Amount Validation
 
-- Minimum: KSh 10
+- Minimum: KSH 10
 - Must be positive number
 - Decimal amounts allowed
 - No maximum (set by external API)
@@ -163,9 +163,9 @@ When deposit is initiated:
 
 ### Test Cases
 
-✅ Valid deposit (KSh 100)
-✅ Minimum amount (KSh 10)
-❌ Below minimum (KSh 5) - should error
+✅ Valid deposit (KSH 100)
+✅ Minimum amount (KSH 10)
+❌ Below minimum (KSH 5) - should error
 ❌ Invalid phone (123) - should error
 ❌ Empty fields - should error
 ✅ Phone number saves as default

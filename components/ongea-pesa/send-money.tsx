@@ -118,7 +118,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
         })
         const data = await response.json()
         if (!response.ok) throw new Error(data.error || "Transfer failed")
-        setSendResult({ success: true, message: data.message || `Sent KSh ${parsedAmount} to ${selectedContact.display_name}` })
+        setSendResult({ success: true, message: data.message || `Sent KSH ${parsedAmount} to ${selectedContact.display_name}` })
 
       } else {
         // ── External M-Pesa send (phone number) ───────────────────────────
@@ -140,7 +140,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
         })
         const data = await response.json()
         if (!response.ok) throw new Error(data.error || data.message || "Payment failed")
-        setSendResult({ success: true, message: data.message || `Sent KSh ${parsedAmount} to ${fullPhone}` })
+        setSendResult({ success: true, message: data.message || `Sent KSH ${parsedAmount} to ${fullPhone}` })
       }
 
       // Reset after success
@@ -162,7 +162,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
   const canSend = !!amount && parseFloat(amount) > 0 && (!!selectedContact || !!phoneNumber)
 
   return (
-    <div className="min-h-[100dvh] bg-background surface-money pb-nav">
+    <div className="min-h-[100dvh] bg-[hsl(var(--pearl))] dark:bg-[hsl(var(--abyss))] surface-money pb-nav">
       <ScreenShell className="pt-safe">
 
         {/* Header */}
@@ -182,7 +182,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
         </div>
 
         {/* Voice Command */}
-        <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 mb-5 flex items-center justify-between gap-3">
+        <div className="rounded-2xl bg-black/[.04] dark:bg-white/[.05] px-4 py-3 mb-5 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-foreground">Voice Command</p>
             <p className="text-xs text-muted-foreground">Say: "Tuma [amount] kwa [name/number]"</p>
@@ -195,7 +195,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
             disabled={isVoiceMode}
             aria-label="Activate voice send"
             className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 active:scale-[0.97]",
+              "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-200 active:scale-[0.97]",
               isVoiceMode
                 ? "bg-red-500/15 text-red-500 animate-pulse cursor-wait"
                 : "bg-brand/10 text-brand hover:bg-brand/15"
@@ -210,9 +210,9 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block px-1">
             Amount
           </label>
-          <div className="rounded-2xl border border-border/60 bg-card px-4 py-3">
+          <div className="rounded-2xl bg-black/[.04] dark:bg-white/[.05] px-4 py-3">
             <div className="flex items-baseline gap-2 mb-3">
-              <span className="text-base font-medium text-muted-foreground">KSh</span>
+              <span className="text-base font-medium text-muted-foreground">KSH</span>
               <input
                 type="number"
                 placeholder="0.00"
@@ -221,7 +221,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
                 className="flex-1 text-3xl font-bold tracking-tighter text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/30"
                 style={{ fontVariantNumeric: "tabular-nums" }}
                 inputMode="decimal"
-                aria-label="Amount in KSh"
+                aria-label="Amount in KSH"
               />
             </div>
             {/* Quick presets */}
@@ -234,7 +234,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
                     "flex-1 text-xs font-semibold py-1.5 rounded-lg transition-all duration-150 active:scale-[0.97]",
                     amount === preset
                       ? "bg-brand text-white"
-                      : "bg-muted text-muted-foreground hover:bg-muted/70"
+                      : "bg-black/[.04] dark:bg-white/[.05] text-muted-foreground hover:bg-black/[.06] dark:bg-white/[.07]"
                   )}
                 >
                   {preset}
@@ -276,7 +276,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
           {selectedContact && (
             <div className="rounded-2xl border border-brand/30 bg-brand/5 px-4 py-3 mb-3 flex items-center gap-3">
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0",
+                "w-10 h-10 rounded-2xl flex items-center justify-center text-white font-semibold text-sm shrink-0",
                 selectedContact.has_account ? "bg-brand" : "bg-amber-500"
               )}>
                 {selectedContact.avatar}
@@ -306,7 +306,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
           )}
 
           {/* Manual entry fields */}
-          <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40 mb-3">
+          <div className="rounded-2xl bg-black/[.04] dark:bg-white/[.05] divide-y divide-border/40 mb-3">
             <div className="px-4 py-3 flex items-center gap-3">
               <User className="h-4 w-4 text-muted-foreground shrink-0" />
               <input
@@ -331,9 +331,9 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
           </div>
 
           {/* Unified fuzzy-search contacts list */}
-          <div className="rounded-2xl border border-border/60 bg-card">
+          <div className="rounded-2xl bg-black/[.04] dark:bg-white/[.05]">
             {/* Search bar */}
-            <div className="px-4 py-3 border-b border-border/40 flex items-center gap-2">
+            <div className="px-4 py-3 border-b border-black/[.06] dark:border-white/[.06] flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground shrink-0" />
               <input
                 placeholder="Search by name or number…"
@@ -361,7 +361,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
               {/* Current user (Me — not selectable) */}
               {currentUser && !loading && (
                 <div className="flex items-center gap-3 px-4 py-3 opacity-60 cursor-not-allowed">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-2xl bg-blue-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
                     {currentUser.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -369,7 +369,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
                       <p className="text-sm font-medium text-foreground truncate">{currentUser.name}</p>
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">You</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">KSh {currentUser.balance.toLocaleString("en-KE")}</p>
+                    <p className="text-xs text-muted-foreground">KSH {currentUser.balance.toLocaleString("en-KE")}</p>
                   </div>
                 </div>
               )}
@@ -390,11 +390,11 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
                     "w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 active:scale-[0.99]",
                     selectedContact?.normalized_phone === contact.normalized_phone && selectedContact?.source === contact.source
                       ? "bg-brand/[0.08] border-l-2 border-brand"
-                      : "hover:bg-muted/50"
+                      : "hover:bg-black/[.04] dark:bg-white/[.05]"
                   )}
                 >
                   <div className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0",
+                    "w-9 h-9 rounded-2xl flex items-center justify-center text-white font-semibold text-sm shrink-0",
                     contact.source === "app" && contact.has_account ? "bg-brand" : "bg-amber-500"
                   )}>
                     {contact.avatar}
@@ -405,7 +405,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
                       {contact.source === "app" && contact.has_account ? (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-brand/10 text-brand shrink-0">Verified</span>
                       ) : contact.source === "personal" ? (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">Phone</span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-black/[.04] dark:bg-white/[.05] text-muted-foreground shrink-0">Phone</span>
                       ) : (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 shrink-0">Unclaimed</span>
                       )}
@@ -456,7 +456,7 @@ export default function SendMoney({ onNavigate, prefill }: SendMoneyProps) {
             <>
               <Send className="h-4 w-4 mr-2" />
               {canSend
-                ? `Send KSh ${Number(amount).toLocaleString("en-KE")} to ${selectedContact?.display_name || recipientName || "0" + phoneNumber}`
+                ? `Send KSH ${Number(amount).toLocaleString("en-KE")} to ${selectedContact?.display_name || recipientName || "0" + phoneNumber}`
                 : "Send Money"
               }
             </>

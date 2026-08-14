@@ -93,7 +93,7 @@ export function TransactionDetailSheet({ transaction, onClose }: { transaction: 
 
               <div className="mt-7 text-center">
                 <p className="text-xs text-muted-foreground">{debit ? "Amount charged" : "Amount credited"}</p>
-                <p className="orbital-display mt-2 text-5xl">KSh {money(Number(tx.amount))}</p>
+                <p className="orbital-display mt-2 text-5xl">KSH {money(Number(tx.amount))}</p>
                 <span className={cn(
                   "mt-3 inline-flex rounded-full px-3 py-1 text-[10px] font-semibold capitalize",
                   tx.status === "completed" ? "bg-brand/10 text-brand" : tx.status === "pending" || tx.status === "processing" ? "bg-amber-500/10 text-amber-600" : "bg-destructive/10 text-destructive",
@@ -102,10 +102,10 @@ export function TransactionDetailSheet({ transaction, onClose }: { transaction: 
 
               <dl className="mt-7 divide-y divide-black/8 border-y border-black/8 text-sm dark:divide-white/8 dark:border-white/8">
                 {durationSeconds > 0 && <div className="flex min-h-12 items-center justify-between gap-4"><dt className="text-muted-foreground">Voice time</dt><dd className="font-mono">{Math.floor(durationSeconds / 60)}m {durationSeconds % 60}s</dd></div>}
-                {rate > 0 && <div className="flex min-h-12 items-center justify-between gap-4"><dt className="text-muted-foreground">Voice rate</dt><dd className="font-mono">KSh {money(rate)}/min</dd></div>}
-                <div className="flex min-h-12 items-center justify-between gap-4"><dt className="text-muted-foreground">Transaction amount</dt><dd className="font-mono">KSh {money(Number(tx.amount))}</dd></div>
-                <div className="flex min-h-12 items-center justify-between gap-4"><dt className="text-muted-foreground">Transaction cost</dt><dd className="font-mono">{transactionCost ? `KSh ${money(transactionCost)}` : "Free"}</dd></div>
-                <div className="flex min-h-14 items-center justify-between gap-4 font-semibold"><dt>{totalLabel}</dt><dd className="font-mono text-brand">KSh {money(total)}</dd></div>
+                {rate > 0 && <div className="flex min-h-12 items-center justify-between gap-4"><dt className="text-muted-foreground">Voice rate</dt><dd className="font-mono">KSH {money(rate)}/min</dd></div>}
+                <div className="flex min-h-12 items-center justify-between gap-4"><dt className="text-muted-foreground">Transaction amount</dt><dd className="font-mono">KSH {money(Number(tx.amount))}</dd></div>
+                <div className="flex min-h-12 items-center justify-between gap-4"><dt className="text-muted-foreground">Transaction cost</dt><dd className="font-mono">{transactionCost ? `KSH ${money(transactionCost)}` : "Free"}</dd></div>
+                <div className="flex min-h-14 items-center justify-between gap-4 font-semibold"><dt>{totalLabel}</dt><dd className="font-mono text-brand">KSH {money(total)}</dd></div>
               </dl>
 
               <dl className="mt-5 space-y-3 text-xs">

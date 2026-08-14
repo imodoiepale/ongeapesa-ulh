@@ -190,8 +190,8 @@ export async function POST(request: NextRequest) {
         phone: phone,
         status: 'pending', // Will be updated via verification
         voice_command_text: voiceFunding
-          ? `Voice service starter funding of KSh ${depositAmount.toLocaleString()} from ${phone}`
-          : `M-Pesa deposit of KSh ${depositAmount.toLocaleString()} from ${phone}`,
+          ? `Voice service starter funding of KSH ${depositAmount.toLocaleString()} from ${phone}`
+          : `M-Pesa deposit of KSH ${depositAmount.toLocaleString()} from ${phone}`,
         external_ref: transactionRef,
         mpesa_transaction_id: trxId,
         transaction_cost: customerCharge,

@@ -27,7 +27,7 @@ M-Pesa STK push sent to phone
   amount: depositAmount,
   phone: phone,
   status: 'pending',  // ⏳ Waiting for M-Pesa confirmation
-  voice_command_text: 'M-Pesa deposit of KSh 100 from 0712345678',
+  voice_command_text: 'M-Pesa deposit of KSH 100 from 0712345678',
   created_at: new Date().toISOString()
 }
 ```

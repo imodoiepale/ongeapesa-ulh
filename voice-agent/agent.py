@@ -141,7 +141,7 @@ async def report_tts_cost(ctx: UserContext, characters: int) -> None:
     """Record what this session's speech synthesis cost.
 
     Without this the economics dashboard shows voice revenue with no cost
-    attached, which makes a KSh 20/min product look infinitely profitable.
+    attached, which makes a KSH 20/min product look infinitely profitable.
     Idempotent server-side: the unique index on (reference, provider, category)
     means a retry cannot double-count a session.
     """

@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_gate_id ON profiles(gate_id);
 ### Developer Features
 - ✅ Type-safe API
 - ✅ Phone number validation (Kenyan formats)
-- ✅ Amount validation (min KSh 10)
+- ✅ Amount validation (min KSH 10)
 - ✅ Error handling
 - ✅ Loading states
 - ✅ Success callbacks
@@ -65,8 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_profiles_gate_id ON profiles(gate_id);
 - **Header:** Green gradient with wallet icon
 - **Gate Name:** Displayed prominently
 - **Phone Input:** Auto-formatted, saved as default
-- **Amount Input:** With KSh symbol
-- **Quick Buttons:** 50, 100, 500, 1000 KSh presets
+- **Amount Input:** With KSH symbol
+- **Quick Buttons:** 50, 100, 500, 1000 KSH presets
 - **Submit Button:** "Deposit via M-Pesa" with loading state
 - **Info Tooltip:** Instructions for M-Pesa prompt
 
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_gate_id ON profiles(gate_id);
 
 ## 💰 Amount Validation
 
-- **Minimum:** KSh 10
+- **Minimum:** KSH 10
 - **Maximum:** No limit (set by external API)
 - **Format:** Accepts decimals (e.g., 10.50)
 

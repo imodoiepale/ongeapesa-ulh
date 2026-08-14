@@ -189,11 +189,11 @@ export default function MainDashboard({ onNavigate, onOpenScanner }: MainDashboa
 
           <button onClick={() => setSheetOpen(true)} className="mt-1 block w-full text-left" aria-label="Open wallet balance">
             <span className="orbital-money block text-[clamp(2.6rem,12vw,3.5rem)]">
-              {balance === null ? "—" : hidden ? "KSh •••••" : `KSh ${money(balance)}`}
+              {balance === null ? "—" : hidden ? "KSH •••••" : `KSH ${money(balance)}`}
             </span>
           </button>
           <p className="mt-1 text-sm opacity-45">
-            {hidden ? "•••••" : `KSh ${money(spentThisMonth)}`} spent this month
+            {hidden ? "•••••" : `KSH ${money(spentThisMonth)}`} spent this month
           </p>
         </div>
 

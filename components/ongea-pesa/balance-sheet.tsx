@@ -371,7 +371,7 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
 
     // Validate minimum amount
     if (amount < 10) {
-      setDepositError('Minimum deposit amount is KSh 10')
+      setDepositError('Minimum deposit amount is KSH 10')
       return
     }
 
@@ -490,26 +490,26 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="fixed inset-x-0 bottom-0 bg-background border-t border-border/60 rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-hidden flex flex-col"
+        className="fixed inset-x-0 bottom-0 bg-[hsl(var(--pearl))] dark:bg-[hsl(var(--abyss))] border-t border-black/[.06] dark:border-white/[.06] rounded-t-3xl shadow-[0_-8px_40px_-12px_hsl(var(--ink)/.18)] animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-black/[.06] dark:border-white/[.06]">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Balance & Transactions</h2>
             <div className="flex items-baseline gap-1 mt-0.5">
               <span className="text-xs text-muted-foreground">Wallet</span>
               <span className="text-sm font-bold text-brand" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                KSh {currentBalance.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                KSH {currentBalance.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
             {isAdminUser && (indexPayGateBalance !== null || indexPayPocketBalance !== null) && (
               <div className="flex gap-4 mt-1">
                 {indexPayGateBalance !== null && (
-                  <span className="text-[10px] text-muted-foreground">Gate: <strong>KSh {indexPayGateBalance.toLocaleString()}</strong></span>
+                  <span className="text-[10px] text-muted-foreground">Gate: <strong>KSH {indexPayGateBalance.toLocaleString()}</strong></span>
                 )}
                 {indexPayPocketBalance !== null && (
-                  <span className="text-[10px] text-muted-foreground">Pocket: <strong>KSh {indexPayPocketBalance.toLocaleString()}</strong></span>
+                  <span className="text-[10px] text-muted-foreground">Pocket: <strong>KSH {indexPayPocketBalance.toLocaleString()}</strong></span>
                 )}
               </div>
             )}
@@ -517,7 +517,7 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsDependantsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-muted-foreground hover:bg-muted/70 text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-black/[.04] dark:bg-white/[.05] text-muted-foreground hover:bg-black/[.06] dark:bg-white/[.07] text-xs font-semibold transition-all"
             >
               <Users className="h-3.5 w-3.5" />
               Family Top-up
@@ -531,7 +531,7 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto flex flex-col">
           {/* Add Balance Section */}
-          <div className="px-5 py-4 border-b border-border/60">
+          <div className="px-5 py-4 border-b border-black/[.06] dark:border-white/[.06]">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Add Balance via M-Pesa</p>
 
             {/* Quick amount presets */}
@@ -541,10 +541,10 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
                   key={amount}
                   onClick={() => setAddAmount(amount.toString())}
                   className={cn(
-                    "py-1.5 text-xs font-semibold rounded-xl transition-all duration-150 active:scale-[0.97]",
+                    "py-1.5 text-xs font-semibold rounded-2xl transition-all duration-150 active:scale-[0.97]",
                     addAmount === amount.toString()
                       ? "bg-brand text-white"
-                      : "bg-muted text-muted-foreground hover:bg-muted/70"
+                      : "bg-black/[.04] dark:bg-white/[.05] text-muted-foreground hover:bg-black/[.06] dark:bg-white/[.07]"
                   )}
                 >
                   {amount >= 1000 ? `${amount / 1000}K` : amount}
@@ -564,7 +564,7 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
                   const found = all.find(t => t.phone === phone)
                   if (found) setStkTarget(found)
                 }}
-                className="w-full text-sm rounded-xl border border-border/60 bg-card px-3 py-2.5 text-foreground mb-2"
+                className="w-full text-sm rounded-2xl bg-black/[.04] dark:bg-white/[.05] px-3 py-2.5 text-foreground mb-2"
               >
                 {mpesaNumber && (
                   <option value={mpesaNumber}>My number ({displayPhone(mpesaNumber)})</option>
@@ -577,8 +577,8 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
 
             {/* Amount input + button row */}
             <div className="flex gap-2 mb-3">
-              <div className="flex-1 rounded-xl border border-border/60 bg-card px-3 py-2 flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">KSh</span>
+              <div className="flex-1 rounded-2xl bg-black/[.04] dark:bg-white/[.05] px-3 py-2 flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">KSH</span>
                 <input
                   type="number"
                   placeholder="0.00"
@@ -595,7 +595,7 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
               <Button
                 onClick={handleAddBalance}
                 disabled={!addAmount || parseFloat(addAmount) <= 0 || isAdding || (depositStatus !== 'idle' && depositStatus !== 'failed')}
-                className="h-auto px-4 py-2 text-sm font-semibold rounded-xl"
+                className="h-auto px-4 py-2 text-sm font-semibold rounded-2xl"
               >
                 {isAdding ? (
                   <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Sending…</>
@@ -607,19 +607,19 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
 
             {/* Deposit status banners — semantic tokens, no gradients */}
             {depositStatus === 'sending' && (
-              <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 px-3 py-2.5 flex items-center gap-2 mb-2">
+              <div className="rounded-2xl bg-blue-500/10 border border-blue-500/20 px-3 py-2.5 flex items-center gap-2 mb-2">
                 <Loader2 className="h-4 w-4 text-blue-500 animate-spin shrink-0" />
                 <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Sending STK Push…</span>
               </div>
             )}
             {depositStatus === 'waiting' && (
-              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 flex items-center gap-2 mb-2">
+              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 flex items-center gap-2 mb-2">
                 <Loader2 className="h-4 w-4 text-amber-500 animate-spin shrink-0" />
                 <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Enter M-Pesa PIN on your phone</span>
               </div>
             )}
             {depositStatus === 'verifying' && (
-              <div className="rounded-xl bg-brand/8 border border-brand/20 px-3 py-2.5 mb-2">
+              <div className="rounded-2xl bg-brand/8 border border-brand/20 px-3 py-2.5 mb-2">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Loader2 className="h-4 w-4 text-brand animate-spin shrink-0" />
                   <span className="text-sm font-medium text-brand">Verifying… {verificationProgress}%</span>
@@ -630,31 +630,31 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
               </div>
             )}
             {depositStatus === 'completed' && (
-              <div className="rounded-xl bg-brand/8 border border-brand/20 px-3 py-2.5 flex items-center gap-2 mb-2">
+              <div className="rounded-2xl bg-brand/8 border border-brand/20 px-3 py-2.5 flex items-center gap-2 mb-2">
                 <CheckCircle className="h-4 w-4 text-brand shrink-0" />
-                <span className="text-sm font-medium text-brand">Deposit successful! KSh {lastDepositAmount.toLocaleString()} added.</span>
+                <span className="text-sm font-medium text-brand">Deposit successful! KSH {lastDepositAmount.toLocaleString()} added.</span>
               </div>
             )}
             {depositStatus === 'failed' && (
-              <div className="rounded-xl bg-destructive/8 border border-destructive/20 px-3 py-2.5 flex items-center justify-between gap-2 mb-2">
+              <div className="rounded-2xl bg-destructive/8 border border-destructive/20 px-3 py-2.5 flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <XCircle className="h-4 w-4 text-destructive shrink-0" />
                   <span className="text-sm font-medium text-destructive">{depositError || 'Transaction failed'}</span>
                 </div>
                 <button
                   onClick={() => { setDepositStatus('idle'); setDepositError(''); setVerificationProgress(0) }}
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted"
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-black/[.04] dark:bg-white/[.05]"
                 >Retry</button>
               </div>
             )}
             {depositError && depositStatus === 'idle' && (
-              <div className="rounded-xl bg-destructive/8 border border-destructive/20 px-3 py-2.5 flex items-center gap-2 mb-2">
+              <div className="rounded-2xl bg-destructive/8 border border-destructive/20 px-3 py-2.5 flex items-center gap-2 mb-2">
                 <XCircle className="h-4 w-4 text-destructive shrink-0" />
                 <span className="text-sm text-destructive whitespace-pre-line">{depositError}</span>
               </div>
             )}
             {depositSuccess && depositStatus === 'idle' && (
-              <div className="rounded-xl bg-brand/8 border border-brand/20 px-3 py-2.5 flex items-center gap-2 mb-2">
+              <div className="rounded-2xl bg-brand/8 border border-brand/20 px-3 py-2.5 flex items-center gap-2 mb-2">
                 <CheckCircle className="h-4 w-4 text-brand shrink-0" />
                 <span className="text-sm text-brand whitespace-pre-line">{depositSuccess}</span>
               </div>
@@ -704,7 +704,7 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
                       "shrink-0 px-3 py-1.5 rounded-full text-[10px] font-semibold transition-all duration-150 active:scale-[0.97]",
                       statusFilter === f.value
                         ? "bg-brand text-white"
-                        : "bg-muted text-muted-foreground hover:bg-muted/70"
+                        : "bg-black/[.04] dark:bg-white/[.05] text-muted-foreground hover:bg-black/[.06] dark:bg-white/[.07]"
                     )}
                   >
                     {f.label}{f.count !== undefined ? ` (${f.count})` : ''}
@@ -729,12 +729,12 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
                   <button onClick={() => setStatusFilter('all')} className="text-xs text-brand hover:underline mt-1">Show all</button>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
+                <div className="rounded-2xl bg-black/[.04] dark:bg-white/[.05] divide-y divide-border/40">
                   {filteredTransactions.map((tx) => (
-                    <button key={tx.id} type="button" onClick={() => setSelectedTransaction(tx)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 active:bg-muted/60">
+                    <button key={tx.id} type="button" onClick={() => setSelectedTransaction(tx)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-black/[.04] dark:bg-white/[.05] active:bg-black/[.06] dark:bg-white/[.07]">
                       {/* Icon */}
                       <div className={cn(
-                        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+                        "w-9 h-9 rounded-2xl flex items-center justify-center shrink-0",
                         isDebit(tx.type) ? "bg-destructive/10" : "bg-brand/10"
                       )}>
                         {/* keep getTransactionIcon call but restyle the icon colors in a wrapper */}
@@ -761,10 +761,10 @@ export default function BalanceSheet({ isOpen, onClose, currentBalance, onBalanc
                           "text-sm font-bold",
                           isDebit(tx.type) ? "text-destructive" : "text-brand"
                         )} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {isDebit(tx.type) ? '−' : '+'}KSh {tx.amount.toLocaleString('en-KE')}
+                          {isDebit(tx.type) ? '−' : '+'}KSH {tx.amount.toLocaleString('en-KE')}
                         </p>
                         {isDebit(tx.type) && tx.status === 'completed' && (
-                          <p className="text-[10px] text-muted-foreground/70">Transaction cost: KSh {customerTransactionCost(tx).toFixed(2)}</p>
+                          <p className="text-[10px] text-muted-foreground/70">Transaction cost: KSH {customerTransactionCost(tx).toFixed(2)}</p>
                         )}
                         <p className={cn(
                           "text-[10px] font-semibold capitalize",

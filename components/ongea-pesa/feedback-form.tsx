@@ -173,7 +173,7 @@ export function FeedbackForm({ onDone }: { onDone?: () => void }) {
             Amount involved, if it was a payment (optional)
           </label>
           <div className="mt-1 flex items-center gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5">
-            <span className="text-xs text-muted-foreground">KSh</span>
+            <span className="text-xs text-muted-foreground">KSH</span>
             <input
               type="number"
               inputMode="numeric"

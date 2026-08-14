@@ -18,7 +18,7 @@ ElevenLabs Conversational AI agent — real-time English/Swahili voice session d
 - Live voice session with mic permission, signed URL, balance injection, status management
 - Animated payment-slot panel (Amount · To · Payment Type) replacing raw transcript
 - Voice-triggered scanner overlay — opens camera over any screen without navigating
-- Voice balance check — reads KSh balance aloud
+- Voice balance check — reads KSH balance aloud
 - Voice multi-send (send_batch) — pay multiple recipients in one spoken command
 - Stage-payment slots — fills the on-screen panel mid-conversation
 - Voice step-up confirm — staged payments released only after PIN/biometric proof

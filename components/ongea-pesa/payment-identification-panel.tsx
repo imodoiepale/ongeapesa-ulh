@@ -27,7 +27,7 @@ function deriveDisplay(slots: PaymentSlots) {
 
   const amountDisplay =
     slots.amount != null
-      ? `KSh ${slots.amount.toLocaleString("en-KE", { minimumFractionDigits: 2 })}`
+      ? `KSH ${slots.amount.toLocaleString("en-KE", { minimumFractionDigits: 2 })}`
       : null
 
   const accountDisplay =
@@ -133,7 +133,7 @@ export default function PaymentIdentificationPanel({ payments }: PaymentIdentifi
   const totalAmount = active.reduce((sum, p) => sum + (p.amount ?? 0), 0)
   const totalDisplay =
     totalAmount > 0
-      ? `KSh ${totalAmount.toLocaleString("en-KE", { minimumFractionDigits: 2 })}`
+      ? `KSH ${totalAmount.toLocaleString("en-KE", { minimumFractionDigits: 2 })}`
       : null
 
   return (

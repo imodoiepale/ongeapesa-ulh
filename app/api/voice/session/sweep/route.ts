@@ -18,7 +18,7 @@ import { ONGEA_ENV } from '@/lib/environment'
 // The billing rule matters more than the sweeping does. A voice_sessions row can
 // carry a timestamp we cannot trust — migration 028 backfilled started_at with
 // now() across historical rows, which would have measured ~50 hours per session
-// and charged KSh 59,854 each. So this route refuses to bill whenever the
+// and charged KSH 59,854 each. So this route refuses to bill whenever the
 // timestamps are not self-consistent, and expires the session at zero instead.
 // A refusal costs us a few shillings of revenue; an overcharge costs a customer.
 
@@ -206,7 +206,7 @@ async function sweep() {
   }
 
   console.log(
-    `🧹 [voice/sweep] ${rows.length} stranded session(s): ${billed} billed, ${refused} refused, KSh ${chargedTotal.toFixed(2)} charged`,
+    `🧹 [voice/sweep] ${rows.length} stranded session(s): ${billed} billed, ${refused} refused, KSH ${chargedTotal.toFixed(2)} charged`,
   );
 
   return { swept: rows.length, billed, refused, charged_total: Math.round(chargedTotal * 100) / 100 };

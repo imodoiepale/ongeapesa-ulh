@@ -303,7 +303,7 @@ export default function VoiceInterface({ onNavigate }: VoiceInterfaceProps) {
           >
             <Wallet className="h-3.5 w-3.5 text-[hsl(var(--voice-accent))]" />
             <span className="text-xs font-semibold text-foreground">
-              {loadingBalance ? '…' : `KSh ${balance.toLocaleString('en-KE', {maximumFractionDigits:0})}`}
+              {loadingBalance ? '…' : `KSH ${balance.toLocaleString('en-KE', {maximumFractionDigits:0})}`}
             </span>
           </button>
 

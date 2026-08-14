@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
     if (depositAmount > 999999) {
       return NextResponse.json(
-        { error: 'Amount exceeds the maximum allowed limit of KSh 999,999' },
+        { error: 'Amount exceeds the maximum allowed limit of KSH 999,999' },
         { status: 400 }
       );
     }

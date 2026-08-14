@@ -2,7 +2,7 @@
 --
 -- The economics dashboard currently reports revenue with no infrastructure cost
 -- at all, which makes voice look infinitely profitable. It is not: voice sells
--- at KSh 20/min and every minute costs real money in TTS, STT, transport and
+-- at KSH 20/min and every minute costs real money in TTS, STT, transport and
 -- (eventually) GPU time. Until that is recorded, "voice revenue" is a number
 -- with no margin attached to it.
 --

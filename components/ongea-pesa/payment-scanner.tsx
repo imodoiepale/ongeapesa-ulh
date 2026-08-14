@@ -566,7 +566,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
 
       // Check balance
       if (parseFloat(enteredAmount) > balance) {
-        alert(`Insufficient balance! You have KSh ${balance.toLocaleString()} but need KSh ${parseFloat(enteredAmount).toLocaleString()}`)
+        alert(`Insufficient balance! You have KSH ${balance.toLocaleString()} but need KSH ${parseFloat(enteredAmount).toLocaleString()}`)
         return
       }
 
@@ -577,7 +577,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
       if (!selectedPayment) return
 
       const amountNum = parseFloat(enteredAmount)
-      selectedPayment.data.amount = `KSh ${amountNum.toLocaleString()}`
+      selectedPayment.data.amount = `KSH ${amountNum.toLocaleString()}`
 
       // Determine whether this payment has a real NCBA rail destination
       const { type, data } = selectedPayment
@@ -630,7 +630,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
           if (res.ok && result.success) {
             toast({
               title: "✅ Payment Sent!",
-              description: `KSh ${amountNum.toLocaleString()} sent.${result.bank_ref ? ` Ref: ${result.bank_ref}` : ''} ${result.message || ''}`,
+              description: `KSH ${amountNum.toLocaleString()} sent.${result.bank_ref ? ` Ref: ${result.bank_ref}` : ''} ${result.message || ''}`,
               duration: 5000,
             })
             setScanResult(null); setEnteredAmount(''); setSelectedPaymentIndex(0); setAlternativesExpanded(false); setCapturedImage(null)
@@ -660,7 +660,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
             const { transaction } = await res.json()
             toast({
               title: "✅ Recorded!",
-              description: `KSh ${amountNum.toLocaleString()} expense saved. ID: ${transaction.id.substring(0, 8)}...`,
+              description: `KSH ${amountNum.toLocaleString()} expense saved. ID: ${transaction.id.substring(0, 8)}...`,
               duration: 5000,
             })
             setScanResult(null); setEnteredAmount(''); setSelectedPaymentIndex(0); setAlternativesExpanded(false); setCapturedImage(null)
@@ -689,7 +689,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
         ...scanResult,
         data: {
           ...scanResult.data,
-          amount: `KSh ${parseFloat(enteredAmount).toLocaleString()}`
+          amount: `KSH ${parseFloat(enteredAmount).toLocaleString()}`
         }
       }
 
@@ -729,7 +729,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
       if (!json.success && json.error === 'Insufficient funds') {
         const shortfall = json.shortfall ?? 0
         speakText(`Insufficient balance. You need ${shortfall.toLocaleString()} shillings more.`)
-        setScanError(`Insufficient balance. Need KSh ${shortfall.toFixed(2)} more.`)
+        setScanError(`Insufficient balance. Need KSH ${shortfall.toFixed(2)} more.`)
         return
       }
 
@@ -1025,7 +1025,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
                   </div>
                   <div className="text-left">
                     <p className="text-xs font-semibold text-foreground">
-                      {enteredAmount ? `KSh ${parseFloat(enteredAmount).toLocaleString()}` : 'Enter Amount'}
+                      {enteredAmount ? `KSH ${parseFloat(enteredAmount).toLocaleString()}` : 'Enter Amount'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {amountSectionExpanded ? 'Collapse' : 'Click to enter'}
@@ -1063,7 +1063,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
                     ) : (
                       <div className="space-y-2">
                         <div className="relative flex items-center border border-border/60 rounded-lg bg-card px-2 h-8">
-                          <span className="text-muted-foreground text-xs mr-1">KSh</span>
+                          <span className="text-muted-foreground text-xs mr-1">KSH</span>
                           <input
                             type="number"
                             placeholder="0.00"
@@ -1105,7 +1105,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
                     {enteredAmount && parseFloat(enteredAmount) > balance && (
                       <div className="mt-2 p-2 rounded-lg border border-destructive/20 bg-destructive/8">
                         <p className="text-xs text-destructive font-medium">
-                          ⚠️ Need KSh {(parseFloat(enteredAmount) - balance).toLocaleString()} more
+                          ⚠️ Need KSH {(parseFloat(enteredAmount) - balance).toLocaleString()} more
                         </p>
                       </div>
                     )}
@@ -1328,17 +1328,17 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
           <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
             <div className="flex justify-between items-center mb-2">
               <span className="font-medium text-foreground">Total Amount:</span>
-              <span className="text-2xl font-bold text-brand">KSh {totalAmount.toLocaleString()}</span>
+              <span className="text-2xl font-bold text-brand">KSH {totalAmount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Your Balance:</span>
               <span className={cn("font-medium", canAfford ? "text-brand" : "text-destructive")}>
-                KSh {balance.toLocaleString()}
+                KSH {balance.toLocaleString()}
               </span>
             </div>
             {!canAfford && (
               <div className="mt-2 p-2 rounded-lg border border-destructive/20 bg-destructive/8 text-xs text-destructive">
-                ⚠️ Insufficient balance. Need KSh {(totalAmount - balance).toLocaleString()} more.
+                ⚠️ Insufficient balance. Need KSH {(totalAmount - balance).toLocaleString()} more.
               </div>
             )}
           </div>
@@ -1350,7 +1350,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
               disabled={!canAfford || isProcessing}
               className="flex-1"
             >
-              {isProcessing ? 'Processing...' : `Pay All (KSh ${totalAmount.toLocaleString()})`}
+              {isProcessing ? 'Processing...' : `Pay All (KSH ${totalAmount.toLocaleString()})`}
             </Button>
             <Button
               variant="outline"
@@ -1375,7 +1375,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
                     {!r.success && <p className="text-xs text-destructive truncate">{r.error}</p>}
                     {r.success && r.bank_ref && <p className="text-xs text-muted-foreground">Ref: {r.bank_ref}</p>}
                   </div>
-                  <span className="text-xs font-semibold shrink-0">KSh {r.amount.toLocaleString()}</span>
+                  <span className="text-xs font-semibold shrink-0">KSH {r.amount.toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -1743,7 +1743,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
               <Receipt className="h-5 w-5 text-brand shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-sm text-foreground">KPLC Bill - Paybill 888880</p>
-                <p className="text-xs text-muted-foreground">Account: 123456789 • KSh 2,450</p>
+                <p className="text-xs text-muted-foreground">Account: 123456789 • KSH 2,450</p>
               </div>
               <Button size="sm" variant="outline">
                 Pay
@@ -1754,7 +1754,7 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
               <CreditCard className="h-5 w-5 text-brand shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-sm text-foreground">Naivas Receipt - Till 832909</p>
-                <p className="text-xs text-muted-foreground">Groceries • KSh 1,850</p>
+                <p className="text-xs text-muted-foreground">Groceries • KSH 1,850</p>
               </div>
               <Button size="sm" variant="outline">
                 View

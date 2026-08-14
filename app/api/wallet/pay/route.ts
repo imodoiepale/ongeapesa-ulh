@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: result.message || `KSh ${amount} sent via ${destination.kind}`,
+      message: result.message || `KSH ${amount} sent via ${destination.kind}`,
       transaction_id: result.transaction_id,
       bank_ref: result.bank_ref,
     });

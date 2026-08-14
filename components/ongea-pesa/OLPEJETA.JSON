@@ -285,13 +285,13 @@
           "adult": 2000,
           "child": 1000,
           "student": 500,
-          "currency": "Ksh"
+          "currency": "KSH"
         },
         "eaResidents": {
           "adult": 3500,
           "child": 1750,
           "student": 500,
-          "currency": "Ksh"
+          "currency": "KSH"
         },
         "nonResidents": {
           "adult": 110,
@@ -302,9 +302,9 @@
         "notes": "Children are 3-11 years old. Children below 3 are free."
       },
       "vehicleEntryFees": {
-        "upTo6Seats": { "fee": 1000, "currency": "Ksh" },
-        "seats7to14": { "fee": 5000, "currency": "Ksh" },
-        "seats15plus": { "fee": 12000, "currency": "Ksh" }
+        "upTo6Seats": { "fee": 1000, "currency": "KSH" },
+        "seats7to14": { "fee": 5000, "currency": "KSH" },
+        "seats15plus": { "fee": 12000, "currency": "KSH" }
       },
       "policies": {
         "onlineBooking": "First wildlife conservancy in Kenya with online entry fee booking. Activities and campsites can also be booked online.",
@@ -314,7 +314,7 @@
           "groupSize": "Minimum 10 students per group.",
           "requirements": "Must be accompanied by a teacher and/or letter from a recognised learning institution.",
           "teacherEntry": "Two teachers per group enter for free.",
-          "guide": "Available for a fee of Ksh 2,500."
+          "guide": "Available for a fee of KSH 2,500."
         }
       },
       "entryFeeInclusions": [
@@ -445,7 +445,7 @@
             "childSharing": 35
           },
           "amenities": ["Single bed with mosquito net", "Power socket", "Shared bathrooms", "Boiled drinking water", "Guest fridge"],
-          "services": {"laundry": "Ksh 500 per bucket (Wed & Fri)"},
+          "services": {"laundry": "KSH 500 per bucket (Wed & Fri)"},
           "mealTimes": {
             "breakfast": "7:00am - 8:00am",
             "lunch": "1:00pm - 2:00pm",
@@ -460,7 +460,7 @@
         },
         "campsites": {
           "totalSites": 7,
-          "mandatoryRequirement": "An armed ranger must accompany campers for a fee of Ksh 5,000 per ranger per night.",
+          "mandatoryRequirement": "An armed ranger must accompany campers for a fee of KSH 5,000 per ranger per night.",
           "sites": [
             {
               "name": "Ewaso",
@@ -602,7 +602,7 @@
     },
     "adoptionAndSupportPrograms": {
       "animalAdoption": {
-        "startingPriceKsh": 6000,
+        "startingPriceKSH": 6000,
         "purpose": "Support wildlife protection, conservation, and community development.",
         "animalsAvailable": [
           "Najin and Fatu (Northern White Rhinos)",

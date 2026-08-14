@@ -25,17 +25,17 @@ export default function Analytics({ onNavigate }: AnalyticsProps) {
   }
 
   const spendingCategories = [
-    { name: "Food & Dining", amount: "KSh 8,500", percentage: 35, color: "bg-red-500" },
-    { name: "Transportation", amount: "KSh 4,200", percentage: 18, color: "bg-blue-500" },
-    { name: "Utilities", amount: "KSh 3,800", percentage: 16, color: "bg-brand" },
-    { name: "Entertainment", amount: "KSh 2,100", percentage: 9, color: "bg-purple-500" },
-    { name: "Shopping", amount: "KSh 5,200", percentage: 22, color: "bg-orange-500" },
+    { name: "Food & Dining", amount: "KSH 8,500", percentage: 35, color: "bg-red-500" },
+    { name: "Transportation", amount: "KSH 4,200", percentage: 18, color: "bg-blue-500" },
+    { name: "Utilities", amount: "KSH 3,800", percentage: 16, color: "bg-brand" },
+    { name: "Entertainment", amount: "KSH 2,100", percentage: 9, color: "bg-purple-500" },
+    { name: "Shopping", amount: "KSH 5,200", percentage: 22, color: "bg-orange-500" },
   ]
 
   const monthlyStats = {
-    totalSpent: "KSh 23,800",
-    totalReceived: "KSh 45,000",
-    netSavings: "KSh 21,200",
+    totalSpent: "KSH 23,800",
+    totalReceived: "KSH 45,000",
+    netSavings: "KSH 21,200",
     transactions: 127,
   }
 

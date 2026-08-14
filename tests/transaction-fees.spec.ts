@@ -6,7 +6,7 @@ import {
 } from '@/lib/transaction-fees'
 
 test.describe('NCBA customer transaction costs', () => {
-  test('uses the current published mobile-money band for a KSh 2,000 send', () => {
+  test('uses the current published mobile-money band for a KSH 2,000 send', () => {
     const fees = calculateTransactionFees(2_000, 'mobile_wallet')
 
     expect(fees.providerFee).toBe(25)

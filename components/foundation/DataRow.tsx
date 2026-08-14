@@ -6,7 +6,7 @@
  *
  * Usage:
  *   <DataRow label="To" value="John Kamau" />
- *   <DataRow label="Amount" value="KSh 500" valueClassName="font-semibold text-foreground" />
+ *   <DataRow label="Amount" value="KSH 500" valueClassName="font-semibold text-foreground" />
  *   <DataRow label="Status" value={<Badge>Completed</Badge>} />
  *   <DataRows>
  *     <DataRow label="To" value="John" />

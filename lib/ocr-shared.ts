@@ -39,7 +39,7 @@ export function getPromptForScanMode(scanMode: string): string {
       {
         "type": "send_phone",
         "phone": "254XXXXXXXXX",
-        "amount": "KSh_amount_if_visible",
+        "amount": "KSH_amount_if_visible",
         "confidence": confidence_0_to_100
       }
     `,
@@ -50,7 +50,7 @@ export function getPromptForScanMode(scanMode: string): string {
       {
         "type": "buy_goods_till",
         "till": "exact_6_or_7_digits",
-        "amount": "KSh_amount_if_visible",
+        "amount": "KSH_amount_if_visible",
         "confidence": confidence_0_to_100
       }
     `,
@@ -62,7 +62,7 @@ export function getPromptForScanMode(scanMode: string): string {
         "type": "paybill",
         "paybill": "exact_6_or_7_digits",
         "account": "exact_account_number",
-        "amount": "KSh_amount_if_visible",
+        "amount": "KSH_amount_if_visible",
         "confidence": confidence_0_to_100
       }
     `,
@@ -74,7 +74,7 @@ export function getPromptForScanMode(scanMode: string): string {
         "type": "withdraw",
         "agent": "exact_6_or_7_digits",
         "store": "exact_store_number",
-        "amount": "KSh_amount_if_visible",
+        "amount": "KSH_amount_if_visible",
         "confidence": confidence_0_to_100
       }
     `,
@@ -86,7 +86,7 @@ export function getPromptForScanMode(scanMode: string): string {
         "type": "bank_to_mpesa",
         "bankCode": "exact_bank_code",
         "account": "exact_account_number",
-        "amount": "KSh_amount_if_visible",
+        "amount": "KSH_amount_if_visible",
         "confidence": confidence_0_to_100
       }
     `,
@@ -98,7 +98,7 @@ export function getPromptForScanMode(scanMode: string): string {
         "type": "bank_to_bank",
         "bankCode": "exact_bank_code",
         "account": "exact_account_number",
-        "amount": "KSh_amount_if_visible",
+        "amount": "KSH_amount_if_visible",
         "confidence": confidence_0_to_100
       }
     `,
@@ -108,7 +108,7 @@ export function getPromptForScanMode(scanMode: string): string {
       FIND THESE EXACT ELEMENTS:
       1. TILL NUMBER: Exactly 6-7 digits (e.g., 832909, 174379, 123456)
       2. BUSINESS NAME: Merchant/store name (exact spelling)
-      3. AMOUNT: Currency amount if visible (with KSh/Ksh)
+      3. AMOUNT: Currency amount if visible (with KSH/KSH)
       4. CONTEXT: Look for "Till", "Store Number", "Lipa na M-Pesa" text
 
       CRITICAL ACCURACY RULES:
@@ -122,7 +122,7 @@ export function getPromptForScanMode(scanMode: string): string {
         "type": "till",
         "till": "exact_6_or_7_digits",
         "merchant": "exact_business_name",
-        "amount": "KSh_amount_if_visible",
+        "amount": "KSH_amount_if_visible",
         "confidence": confidence_0_to_100
       }
     `,
@@ -160,7 +160,7 @@ export function getPromptForScanMode(scanMode: string): string {
         "type": "receipt",
         "receiptData": {
           "vendor": "business_name",
-          "amount": "total_amount_with_KSh",
+          "amount": "total_amount_with_KSH",
           "date": "YYYY-MM-DD",
           "category": "expense_category",
           "till": "6_or_7_digit_till_if_found_or_null",
@@ -211,7 +211,7 @@ ACCURACY RULES:
 - Read digits character-by-character: 0≠O, 1≠I≠l, 5≠S, 6≠G, 8≠B
 - Do NOT guess or approximate any number — extract exactly as printed
 - Preserve business names as written (exact capitalization)
-- Include "KSh" prefix with all monetary amounts
+- Include "KSH" prefix with all monetary amounts
 
 RETURN ONLY a single JSON object matching this schema:
 {
@@ -224,10 +224,10 @@ RETURN ONLY a single JSON object matching this schema:
   "store": "<store_number_if_applicable_else_omit>",
   "bankCode": "<bank_code_if_applicable_else_omit>",
   "merchant": "<business_or_merchant_name_if_visible_else_omit>",
-  "amount": "<KSh_amount_if_visible_else_omit>",
+  "amount": "<KSH_amount_if_visible_else_omit>",
   "receiptData": {
     "vendor": "<vendor_name>",
-    "amount": "<total_with_KSh>",
+    "amount": "<total_with_KSH>",
     "date": "<YYYY-MM-DD>",
     "category": "<fuel|groceries|restaurant|utilities|other>",
     "till": "<6_or_7_digit_till_or_null>",
@@ -273,9 +273,9 @@ export function validateAndFormatNumbers(data: Record<string, any>): Record<stri
     formatted.phone = phone;
   }
   if (formatted.amount) {
-    if (!String(formatted.amount).includes('KSh') && !String(formatted.amount).includes('Ksh')) {
+    if (!String(formatted.amount).includes('KSH') && !String(formatted.amount).includes('KSH')) {
       const num = String(formatted.amount).replace(/[^0-9.,]/g, '');
-      if (num) formatted.amount = `KSh ${num}`;
+      if (num) formatted.amount = `KSH ${num}`;
     }
   }
 

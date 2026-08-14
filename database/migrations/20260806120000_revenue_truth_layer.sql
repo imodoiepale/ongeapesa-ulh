@@ -6,7 +6,7 @@
 --                                    dragged net margin negative.
 --   * migration 025's RPCs         — correctly excluded customer-borne cost, but
 --                                    counted platform_fee ONLY, so voice airtime
---                                    revenue (KSh 20/min) was invisible.
+--                                    revenue (KSH 20/min) was invisible.
 --   * five client pages            — recomputed 0.5% in the browser with a
 --                                    `platform_fee > 0 ? persisted : amount*0.005`
 --                                    fallback, which silently re-charges genuinely
@@ -85,7 +85,7 @@ SELECT
 
   -- What Ongea Pesa earns: the explicit platform fee on payment rails, PLUS the
   -- full amount on rows where the amount IS the product (voice airtime at
-  -- KSh 20/min, subscriptions, and the pre-028 hidden fee-ledger rows).
+  -- KSH 20/min, subscriptions, and the pre-028 hidden fee-ledger rows).
   COALESCE(t.platform_fee, 0)
     + CASE WHEN t.type IN ('voice_usage','platform_fee','subscription')
            THEN COALESCE(t.amount, 0) ELSE 0 END AS platform_revenue,

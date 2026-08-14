@@ -110,7 +110,7 @@ Your ElevenLabs prompt (`prompt.md`) has been **completely rewritten** to accura
 #### Scenario 1: Internal Transfer (FREE - Subscribed)
 ```
 User: "Send 5000 to John"
-AI: "Okay, sending KSh 5,000 to John from your wallet…" 
+AI: "Okay, sending KSH 5,000 to John from your wallet…" 
 [type: c2c, recipient: John]
 AI: "Done! Pesa imefika John's wallet. That was free! You have 19 free sends left."
 ```
@@ -118,15 +118,15 @@ AI: "Done! Pesa imefika John's wallet. That was free! You have 19 free sends lef
 #### Scenario 2: Internal Transfer (0.5% Fee)
 ```
 User: "Tuma 3000 to mama"
-AI: "Alright, sending KSh 3,000 to mama from your wallet…"
+AI: "Alright, sending KSH 3,000 to mama from your wallet…"
 [type: c2c, recipient: mama]
-AI: "Sent! Transaction cost KSh 15 (0.5% fee). Your wallet balance is KSh 6,985."
+AI: "Sent! Transaction cost KSH 15 (0.5% fee). Your wallet balance is KSH 6,985."
 ```
 
 #### Scenario 3: External M-Pesa
 ```
 User: "Pay till 832909, 500 bob"
-AI: "Paying KSh 500 from your wallet to till 832909…"
+AI: "Paying KSH 500 from your wallet to till 832909…"
 [type: buy_goods_till]
 AI: "Done! Paid to till 832909 from your wallet."
 ```
@@ -134,7 +134,7 @@ AI: "Done! Paid to till 832909 from your wallet."
 #### Scenario 4: Insufficient Balance
 ```
 User: "Send 10000 to John"
-AI: "Sorry boss, you don't have enough in your wallet. You have KSh 5,000 but need KSh 10,000. Want to load from M-Pesa first?"
+AI: "Sorry boss, you don't have enough in your wallet. You have KSH 5,000 but need KSH 10,000. Want to load from M-Pesa first?"
 ```
 
 ---
@@ -157,7 +157,7 @@ AI: "Sorry boss, you don't have enough in your wallet. You have KSh 5,000 but ne
 - **Insufficient wallet balance**: "Sorry boss, you don't have enough in your wallet..."
 - **Recipient not found**: "Hmm, I can't find that person on Ongea Pesa..."
 - **Self-transfer**: "You can't send money to yourself, boss!"
-- **Amount too large**: "Maximum is KSh 999,999 per transaction."
+- **Amount too large**: "Maximum is KSH 999,999 per transaction."
 
 ---
 

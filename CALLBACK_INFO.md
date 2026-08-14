@@ -136,9 +136,9 @@ The callback endpoint logs EVERYTHING to the console:
    Current status: pending
 
 💰 Wallet credited!
-   Previous balance: KSh 1,000.00
-   Deposit amount: KSh 100.00
-   New balance: KSh 1,100.00
+   Previous balance: KSH 1,000.00
+   Deposit amount: KSH 100.00
+   New balance: KSH 1,100.00
 
 ✅ Transaction updated successfully
 
@@ -204,11 +204,11 @@ curl https://yourdomain.com/api/gate/balance \
   "user_id": "abc-123",
   "user_email": "user@example.com",
   "wallet_balance": 1000.00,
-  "wallet_balance_formatted": "KSh 1,000.00",
+  "wallet_balance_formatted": "KSH 1,000.00",
   "gate_id": "456",
   "gate_name": "user_gate",
   "gate_balance": 1000.00,
-  "gate_balance_formatted": "KSh 1,000.00",
+  "gate_balance_formatted": "KSH 1,000.00",
   "gate_balance_error": null,
   "balances_match": true,
   "difference": 0.00,

@@ -134,7 +134,7 @@ Top to bottom: (1) A phone camera view with a glowing scanner frame — label "C
 → (2) A brain-circuit node split in two: "OpenAI gpt-4o" left, "Gemini 2.5" right, with a
 "fallback" arrow — label "DUAL OCR ENGINE". → (3) A structured JSON card showing parsed
 fields: type / amount / paybill / account — label "PAYMENT OBJECT". → (4) A routing diamond:
-branches to "INTERNAL (free)" and "NCBA RAIL". → (5) A wallet icon with +KSh confirmation.
+branches to "INTERNAL (free)" and "NCBA RAIL". → (5) A wallet icon with +KSH confirmation.
 Premium 3D isometric icons, gold connector lines on emerald, crisp white labels.
 Suitable as a GitHub README hero image. Aspect ratio: 9:16. Ultra clean.
 Negative prompts: blurry, cluttered, cartoon, hand-drawn, watermark.

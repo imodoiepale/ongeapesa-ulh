@@ -287,7 +287,7 @@ Your n8n webhook at Railway should:
 1. Click microphone or wait for auto-start
 2. Say: "Send 100 shillings to 0712345678"
 3. Agent should:
-   - Confirm: "Sending KSh 100 to 0712345678"
+   - Confirm: "Sending KSH 100 to 0712345678"
    - Call send_money tool
    - Say: "Sent!"
 

@@ -192,7 +192,7 @@ export async function PATCH(request: Request) {
       transaction.status !== "completed" ||
       Number(transaction.amount) < VOICE_STARTER_AMOUNT
     ) {
-      return NextResponse.json({ error: "Your KSh 200 payment has not been confirmed yet." }, { status: 409 })
+      return NextResponse.json({ error: "Your KSH 200 payment has not been confirmed yet." }, { status: 409 })
     }
 
     databaseUpdate = {

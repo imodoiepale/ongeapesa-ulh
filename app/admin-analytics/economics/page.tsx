@@ -452,7 +452,7 @@ export default function EconomicsPage() {
               </div>
               {num(voiceUnit.margin_per_min) < 0 && (
                 <p className="mt-3 text-[11px] font-medium text-red-600 dark:text-red-400">
-                  Voice is losing money per minute at the current KSh {VOICE_RATE_PER_MINUTE}/min price.
+                  Voice is losing money per minute at the current KSH {VOICE_RATE_PER_MINUTE}/min price.
                 </p>
               )}
             </>

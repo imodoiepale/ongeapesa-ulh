@@ -154,16 +154,16 @@ export function VoiceFundingScreen() {
 
         <div className="voice-funding-copy">
           <p className="orbital-label">Voice beta · transparent pricing</p>
-          <h1 className="orbital-display">Load <span>KSh 200</span><br />to start speaking</h1>
-          <p>Ongea Pesa Voice is still in beta and real-time AI audio is costly to run. Voice is charged at KSh {VOICE_RATE_PER_MINUTE} per minute, calculated to the second. Your remaining money stays visible and spendable in your wallet.</p>
+          <h1 className="orbital-display">Load <span>KSH 200</span><br />to start speaking</h1>
+          <p>Ongea Pesa Voice is still in beta and real-time AI audio is costly to run. Voice is charged at KSH {VOICE_RATE_PER_MINUTE} per minute, calculated to the second. Your remaining money stays visible and spendable in your wallet.</p>
         </div>
 
         <div className="voice-funding-breakdown">
-          <div><span>Wallet funding</span><strong>KSh {fees.amount}</strong></div>
+          <div><span>Wallet funding</span><strong>KSH {fees.amount}</strong></div>
           <div><span>Ongea Pesa deposit fee</span><strong>Free</strong></div>
-          <div><span>Estimated M-Pesa charge</span><strong>KSh {fees.mpesaCharge}</strong></div>
-          <div className="voice-funding-breakdown__total"><span>Total from M-Pesa</span><strong>KSh {fees.totalFromMpesa}</strong></div>
-          <div><span>Voice usage</span><strong>KSh {VOICE_RATE_PER_MINUTE}/minute</strong></div>
+          <div><span>Estimated M-Pesa charge</span><strong>KSH {fees.mpesaCharge}</strong></div>
+          <div className="voice-funding-breakdown__total"><span>Total from M-Pesa</span><strong>KSH {fees.totalFromMpesa}</strong></div>
+          <div><span>Voice usage</span><strong>KSH {VOICE_RATE_PER_MINUTE}/minute</strong></div>
           <div><span>Ongea Pesa service fee</span><strong>0.5% per debit</strong></div>
         </div>
 
@@ -188,7 +188,7 @@ export function VoiceFundingScreen() {
           <p className="voice-funding-assurance"><ShieldCheck /> You approve the payment securely on your phone. We never see your M-Pesa PIN.</p>
           {error && <p role="alert" className="onboarding-error">{error}</p>}
           {state === "pending" && <p role="status" className="voice-funding-status"><Clock3 /> Check your phone and enter your M-Pesa PIN.</p>}
-          {state === "success" && <p role="status" className="voice-funding-status is-success"><Check /> KSh 200 confirmed. Your wallet is ready.</p>}
+          {state === "success" && <p role="status" className="voice-funding-status is-success"><Check /> KSH 200 confirmed. Your wallet is ready.</p>}
 
           {state === "error" && transactionId ? (
             <button type="button" onClick={() => { setError(""); setState("pending") }} className="onboarding-primary">
@@ -197,7 +197,7 @@ export function VoiceFundingScreen() {
           ) : (
             <button type="submit" disabled={busy || state === "success"} className="onboarding-primary onboarding-primary--mint">
               {busy ? <Loader2 className="animate-spin" /> : <WalletCards />}
-              {state === "submitting" ? "Sending prompt" : state === "pending" ? "Waiting for M-Pesa" : state === "completing" ? "Confirming wallet" : "Add KSh 200"}
+              {state === "submitting" ? "Sending prompt" : state === "pending" ? "Waiting for M-Pesa" : state === "completing" ? "Confirming wallet" : "Add KSH 200"}
             </button>
           )}
         </form>

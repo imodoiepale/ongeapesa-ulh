@@ -32,7 +32,7 @@ ALTER TABLE public.profiles
 COMMENT ON COLUMN public.profiles.device_biometrics_consent_at IS
   'When the user consented to device face/fingerprint verification. Required by the onboarding-complete write.';
 COMMENT ON COLUMN public.profiles.voice_funding_completed_at IS
-  'When the KSh 200 voice starter funding was confirmed. Gates the onboarding flow in components/ongea-pesa/app.tsx.';
+  'When the KSH 200 voice starter funding was confirmed. Gates the onboarding flow in components/ongea-pesa/app.tsx.';
 
 -- Backfill from user_metadata for anyone already stranded by this, so they are
 -- not asked to redo onboarding they already completed and paid for.

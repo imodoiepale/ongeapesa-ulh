@@ -111,7 +111,7 @@ class GeminiVisionService {
            - Store Number: Accompanying identifier
         
         9. AMOUNTS:
-           - Formats: KSh 1,234, Ksh 1234, 1,234/-, Kshs. 1234.50
+           - Formats: KSH 1,234, KSH 1234, 1,234/-, KSHs. 1234.50
            - Keywords: "Total", "Amount", "Pay", "Balance", "Due"
         
         === CHARACTER ACCURACY (CRITICAL) ===
@@ -162,10 +162,10 @@ class GeminiVisionService {
             "store": "XXXX",
             "bankCode": "XXX",
             "merchant": "Business Name",
-            "amount": "KSh X,XXX",
+            "amount": "KSH X,XXX",
             "receiptData": {
               "vendor": "Business Name",
-              "amount": "KSh X,XXX",
+              "amount": "KSH X,XXX",
               "date": "YYYY-MM-DD",
               "category": "groceries|fuel|restaurant|utilities|other"
             }

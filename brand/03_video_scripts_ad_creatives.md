@@ -11,7 +11,7 @@ All scripts: open with the **sound logo**, end with "**Ongea Pesa. Sema tu.**" +
 - HOOK (0–3s): Creator ties blindfold. "Sending 500 bob to mum. Blindfolded. First: the normal way."
 - (3–15s): Fumbling through menus, mis-taps, frustration. Timer running. "Wapi send money... is this it? I just called my landlord."
 - (15–20s): Rip blindfold moment — "Now watch this." Re-ties blindfold. Opens Ongea Pesa.
-- (20–30s): "Tuma mia tano kwa mum." App voice: "Kutuma KSh 500 kwa Mum. Sema ndiyo kuconfirm." — "Ndiyo." — Chime. Timer stops: 8 seconds.
+- (20–30s): "Tuma mia tano kwa mum." App voice: "Kutuma KSH 500 kwa Mum. Sema ndiyo kuconfirm." — "Ndiyo." — Chime. Timer stops: 8 seconds.
 - CTA: "Now imagine you had no blindfold to take off. Ongea Pesa. Sema tu." #BlindfoldChallenge #OngeaPesa
 
 ---

@@ -97,7 +97,7 @@
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `type` | string | **ALWAYS** | Transaction type identifier |
-| `amount` | string | **ALWAYS** | Amount in KSh (no currency symbol) - MANDATORY for all transactions |
+| `amount` | string | **ALWAYS** | Amount in KSH (no currency symbol) - MANDATORY for all transactions |
 | `phone` | string | conditional | 254XXXXXXXXX format for send_phone, buy_goods_pochi |
 | `till` | string | conditional | 6-7 digits for buy_goods_till |
 | `paybill` | string | conditional | 6-7 digits for paybill transactions |
@@ -140,9 +140,9 @@
 - Preserve exact formatting including spaces/dashes
 
 ### Amounts
-- Numeric only (no KSh prefix in JSON)
-- Minimum: 1 KSh
-- Maximum: 999,999 KSh per transaction
+- Numeric only (no KSH prefix in JSON)
+- Minimum: 1 KSH
+- Maximum: 999,999 KSH per transaction
 - No decimal places (whole shillings only)
 
 ## N8N Workflow Integration
@@ -161,7 +161,7 @@ The JSON is sent to N8N webhook which:
 {
   "success": false,
   "error_code": "INSUFFICIENT_FUNDS|INVALID_NUMBER|NETWORK_ERROR",
-  "error_message": "Insufficient balance. Current balance: KSh 1,200",
+  "error_message": "Insufficient balance. Current balance: KSH 1,200",
   "transaction_id": "uuid-v4-string"
 }
 ```

@@ -365,17 +365,17 @@
   --cyan: 187 84% 50%;
   --teal: 175 85% 38%;
   --warm-gold: 44 79% 78%;
-  --font-display: var(--font-bodoni), Georgia, serif;
-  --font-label: var(--font-sora), var(--font-inter), sans-serif;
-  --font-data: var(--font-mono), ui-monospace, monospace;
+  /* Roles, not faces — all four resolve to the one family. Hierarchy comes
+     from weight, size and tracking so the app reads as a single voice. */
+  --font-display: var(--font-inter), system-ui, sans-serif;
+  --font-label: var(--font-inter), system-ui, sans-serif;
+  --font-data: var(--font-inter), system-ui, sans-serif;
 }
 
-/* Money figures. .orbital-display is a Bodoni serif — beautiful for headings,
-   but its hairline strokes and old-style numerals make a balance hard to read
-   at a glance, so amounts opt out of it and into a rounded sans.
-   --font-money is the Nunito variable declared in app/layout.tsx. */
+/* Money figures — same face as everything else, distinguished by weight and
+   tabular figures so digits never shift width as a balance updates. */
 .orbital-money {
-  font-family: var(--font-money), "Nunito", system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -.02em;
   font-variant-numeric: tabular-nums;
@@ -568,8 +568,8 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   color: hsl(var(--mint));
 }
 .voice-node-field__core-content > svg { width: 1.75rem; height: 1.75rem; }
-.voice-node-field__core-content strong { font-family: var(--font-sora), sans-serif; font-size: .61rem; letter-spacing: .14em; text-transform: uppercase; }
-.voice-node-field__core-content small { font-family: var(--font-mono), monospace; font-size: .55rem; color: hsl(var(--foreground) / .5); }
+.voice-node-field__core-content strong { font-family: var(--font-inter), sans-serif; font-size: .61rem; letter-spacing: .14em; text-transform: uppercase; }
+.voice-node-field__core-content small { font-family: var(--font-inter), sans-serif; font-size: .55rem; color: hsl(var(--foreground) / .5); }
 @keyframes voice-node-pulse {
   0%, 100% { opacity: .2; transform: scale(calc(.7 * var(--node-scale))); }
   50% { opacity: .9; transform: scale(calc(1.3 * var(--node-scale))); }
@@ -924,7 +924,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   justify-content: center;
   gap: 10px;
   border-radius: 999px;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   font-weight: 600;
   transition: transform 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
@@ -984,7 +984,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   padding: 0 10px;
   color: #071315;
   background: #f8f8f5;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 11px;
   font-weight: 600;
   transform: translateX(-50%);
@@ -993,7 +993,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   display: grid;
   grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 11px;
   font-weight: 600;
   text-align: center;
@@ -1062,7 +1062,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
 .onboarding-access__content > div { max-width: none; }
 .onboarding-access h2 {
   margin: 0;
-  font-family: var(--font-bodoni), Georgia, serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   font-size: 38px;
   font-weight: 500;
   line-height: .98;
@@ -1079,7 +1079,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   display: block;
   margin-bottom: 7px;
   color: #172023;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 11px;
   font-weight: 500;
 }
@@ -1140,7 +1140,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   color: white;
   background: #020909;
   box-shadow: inset 0 -2px 0 #13d6aa;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 13px;
   font-weight: 600;
 }
@@ -1188,7 +1188,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   border: 1px solid #081315;
   border-radius: 9px;
   color: #081315 !important;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 12px;
   font-weight: 600;
 }
@@ -1289,7 +1289,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
 .onboarding-biometric-consent strong,
 .onboarding-device-consent strong {
   display: block;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 10px;
 }
 .onboarding-biometric-consent small,
@@ -1334,7 +1334,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
 .onboarding-calibration output {
   margin-top: 3px;
   color: #12ddb3;
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-size: 35px;
   font-weight: 300;
 }
@@ -1394,7 +1394,7 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
 }
 .onboarding-choice > svg:first-child { width: 27px; height: 27px; color: #078b6e; stroke-width: 1.5; }
 .onboarding-choice > svg:last-child { width: 17px; height: 17px; }
-.onboarding-choice strong { display: block; font-family: var(--font-sora), sans-serif; font-size: 11px; }
+.onboarding-choice strong { display: block; font-family: var(--font-inter), sans-serif; font-size: 11px; }
 .onboarding-choice small { display: block; margin-top: 3px; color: rgb(8 19 21 / .6); font-size: 9px; line-height: 1.3; }
 .onboarding-pin-form {
   display: grid;
@@ -1488,14 +1488,14 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
 .voice-funding-breakdown { margin-top: 17px; border-block: 1px solid rgb(8 19 21 / .12); padding-block: 9px; }
 .voice-funding-breakdown > div { display: flex; min-height: 25px; align-items: center; justify-content: space-between; gap: 16px; font-size: 10px; }
 .voice-funding-breakdown span { color: rgb(8 19 21 / .58); }
-.voice-funding-breakdown strong { font-family: var(--font-mono), monospace; font-size: 10px; font-variant-numeric: tabular-nums; }
+.voice-funding-breakdown strong { font-family: var(--font-inter), sans-serif; font-size: 10px; font-variant-numeric: tabular-nums; }
 .voice-funding-breakdown__total { margin-top: 5px; padding-top: 7px; border-top: 1px dashed rgb(8 19 21 / .14); }
 .voice-funding-breakdown__total strong { color: #078b6e; font-size: 12px; }
 .voice-funding-form { display: grid; gap: 10px; margin-top: 14px; }
-.voice-funding-form label > span:first-child { display: block; margin-bottom: 6px; font-family: var(--font-sora), sans-serif; font-size: 10px; font-weight: 600; }
+.voice-funding-form label > span:first-child { display: block; margin-bottom: 6px; font-family: var(--font-inter), sans-serif; font-size: 10px; font-weight: 600; }
 .voice-funding-input { position: relative; display: block; }
 .voice-funding-input svg { position: absolute; left: 13px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: #078b6e; }
-.voice-funding-input input { width: 100%; min-height: 48px; padding: 0 14px 0 42px; border: 1px solid rgb(8 19 21 / .18); border-radius: 10px; background: rgb(255 255 255 / .68); font-family: var(--font-mono), monospace; font-size: 13px; }
+.voice-funding-input input { width: 100%; min-height: 48px; padding: 0 14px 0 42px; border: 1px solid rgb(8 19 21 / .18); border-radius: 10px; background: rgb(255 255 255 / .68); font-family: var(--font-inter), sans-serif; font-size: 13px; }
 .voice-funding-input input:focus { outline: 3px solid rgb(18 221 179 / .16); border-color: #0aa985; }
 .voice-funding-assurance,
 .voice-funding-status { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 8px; color: rgb(8 19 21 / .56); }

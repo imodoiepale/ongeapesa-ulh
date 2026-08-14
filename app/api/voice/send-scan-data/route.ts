@@ -77,23 +77,23 @@ export async function POST(request: NextRequest) {
 
 function formatScanMessage(scanResult: any, balance: number, fees: TransactionFees | null = null): string {
   const { type, data, confidence } = scanResult;
-  const balanceFormatted = `KSh ${balance.toLocaleString()}`;
+  const balanceFormatted = `KSH ${balance.toLocaleString()}`;
   
   // Build fee message if fees are calculated
   let feeMessage = '';
   let insufficientFundsWarning = '';
   
   if (fees) {
-    feeMessage = ` Transaction cost: KSh ${fees.totalTransactionCost.toLocaleString()}. Total wallet debit: KSh ${fees.totalDebit.toLocaleString()}.`;
+    feeMessage = ` Transaction cost: KSH ${fees.totalTransactionCost.toLocaleString()}. Total wallet debit: KSH ${fees.totalDebit.toLocaleString()}.`;
     
     // Check if balance is insufficient
     if (balance < fees.totalDebit) {
       const shortfall = fees.totalDebit - balance;
-      insufficientFundsWarning = ` WARNING: Your balance is insufficient. You need KSh ${shortfall.toLocaleString()} more. Would you like to add funds to your wallet first?`;
+      insufficientFundsWarning = ` WARNING: Your balance is insufficient. You need KSH ${shortfall.toLocaleString()} more. Would you like to add funds to your wallet first?`;
     } else if (balance - fees.totalDebit < 100) {
       // Low balance warning (less than 100 remaining)
       const remaining = balance - fees.totalDebit;
-      insufficientFundsWarning = ` Note: After this payment, you'll only have KSh ${remaining.toLocaleString()} remaining. Consider adding funds soon.`;
+      insufficientFundsWarning = ` Note: After this payment, you'll only have KSH ${remaining.toLocaleString()} remaining. Consider adding funds soon.`;
     }
   }
 
