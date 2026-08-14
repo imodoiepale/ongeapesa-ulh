@@ -360,7 +360,7 @@ export default function VoiceInterface({ onNavigate }: VoiceInterfaceProps) {
       <div className="flex-1 min-h-0 overflow-y-auto px-5 relative z-10">
         <div className="min-h-full flex flex-col items-center justify-center gap-5 py-2">
         <h1 className="orbital-display text-[2.5rem]">Voice Assistant</h1>
-        <p className="font-[family-name:var(--font-display)] text-xl text-[hsl(var(--teal))]">{isConnected ? "Tuma elfu mbili kwa Mum" : "Speak naturally"}</p>
+        <p className="font-[family-name:var(--font-display)] text-xl font-medium text-[hsl(var(--foreground)/.78)]">{isConnected ? "Tuma elfu mbili kwa Mum" : "Speak naturally"}</p>
         <VoiceNodeField
           active={isConnected}
           speaking={isSpeaking}

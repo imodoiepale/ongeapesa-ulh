@@ -6,7 +6,10 @@ import { createClient } from '@/lib/supabase/client';
 import { useTransactionPolling } from '@/hooks/use-transaction-polling';
 import { depositFeeBreakdown } from '@/lib/transaction-fees';
 
-type DepositRail = 'indexpay' | 'ncba';
+// LOOP Prompt is the primary top-up rail. NCBA STK stays as the fallback so a
+// demo cannot dead-end if LOOP is unavailable; IndexPay is kept for existing
+// gate users but is no longer the default.
+type DepositRail = 'loop' | 'ncba' | 'indexpay';
 
 interface DepositDialogProps {
   isOpen: boolean;
@@ -15,7 +18,7 @@ interface DepositDialogProps {
 }
 
 export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDialogProps) {
-  const [rail, setRail] = useState<DepositRail>('indexpay');
+  const [rail, setRail] = useState<DepositRail>('loop');
   const [amount, setAmount] = useState('');
   const [phone, setPhone] = useState('');
   const [gateName, setGateName] = useState('');
@@ -175,6 +178,32 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
     }
   };
 
+  // ── LOOP Prompt deposit handler (primary) ─────────────────────────────────
+  //
+  // LOOP Prompt is asynchronous: this only confirms the prompt reached the
+  // phone. The row stays 'processing' until loop_prompt_callback settles it, so
+  // we hand the id to the poller rather than declaring success here — the
+  // balance must rise when money lands, not when a prompt is sent.
+  const handleLoopDeposit = async (amountValue: number) => {
+    const response = await fetch('/api/deposit/loop', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: amountValue, phone }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      setSuccess('LOOP prompt sent — approve it on your phone to complete the top-up.');
+      setAmount('');
+      setDepositAmount(amountValue);
+      setTransactionId(data.transaction_id);
+    } else {
+      setError(data.error || 'Failed to send the LOOP prompt');
+      setLoading(false);
+    }
+  };
+
   // ── IndexPay (existing) deposit handler ───────────────────────────────────
   const handleIndexPayDeposit = async (amountValue: number) => {
     const response = await fetch('/api/gate/deposit', {
@@ -252,7 +281,9 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
         return;
       }
 
-      if (rail === 'ncba') {
+      if (rail === 'loop') {
+        await handleLoopDeposit(amountValue);
+      } else if (rail === 'ncba') {
         await handleNcbaDeposit(amountValue);
       } else {
         await handleIndexPayDeposit(amountValue);
@@ -323,14 +354,14 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
               <div className="flex gap-2 p-1 bg-muted rounded-xl">
                 <button
                   type="button"
-                  onClick={() => { setRail('indexpay'); setError(''); setSuccess(''); }}
+                  onClick={() => { setRail('loop'); setError(''); setSuccess(''); }}
                   className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all ${
-                    rail === 'indexpay'
+                    rail === 'loop'
                       ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  Wallet Top-up
+                  LOOP
                 </button>
                 <button
                   type="button"
@@ -536,7 +567,7 @@ export default function DepositDialog({ isOpen, onClose, onSuccess }: DepositDia
                 ) : (
                   <>
                     <Wallet size={20} />
-                    {rail === 'ncba' ? 'Pay via M-Pesa STK' : 'Deposit via M-Pesa'}
+                    {rail === 'loop' ? 'Send LOOP prompt' : rail === 'ncba' ? 'Pay via M-Pesa STK' : 'Deposit via M-Pesa'}
                   </>
                 )}
               </button>

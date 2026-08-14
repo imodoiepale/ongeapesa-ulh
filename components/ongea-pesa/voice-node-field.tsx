@@ -3,11 +3,13 @@
 import type { CSSProperties } from "react"
 import { AudioLines, Mic } from "lucide-react"
 
+// Deliberately sparse. The earlier 16-node field competed with the core for
+// attention; ten, spread wide, still reads as a network but lets the status
+// text be the thing you look at.
 const nodes = [
-  [44, 174, 1.1], [62, 112, .75], [91, 69, .9], [146, 45, .7],
-  [211, 51, .8], [270, 78, 1], [314, 126, .7], [324, 194, .9],
-  [294, 254, .75], [245, 301, 1], [178, 317, .8], [112, 295, .7],
-  [65, 253, .95], [116, 141, .65], [249, 146, .65], [231, 226, .6],
+  [44, 174, 1.1], [91, 69, .9], [211, 51, .8], [270, 78, 1],
+  [324, 194, .9], [294, 254, .75], [178, 317, .8], [112, 295, .7],
+  [65, 253, .95], [249, 146, .65],
 ] as const
 
 export function VoiceNodeField({
@@ -49,8 +51,6 @@ export function VoiceNodeField({
           <circle cx="180" cy="180" r="91" />
           <circle cx="180" cy="180" r="132" />
           <ellipse cx="180" cy="180" rx="151" ry="72" transform="rotate(-16 180 180)" />
-          <ellipse cx="180" cy="180" rx="147" ry="63" transform="rotate(42 180 180)" />
-          <path d="M35 180H325M180 35V325" />
         </g>
 
         <g className="voice-node-field__links">
@@ -73,10 +73,8 @@ export function VoiceNodeField({
         </g>
 
         <g className="voice-node-field__travellers" filter="url(#voice-field-glow)">
-          <circle r="2.2"><animateMotion dur="3.1s" repeatCount="indefinite" path="M44 174C92 124 122 116 180 180" /></circle>
-          <circle r="1.8"><animateMotion dur="4.4s" begin="-.8s" repeatCount="indefinite" path="M270 78C242 122 222 145 180 180" /></circle>
-          <circle r="2"><animateMotion dur="3.7s" begin="-1.9s" repeatCount="indefinite" path="M294 254C249 236 220 210 180 180" /></circle>
-          <circle r="1.7"><animateMotion dur="4.8s" begin="-2.6s" repeatCount="indefinite" path="M65 253C111 230 137 206 180 180" /></circle>
+          <circle r="1.9"><animateMotion dur="5.2s" repeatCount="indefinite" path="M44 174C92 124 122 116 180 180" /></circle>
+          <circle r="1.7"><animateMotion dur="6.4s" begin="-2.1s" repeatCount="indefinite" path="M270 78C242 122 222 145 180 180" /></circle>
         </g>
 
         <circle cx="180" cy="180" r="67" fill="url(#voice-field-core)" className="voice-node-field__aura" />

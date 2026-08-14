@@ -79,8 +79,10 @@ export function FluidNav({
         // Background: glass blur + hairline top border
         "bg-[hsl(var(--pearl)/.92)] dark:bg-[hsl(var(--abyss)/.92)] backdrop-blur-xl",
         "border-t border-[hsl(var(--teal)/.18)]",
-        // Safe area for iPhone notch
-        "pb-[env(safe-area-inset-bottom,0px)]",
+        // Home-indicator clearance, CAPPED. The raw inset (up to ~34px on
+        // iPhone) rendered as an empty band of background below the icons.
+        // 0.375rem keeps the icons clear of the indicator without the gap.
+        "pb-[min(env(safe-area-inset-bottom,0px),0.375rem)]",
         className
       )}
     >

@@ -394,7 +394,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Canonical bottom-nav clearance — FluidNav row (4rem) + iOS home-indicator
    safe area. Screens that scroll under the fixed nav pad with .pb-nav. */
-:root { --bottom-nav-h: calc(4rem + env(safe-area-inset-bottom, 0px)); }
+/* Nav height + capped home-indicator clearance. Must match FluidNav's padding,
+   or pages reserve space the nav does not occupy and leave a gap. */
+:root { --bottom-nav-h: calc(4rem + min(env(safe-area-inset-bottom, 0px), 0.375rem)); }
 .pb-nav { padding-bottom: calc(var(--bottom-nav-h) + 1.5rem); }
 @media (min-width: 1024px) { .pb-nav { padding-bottom: 2rem; } }
 
@@ -535,15 +537,15 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
 }
 .voice-node-field[data-active="true"]::before { opacity: 1; transform: scale(1.12); }
 .voice-node-field svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.voice-node-field__grid { fill: none; stroke: hsl(var(--cyan) / .14); stroke-width: .7; }
+.voice-node-field__grid { fill: none; stroke: hsl(var(--cyan) / .07); stroke-width: .6; }
 .voice-node-field__grid ellipse { stroke-dasharray: 2 7; }
-.voice-node-field__links { fill: none; stroke: hsl(var(--mint) / .24); stroke-width: .7; stroke-dasharray: 1.5 5; }
-.voice-node-field[data-active="true"] .voice-node-field__links { stroke: hsl(var(--mint) / .52); }
+.voice-node-field__links { fill: none; stroke: hsl(var(--mint) / .14); stroke-width: .6; stroke-dasharray: 1.5 7; }
+.voice-node-field[data-active="true"] .voice-node-field__links { stroke: hsl(var(--mint) / .3); }
 .voice-node-field__node-halo {
   fill: hsl(var(--cyan) / .08);
   transform-box: fill-box;
   transform-origin: center;
-  animation: voice-node-pulse 2.7s ease-in-out var(--node-delay) infinite;
+  animation: voice-node-pulse 4.2s ease-in-out var(--node-delay) infinite;
 }
 .voice-node-field__node { fill: hsl(var(--mint)); filter: drop-shadow(0 0 4px hsl(var(--mint))); }
 .voice-node-field__travellers { fill: hsl(var(--mint)); opacity: .24; }
@@ -564,15 +566,30 @@ html:has(.orbital-dark) body { background: hsl(var(--abyss)); }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: .28rem;
-  color: hsl(var(--mint));
+  gap: .3rem;
+  /* On the dark core disc. White, not mint — the status is the one thing a user
+     checks mid-sentence, so it has to read instantly. */
+  color: #fff;
 }
-.voice-node-field__core-content > svg { width: 1.75rem; height: 1.75rem; }
-.voice-node-field__core-content strong { font-family: var(--font-inter), sans-serif; font-size: .61rem; letter-spacing: .14em; text-transform: uppercase; }
-.voice-node-field__core-content small { font-family: var(--font-inter), sans-serif; font-size: .55rem; color: hsl(var(--foreground) / .5); }
+.voice-node-field__core-content > svg { width: 1.6rem; height: 1.6rem; color: hsl(var(--mint)); }
+.voice-node-field__core-content strong {
+  font-family: var(--font-inter), sans-serif;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 3px rgb(0 0 0 / .45);
+}
+.voice-node-field__core-content small {
+  font-family: var(--font-inter), sans-serif;
+  font-size: .58rem;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / .72);
+}
 @keyframes voice-node-pulse {
-  0%, 100% { opacity: .2; transform: scale(calc(.7 * var(--node-scale))); }
-  50% { opacity: .9; transform: scale(calc(1.3 * var(--node-scale))); }
+  0%, 100% { opacity: .14; transform: scale(calc(.8 * var(--node-scale))); }
+  50% { opacity: .5; transform: scale(calc(1.12 * var(--node-scale))); }
 }
 @keyframes voice-aura-breathe { 50% { transform: scale(1.08); opacity: .72; } }
 .voice-glyph { width: 2.4rem; height: 2.4rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid currentColor; }
