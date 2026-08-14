@@ -547,8 +547,12 @@ def build_tts():
             or os.environ.get("ONGEA_LLM_API_KEY")
             or None
         )
+        # tts-1 is OpenAI's low-latency model; gpt-4o-mini-tts is newer and more
+        # steerable but slower to first byte, which is the number that decides
+        # whether a voice agent feels real-time. Default to speed and let quality
+        # be opted into.
         return openai.TTS(
-            model=os.environ.get("ONGEA_TTS_MODEL", "gpt-4o-mini-tts"),
+            model=os.environ.get("ONGEA_TTS_MODEL", "tts-1"),
             voice=os.environ.get("ONGEA_TTS_VOICE", "alloy"),
             api_key=api_key,
         )
@@ -569,6 +573,51 @@ def build_tts():
     raise ValueError(
         f"Unknown ONGEA_TTS provider: {provider!r}. Use one of: fish, openai, elevenlabs."
     )
+
+
+def _turn_handling() -> dict[str, Any]:
+    """Latency tuning for the reply loop.
+
+    Perceived lag between "user stops talking" and "agent starts talking" is the
+    sum of: endpointing delay + STT finalisation + LLM first token + TTS first
+    byte. Two of those are configurable here and both default conservatively.
+
+      preemptive_tts   defaults to FALSE — the LLM runs preemptively but TTS
+                       does not start until the turn is CONFIRMED, so the whole
+                       synthesis round trip is serialised after endpointing.
+                       Turning it on is the single biggest win.
+      endpointing      min_delay defaults to 0.5s of silence before the turn is
+                       declared over. 0.3s still reads as a natural pause while
+                       returning 200ms.
+
+    The trade-off is real: both make the agent quicker to start talking, so it
+    is likelier to answer a mid-sentence pause. Tune with ONGEA_ENDPOINT_MIN_DELAY
+    if Kenyan speech rhythm needs more room — raise it if it interrupts, lower
+    it if it feels sluggish.
+
+    turn_handling also supersedes the deprecated turn_detection= argument, which
+    is what emitted the v2.0 warning. Passed through a signature check because
+    it only exists on newer livekit-agents, and guessing an argument is exactly
+    what silenced this agent before.
+    """
+    min_delay = float(os.environ.get("ONGEA_ENDPOINT_MIN_DELAY", "0.3"))
+    accepted = inspect.signature(AgentSession.__init__).parameters
+
+    if "turn_handling" in accepted:
+        return {
+            "turn_handling": {
+                "turn_detection": MultilingualModel(),
+                "endpointing": {"min_delay": min_delay},
+                # LLM preemption is already on by default; this adds TTS.
+                "preemptive_generation": {"enabled": True, "preemptive_tts": True},
+            }
+        }
+
+    logger.warning(
+        "this livekit-agents has no turn_handling — falling back to turn_detection; "
+        "replies will be slower (no preemptive TTS)",
+    )
+    return {"turn_detection": MultilingualModel()}
 
 
 async def entrypoint(ctx: JobContext) -> None:
@@ -598,7 +647,7 @@ async def entrypoint(ctx: JobContext) -> None:
         # the semantic "have they actually finished?" signal on top, which is what
         # stops the agent interrupting mid-sentence.
         vad=silero.VAD.load(),
-        turn_detection=MultilingualModel(),
+        **_turn_handling(),
     )
 
     # Tally synthesised characters so the session's TTS cost can be reported.
