@@ -33,14 +33,14 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
   openGraph: {
     type: "website",
-    url: "https://ongeapesa.nsait.co.ke",
+    url: "https://ongeapesa-ulh.nsait.co.ke",
     siteName: "Ongea Pesa",
     title: "Ongea Pesa — Voice-Activated M-Pesa",
     description:
       "Kenya's fastest voice-activated M-Pesa assistant. Pay bills, send money, and manage finances with just your voice.",
     images: [
       {
-        url: "https://ongeapesa.nsait.co.ke/icons/icon-512x512.png",
+        url: "https://ongeapesa-ulh.nsait.co.ke/icons/icon-512x512.png",
         width: 512,
         height: 512,
         alt: "Ongea Pesa — Voice-Activated M-Pesa Assistant",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Ongea Pesa — Voice-Activated M-Pesa",
     description: "Kenya's fastest voice-activated M-Pesa assistant",
-    images: ["https://ongeapesa.nsait.co.ke/icons/icon-512x512.png"],
+    images: ["https://ongeapesa-ulh.nsait.co.ke/icons/icon-512x512.png"],
   },
   icons: {
     icon: [

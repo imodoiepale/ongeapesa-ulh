@@ -65,7 +65,7 @@ The agent receives **dynamic variables** at session start (set by our app when i
 These come from `voice_sessions` (table) at agent-start time, so **the speaker is whoever holds the authenticated browser session that minted the signed URL.** That's our voice identity binding.
 
 ### The `send_money` tool
-Defined on the ElevenLabs side as a **webhook tool** to `https://ongeapesa.nsait.co.ke/api/voice/webhook` (POST, async). Required: `user_id`, `user_email`, `user_name`, `gate_id`, `gate_name`, `summary`. LLM-extracted: `type`, `amount`, `phone`, `till`, `paybill`, `account`, `agent`, `store`, `bankCode`.
+Defined on the ElevenLabs side as a **webhook tool** to `https://ongeapesa-ulh.nsait.co.ke/api/voice/webhook` (POST, async). Required: `user_id`, `user_email`, `user_name`, `gate_id`, `gate_name`, `summary`. LLM-extracted: `type`, `amount`, `phone`, `till`, `paybill`, `account`, `agent`, `store`, `bankCode`.
 
 `type` is one of:
 - **Internal wallet:** `c2c`, `c2b`, `b2c`, `b2b`
@@ -192,7 +192,7 @@ Four separate n8n workflows handle actual settlement:
 ## 8. End-to-end example: "Tuma 500 to 0712345678"
 
 1. User speaks → ElevenLabs agent recognizes `send_phone` intent.
-2. Agent emits `send_money` webhook to `https://ongeapesa.nsait.co.ke/api/voice/webhook` with `{user_id, gate_id, type:"send_phone", phone:"0712345678", amount:"500", summary, …}`.
+2. Agent emits `send_money` webhook to `https://ongeapesa-ulh.nsait.co.ke/api/voice/webhook` with `{user_id, gate_id, type:"send_phone", phone:"0712345678", amount:"500", summary, …}`.
 3. `/api/voice/webhook` validates the active `voice_sessions` row → forwards to n8n `/webhook/send_money`.
 4. n8n **WALLET SYSTEM** AI Agent re-parses, `Edit Fields` normalizes, `Create a row` inserts a `transactions` record.
 5. *(Coming next — see §9 gap):* the workflow calls `/webhook/ncba_withdraw` `destinationType:"phone"` → NCBA mobilemoneytransfer fires → `bankRef` returned.

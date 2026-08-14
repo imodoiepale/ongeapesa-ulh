@@ -27,8 +27,8 @@ ONGEA_ENVIRONMENT=live
 
 
 # ── App URLs ──────────────────────────────────────────────────────────────────
-NEXT_PUBLIC_SITE_URL=https://ongeapesa.nsait.co.ke
-NEXT_PUBLIC_APP_URL=https://ongeapesa.nsait.co.ke
+NEXT_PUBLIC_SITE_URL=https://ongeapesa-ulh.nsait.co.ke
+NEXT_PUBLIC_APP_URL=https://ongeapesa-ulh.nsait.co.ke
 
 
 # ── n8n ───────────────────────────────────────────────────────────────────────
@@ -82,8 +82,8 @@ NEXT_PUBLIC_INDEXPAY_URL=https://api.indexpay.co.ke
 # ── Security: passkeys + voice step-up ────────────────────────────────────────
 # RP_ID is the bare domain, ORIGIN includes the scheme. They must match the
 # deployed host or WebAuthn registration silently fails.
-WEBAUTHN_RP_ID=ongeapesa.nsait.co.ke
-WEBAUTHN_ORIGIN=https://ongeapesa.nsait.co.ke
+WEBAUTHN_RP_ID=ongeapesa-ulh.nsait.co.ke
+WEBAUTHN_ORIGIN=https://ongeapesa-ulh.nsait.co.ke
 
 # Must be the literal string "true" to enable.
 VOICE_STEPUP_ENABLED=true

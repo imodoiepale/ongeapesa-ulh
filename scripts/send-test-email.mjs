@@ -73,7 +73,7 @@ let html = readFileSync(templatePath, 'utf8')
 
 // Substitute the Supabase Go-template variables with realistic stand-ins so the
 // rendered test message matches what a recipient would actually receive.
-const site = 'https://ongeapesa.nsait.co.ke'
+const site = 'https://ongeapesa-ulh.nsait.co.ke'
 html = html
   .replaceAll('{{ .ConfirmationURL }}', `${site}/auth/confirm?token=deliverability-test`)
   .replaceAll('{{ .Token }}', '481902')

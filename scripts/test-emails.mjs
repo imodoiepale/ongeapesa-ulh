@@ -28,7 +28,7 @@ for (const line of envText.split('\n')) {
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM          = process.env.RESEND_FROM ?? 'Ongea Pesa <ongeapesa@nsait.co.ke>';
 const TO            = 'info@nsait.co.ke';
-const SITE          = 'https://ongeapesa.nsait.co.ke';
+const SITE          = 'https://ongeapesa-ulh.nsait.co.ke';
 
 if (!RESEND_API_KEY) {
   console.error('❌  RESEND_API_KEY not found in .env.local');

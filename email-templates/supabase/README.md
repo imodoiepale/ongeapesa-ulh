@@ -42,8 +42,8 @@ Click **Save** and then **Test SMTP** to confirm delivery.
 
 | Field | Value |
 |---|---|
-| Site URL | `https://ongeapesa.nsait.co.ke` |
-| Redirect URLs | `https://ongeapesa.nsait.co.ke/**` |
+| Site URL | `https://ongeapesa-ulh.nsait.co.ke` |
+| Redirect URLs | `https://ongeapesa-ulh.nsait.co.ke/**` |
 | Redirect URLs | `http://localhost:3000/**` *(dev)* |
 
 ---
@@ -116,7 +116,7 @@ to the following:
 - **No remote images.** The old templates pulled a 1600px hero background from
   `mp.astria.ai` — an unrelated third-party host, with a query string, referenced
   as a CSS background that Gmail strips anyway. Off-domain assets read as
-  tracking pixels. If an image is ever needed, host it on `ongeapesa.nsait.co.ke`.
+  tracking pixels. If an image is ever needed, host it on `ongeapesa-ulh.nsait.co.ke`.
 - **No `<style>` block, no `@keyframes`, no `animation:`.** Gmail discards head
   styles; the animations rendered nowhere and only added weight.
 - **No `position:absolute` layering.** Tables and inline styles only.
@@ -153,6 +153,6 @@ change both.
 - [ ] Supabase SMTP test passes (Dashboard → Test SMTP)
 - [ ] OTP email received from `ongeapesa@nsait.co.ke`, green header, correct code
 - [ ] Signup confirmation arrives via Resend (check Resend dashboard → Logs)
-- [ ] Password reset button links to `https://ongeapesa.nsait.co.ke/reset-password?...`
+- [ ] Password reset button links to `https://ongeapesa-ulh.nsait.co.ke/reset-password?...`
 - [ ] Email headers: `From: ongeapesa@nsait.co.ke`, SPF=pass, DKIM=pass
 - [ ] All 6 templates visually consistent (same header/footer/green)
