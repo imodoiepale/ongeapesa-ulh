@@ -40,10 +40,12 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
   const [pendingBatch, setPendingBatch] = useState<{ payments?: BatchItem[]; results?: BatchResponse } | null>(null)
   // Seeded by the home screen's quick-transfer / billings shortcuts, consumed once by SendMoney.
   const [sendPrefill, setSendPrefill] = useState<SendPrefill | null>(null)
-  // Voice-triggered scan overlay — null = hidden
-  // { autoStart?: boolean, mode?: string | null }
-  //   autoStart: true (default) → camera starts immediately (voice path)
-  //   autoStart: false → show mode selection first (button path)
+  // Scan overlay — null = hidden. { autoStart?: boolean, mode?: string | null }
+  //   autoStart: true (default) → camera starts immediately. Both the voice path
+  //     and the dashboard Scan button use this: tapping "Scan" should open the
+  //     camera, not a menu, and auto-detect already covers till/paybill/QR/receipt.
+  //   autoStart: false → show the mode picker first. Nothing uses it today; the
+  //     mode picker's real home is the /scanner route.
   const [scanOverlay, setScanOverlay] = useState<{ mode?: string | null; autoStart?: boolean } | null>(null)
 
   useEffect(() => {
@@ -72,21 +74,20 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
     return () => unregisterToolHandlers(['showBatch']);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Effect B — re-registers scan handlers whenever overlay closes or screen changes.
-  // When the overlay is open, PaymentScanner registers its own startScan which takes precedence.
-  // When the overlay closes (scanOverlay → null), this effect re-fires and restores AppShell's handlers.
+  // Effect B — owns the scan handlers only while the scanner is NOT on screen.
   useEffect(() => {
-    if (scanOverlay === null) {
-      registerToolHandlers({
-        openScanner: () => {
-          // Don't open overlay when already on the scanner screen — camera is already running
-          if (currentScreen !== 'scanner') setScanOverlay({})
-        },
-        startScan: (mode) => {
-          if (currentScreen !== 'scanner') setScanOverlay({ mode: mode ?? null })
-        },
-      });
-    }
+    // While the scanner is on screen — as the overlay, or as the /scanner route —
+    // PaymentScanner owns these handlers, because only it can actually drive a
+    // running camera. AppShell registering its own would clobber the scanner's
+    // (child effects run before parent effects) and leave voice "scan" a no-op
+    // that still reported success.
+    const scannerOwnsHandlers = scanOverlay !== null || currentScreen === 'scanner'
+    if (scannerOwnsHandlers) return
+
+    registerToolHandlers({
+      openScanner: () => setScanOverlay({}),
+      startScan: (mode) => setScanOverlay({ mode: mode ?? null }),
+    });
     return () => unregisterToolHandlers(['openScanner', 'startScan']);
   }, [scanOverlay, currentScreen]); // re-register when overlay closes or screen changes
   // Note: registerToolHandlers and setScanOverlay are stable refs/setters, no need to list
@@ -155,7 +156,7 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
         return (
           <MainDashboard
             onNavigate={navigate}
-            onOpenScanner={() => setScanOverlay({ autoStart: false })}
+            onOpenScanner={() => setScanOverlay({})}
           />
         )
       case "voice":
@@ -184,7 +185,7 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
         return (
           <MainDashboard
             onNavigate={navigate}
-            onOpenScanner={() => setScanOverlay({ autoStart: false })}
+            onOpenScanner={() => setScanOverlay({})}
           />
         )
     }
@@ -208,9 +209,7 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
       <OrbitalBackdrop scene={scanOverlay !== null ? "scanner" : backdropScene[currentScreen]} />
       <div className="relative z-[1]">{renderScreen()}</div>
 
-      {/* Scan overlay — opens on top of the current screen; closing returns here.
-          autoStart=true (voice path): camera begins immediately.
-          autoStart=false (button path): shows mode-selection first. */}
+      {/* Scan overlay — opens on top of the current screen; closing returns here. */}
       {scanOverlay !== null && (
         <div className="fixed inset-0 z-[75] animate-in fade-in zoom-in-95 duration-300">
           <PaymentScanner

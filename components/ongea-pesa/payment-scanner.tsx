@@ -1590,16 +1590,55 @@ export default function PaymentScanner({ onNavigate, variant = 'page', autoStart
     )
   }
 
-  // In overlay mode, never show the landing page — show a loading placeholder until the camera starts
+  // Overlay mode, camera not yet up. Two very different situations live here, and
+  // showing "Opening camera…" for both is how this screen used to hang forever:
+  //
+  //   1. A start is genuinely in flight (autoStart, no error yet) → placeholder.
+  //   2. The start failed, or was never requested → the placeholder would be a
+  //      lie with no way out. Show the reason and a way to retry or leave.
+  //
+  // If autoStart is false and nothing has failed, we fall through to the landing
+  // page below so the mode picker is reachable rather than being a dead end.
   if (variant === 'overlay' && !isScanning && !scanResult) {
-    return (
-      <div className="flex items-center justify-center min-h-[100dvh] bg-background">
-        <div className="text-center">
-          <Camera className="h-12 w-12 mx-auto mb-3 animate-pulse text-brand" />
-          <p className="text-sm text-muted-foreground">Opening camera…</p>
+    const failure = scanError ?? cameraError
+
+    if (failure) {
+      return (
+        <div className="flex items-center justify-center min-h-[100dvh] bg-background px-6">
+          <div className="text-center max-w-xs">
+            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-3">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <h2 className="text-base font-semibold text-foreground mb-1.5">Camera unavailable</h2>
+            <p className="text-sm text-muted-foreground mb-5">{failure}</p>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => handleScan(initialMode ?? null)} size="sm" className="rounded-xl">
+                Try again
+              </Button>
+              <Button
+                onClick={() => onClose ? onClose() : onNavigate("dashboard")}
+                variant="ghost"
+                size="sm"
+                className="rounded-xl"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-    )
+      )
+    }
+
+    if (autoStart) {
+      return (
+        <div className="flex items-center justify-center min-h-[100dvh] bg-background">
+          <div className="text-center">
+            <Camera className="h-12 w-12 mx-auto mb-3 animate-pulse text-brand" />
+            <p className="text-sm text-muted-foreground">Opening camera…</p>
+          </div>
+        </div>
+      )
+    }
   }
 
   return (

@@ -50,19 +50,31 @@ export type VoiceTools = ReturnType<typeof createVoiceTools>;
 
 export function createVoiceTools({ handlers, fallbackBalance }: VoiceToolDeps) {
   return {
+    // These tools drive the UI, so a missing handler means the screen that owns
+    // the action isn't mounted. Optional chaining used to swallow that and still
+    // return the success string, so the agent would cheerfully say "Opening
+    // scanner now" while nothing opened. Report what actually happened — a model
+    // that is told the truth can retry or explain; one that is told it succeeded
+    // cannot.
     open_scanner: async (): Promise<string> => {
-      handlers().openScanner?.();
+      const handler = handlers().openScanner;
+      if (!handler) return 'The scanner is already open.';
+      handler();
       return 'Opening scanner now';
     },
 
     start_scan: async (params?: { mode?: string }): Promise<string> => {
       const mode = params?.mode ?? null;
-      handlers().startScan?.(mode);
+      const handler = handlers().startScan;
+      if (!handler) return 'Could not start the scan — the scanner is not open yet.';
+      handler(mode);
       return `Starting ${mode ?? 'auto'} scan`;
     },
 
     confirm_payment: async (): Promise<string> => {
-      handlers().confirmPayment?.();
+      const handler = handlers().confirmPayment;
+      if (!handler) return 'There is nothing on screen to confirm right now.';
+      handler();
       return 'Confirming payment';
     },
 

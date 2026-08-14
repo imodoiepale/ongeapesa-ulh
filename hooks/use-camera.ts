@@ -18,6 +18,37 @@ export interface CameraHook {
   toggleTorch: () => Promise<void>;
 }
 
+/**
+ * Turn a getUserMedia failure into something a user can act on.
+ *
+ * These arrive as DOMExceptions whose `.message` is often empty and whose
+ * `.name` is jargon, so the name is what we actually branch on.
+ */
+function describeCameraError(err: unknown): string {
+  const name = (err as { name?: string } | null)?.name;
+
+  switch (name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'Camera access was blocked. Allow camera access for this site in your browser settings, then try again.';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return 'No camera was found on this device.';
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return 'The camera is already in use by another app. Close it and try again.';
+    case 'OverconstrainedError':
+    case 'ConstraintNotSatisfiedError':
+      return 'This camera does not support the requested settings.';
+    case 'AbortError':
+      return 'The camera stopped unexpectedly. Please try again.';
+    default:
+      return err instanceof Error && err.message
+        ? err.message
+        : 'Could not access the camera.';
+  }
+}
+
 export const useCamera = (): CameraHook => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,50 +74,90 @@ export const useCamera = (): CameraHook => {
       }
       if (videoRef.current) videoRef.current.srcObject = null;
 
-      // Check if getUserMedia is supported
+      // Check if getUserMedia is supported.
+      // Browsers only expose mediaDevices in a secure context, so the usual
+      // cause of this on a working browser is the app being served over plain
+      // http:// (e.g. testing on a LAN IP) rather than a missing feature.
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera not supported in this browser');
+        const insecure = typeof window !== 'undefined' && !window.isSecureContext;
+        throw new Error(
+          insecure
+            ? 'The camera needs a secure connection. Open the app over https:// or on localhost.'
+            : 'This browser does not support camera access.',
+        );
       }
-
-      const constraints = {
-        video: {
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      };
 
       console.log('Requesting camera access...');
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment', // Prefer the back camera on mobile
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        });
+      } catch (err) {
+        // Some devices — laptops with only a front camera, certain Android
+        // WebViews — reject the rear-camera hint outright instead of ignoring
+        // it. Any camera beats no camera, so retry unconstrained.
+        if ((err as { name?: string } | null)?.name !== 'OverconstrainedError') throw err;
+        console.warn('Rear camera unavailable, falling back to any camera');
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+
       streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      const video = videoRef.current;
 
-        // Wait for video to be ready
-        await new Promise<void>((resolve, reject) => {
-          if (!videoRef.current) {
-            reject(new Error('Video element not available'));
-            return;
-          }
-
-          videoRef.current.onloadedmetadata = () => {
-            if (videoRef.current) {
-              videoRef.current.play()
-                .then(() => {
-                  console.log('Camera started successfully');
-                  setIsStreaming(true);
-                  resolve();
-                })
-                .catch(reject);
-            }
-          };
-
-          videoRef.current.onerror = () => {
-            reject(new Error('Video element error'));
-          };
-        });
+      // A missing <video> used to be skipped silently: the stream stayed live,
+      // isStreaming stayed false, and startCamera *resolved* — so the caller
+      // logged success while the UI sat on a placeholder forever. Fail loudly,
+      // and release the camera so the device light doesn't stay on for nothing.
+      if (!video) {
+        stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        throw new Error('Camera view was not ready. Please try again.');
       }
+
+      video.srcObject = stream;
+
+      // Wait for the video to be ready, then play.
+      await new Promise<void>((resolve, reject) => {
+        let settled = false;
+
+        const cleanup = () => {
+          video.onloadedmetadata = null;
+          video.onerror = null;
+          clearTimeout(timer);
+        };
+        const succeed = () => { if (!settled) { settled = true; cleanup(); resolve(); } };
+        const fail = (err: Error) => { if (!settled) { settled = true; cleanup(); reject(err); } };
+
+        // Nothing below is guaranteed to fire. Without a deadline, a re-attach
+        // that never emits metadata leaves this promise pending forever and the
+        // scanner stuck mid-open with no error to show.
+        const timer = setTimeout(
+          () => fail(new Error('Camera timed out while starting. Please try again.')),
+          10000,
+        );
+
+        const play = () => {
+          video.play()
+            .then(() => { setIsStreaming(true); succeed(); })
+            .catch(err => fail(err instanceof Error ? err : new Error('Could not start the camera preview')));
+        };
+
+        // On a fast re-attach the metadata event may already have fired, in which
+        // case onloadedmetadata never fires again — check the state first.
+        if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+          play();
+        } else {
+          video.onloadedmetadata = play;
+          video.onerror = () => fail(new Error('Camera view failed to load'));
+        }
+      });
 
       // --- Detect zoom and torch capabilities ---
       try {
@@ -117,11 +188,19 @@ export const useCamera = (): CameraHook => {
         setTorchSupported(false);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to access camera';
+      // Don't leave a half-acquired stream running behind a failure.
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+
+      const errorMessage = describeCameraError(err);
       setError(errorMessage);
       setIsStreaming(false);
       console.error('Camera error:', err);
-      throw err;
+      // Rethrow a message the caller can show as-is; the raw DOMException name
+      // ("NotAllowedError") tells the user nothing about what to do next.
+      throw new Error(errorMessage);
     }
   }, []);
 
