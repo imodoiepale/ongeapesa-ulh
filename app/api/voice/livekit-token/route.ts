@@ -43,10 +43,16 @@ export async function POST() {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
-  // The gate. Admin-only opt-in, enforced here and by the DB trigger.
-  if (profile.voice_engine !== 'livekit') {
+  // LiveKit is the DEFAULT engine, so this is now an opt-OUT gate: only an
+  // account explicitly pinned to 'elevenlabs' is refused. It was opt-in while
+  // LiveKit was experimental; leaving it that way would 403 every user now that
+  // it is primary.
+  //
+  // voice_engine remains admin-settable only (guard_voice_engine_update), so a
+  // user still cannot move themselves between engines.
+  if (profile.voice_engine === 'elevenlabs') {
     return NextResponse.json(
-      { error: 'The LiveKit voice engine is not enabled for this account' },
+      { error: 'This account is pinned to the ElevenLabs voice engine' },
       { status: 403 },
     )
   }

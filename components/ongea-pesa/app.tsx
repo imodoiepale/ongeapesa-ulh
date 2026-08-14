@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { UserProvider } from "@/contexts/UserContext"
-import { ElevenLabsProvider, useElevenLabs } from "@/contexts/ElevenLabsContext"
+import { useElevenLabs } from "@/contexts/ElevenLabsContext"
+import { VoiceProvider } from "@/contexts/VoiceProvider"
 import { Toaster } from "@/components/ui/toaster"
 import GlobalVoiceWidget from "./global-voice-widget"
 import MainDashboard from "./main-dashboard"
@@ -25,7 +26,8 @@ import type { BatchItem, BatchResponse } from '@/lib/batch-payments'
 
 type Screen = "dashboard" | "voice" | "send" | "recurring" | "analytics" | "test" | "permissions" | "scanner" | "batch"
 
-// Inner component — must be a child of ElevenLabsProvider to call useElevenLabs
+// Inner component — must be a child of VoiceProvider to call useElevenLabs
+// (that hook reads the shared voice context, whichever engine filled it).
 function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
   const router = useRouter()
   const { user } = useAuth()
@@ -222,7 +224,7 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
       )}
 
       {/* GlobalVoiceWidget commented out — removed floating popup per UX review.
-          ElevenLabsProvider stays active for the Voice page + client-tool integration. */}
+          VoiceProvider stays active for the Voice page + client-tool integration. */}
       {/* {currentScreen !== "voice" && <GlobalVoiceWidget />} */}
       <Toaster />
 
@@ -255,9 +257,12 @@ function AppShell({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
 export default function OngeaPesaApp({ initialScreen = "dashboard" }: { initialScreen?: Screen }) {
   return (
     <UserProvider>
-      <ElevenLabsProvider>
+      {/* LiveKit is the default engine; ElevenLabs is the dormant fallback.
+          Both fill the same context, so AppShell and its children are
+          engine-agnostic and keep calling useElevenLabs(). */}
+      <VoiceProvider>
         <AppShell initialScreen={initialScreen} />
-      </ElevenLabsProvider>
+      </VoiceProvider>
     </UserProvider>
   )
 }

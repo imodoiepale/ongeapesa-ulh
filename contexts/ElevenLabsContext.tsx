@@ -20,7 +20,7 @@ interface Message {
 // Re-exported so existing importers of this module keep working.
 export type { PaymentSlots, ToolHandlers } from '@/lib/voice-tools';
 
-interface ElevenLabsContextType {
+export interface ElevenLabsContextType {
   isConnected: boolean;
   isLoading: boolean;
   messages: Message[];
@@ -384,10 +384,25 @@ export function ElevenLabsProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * DORMANT ENGINE.
+ *
+ * LiveKit is the default runtime; this provider is kept as the fallback and is
+ * only mounted when LiveKit is unavailable or a user is explicitly pinned to
+ * 'elevenlabs'. Its logic is unchanged - do not edit it to fix a LiveKit
+ * problem, or the fallback stops being a known-good path to fall back to.
+ *
+ * The context object is exported so LiveKitVoiceProvider can fill the SAME
+ * context. That is what lets voice-interface, payment-scanner, batch-send and
+ * global-voice-widget keep calling useElevenLabs() on either engine.
+ */
+export { ElevenLabsContext as VoiceContext };
+export type { ElevenLabsContextType as VoiceContextValue };
+
 export function useElevenLabs() {
   const context = useContext(ElevenLabsContext);
   if (!context) {
-    throw new Error('useElevenLabs must be used within ElevenLabsProvider');
+    throw new Error('useElevenLabs must be used within a VoiceProvider');
   }
   return context;
 }

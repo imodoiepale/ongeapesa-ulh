@@ -21,23 +21,17 @@ import {
 import { Room, RoomEvent, RpcInvocationData } from 'livekit-client';
 import { createVoiceTools } from '@/lib/voice-tools';
 import type { PaymentSlots, ToolHandlers } from '@/lib/voice-tools';
+import { VoiceContext } from './ElevenLabsContext';
+import type { VoiceContextValue } from './ElevenLabsContext';
 
 export type { PaymentSlots, ToolHandlers };
 
-interface LiveKitVoiceContextType {
-  isConnected: boolean;
-  isLoading: boolean;
-  isSpeaking: boolean;
-  error: string | null;
-  room: Room | null;
-  voiceSessionId: string | null;
-  startSession: () => Promise<void>;
-  endSession: () => Promise<void>;
-  registerToolHandlers: (handlers: ToolHandlers) => void;
-  unregisterToolHandlers: (keys: (keyof ToolHandlers)[]) => void;
+interface Message {
+  id: string;
+  text: string;
+  source: 'user' | 'ai';
+  timestamp: Date;
 }
-
-const LiveKitVoiceContext = createContext<LiveKitVoiceContextType | undefined>(undefined);
 
 /** RPC method names. These MUST match the @function_tool names in
  *  voice-agent/agent.py — LiveKit routes purely on the string. */
@@ -57,6 +51,17 @@ export function LiveKitVoiceProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [voiceSessionId, setVoiceSessionId] = useState<string | null>(null);
   const [userBalance, setUserBalance] = useState(0);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  // Transcripts arrive as agent/user text on the room; kept for parity with the
+  // ElevenLabs surface so the chat panel renders identically on both engines.
+  const sendMessage = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setMessages(prev => [
+      ...prev,
+      { id: Date.now().toString(), text, source: 'user', timestamp: new Date() },
+    ]);
+  }, []);
 
   const roomRef = useRef<Room | null>(null);
   const toolHandlersRef = useRef<ToolHandlers>({});
@@ -152,22 +157,31 @@ export function LiveKitVoiceProvider({ children }: { children: ReactNode }) {
   // A tab closed mid-call must not leave the room (and the meter) open.
   useEffect(() => () => { roomRef.current?.disconnect(); }, []);
 
-  return (
-    <LiveKitVoiceContext.Provider
-      value={{
-        isConnected, isLoading, isSpeaking, error,
-        room: roomRef.current, voiceSessionId,
-        startSession, endSession,
-        registerToolHandlers, unregisterToolHandlers,
-      }}
-    >
-      {children}
-    </LiveKitVoiceContext.Provider>
-  );
-}
+  // Fills the SAME context ElevenLabsProvider does, so voice-interface,
+  // payment-scanner, batch-send and global-voice-widget keep calling
+  // useElevenLabs() and work on either engine with no per-engine branching.
+  const value: VoiceContextValue = {
+    isConnected,
+    isLoading,
+    isSpeaking,
+    messages,
+    sendMessage,
+    clearMessages: () => setMessages([]),
+    // ElevenLabs exposes its SDK object here. LiveKit's equivalent is the Room,
+    // and error is surfaced on it so a caller reading `.error` sees something
+    // useful rather than undefined.
+    conversation: { room: roomRef.current, error, voiceSessionId },
+    startSession,
+    endSession,
+    registerToolHandlers,
+    unregisterToolHandlers,
+    // ElevenLabs pushes mid-call context to the model. LiveKit has no direct
+    // equivalent on the agent side yet, so this is a no-op rather than a throw:
+    // a caller nudging context must not break a live call.
+    sendContextualUpdate: async (text: string) => {
+      console.debug('[livekit] contextual update ignored (unsupported):', text);
+    },
+  };
 
-export function useLiveKitVoice() {
-  const ctx = useContext(LiveKitVoiceContext);
-  if (!ctx) throw new Error('useLiveKitVoice must be used within a LiveKitVoiceProvider');
-  return ctx;
+  return <VoiceContext.Provider value={value}>{children}</VoiceContext.Provider>;
 }
